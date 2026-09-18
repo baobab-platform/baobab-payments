@@ -1,0 +1,28 @@
+name: Foundation Repository Gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  foundation:
+    # SHA is nabhold/shared's main HEAD as of 2026-09-18 (includes the
+    # 2026-09-16 GHCR image-resolution check, which needs the packages:
+    # read permission granted above). Re-verify this pin is still current
+    # before relying on it if this file is more than a few weeks old.
+    uses: nabhold/shared/.github/workflows/foundation-repository-gates.yml@317538bfa9cac7d0117420c12984d80d89d9f5ea
+    with:
+      # No Dockerfile yet — this engine has no application code (no
+      # Cargo.toml) and doesn't build a container image. Set this back to
+      # "Dockerfile" (the reusable workflow's default) once one exists.
+      dockerfile: ""
+      build_context: "."
+      dependency_review_enabled: false
