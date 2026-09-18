@@ -1,0 +1,44 @@
+# ==============================================================================
+# Nabhold Engine Template
+# Security - CodeQL (CONDITIONAL - only if this repo has a CodeQL-supported
+# language)
+#
+# File: .github/workflows/security-codeql.yml.example
+#
+# Per TEMPLATE-USAGE.md step 3: rename to security-codeql.yml (dropping
+# `.example`) once this engine's language is decided, and set `languages`
+# below to match (CodeQL's supported set includes go, javascript-typescript,
+# python, java-kotlin, ruby, csharp, cpp, swift - see GitHub's own docs for
+# the current list). Delete this file instead if the chosen language isn't
+# CodeQL-supported.
+# ==============================================================================
+
+name: Security — CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    # SHA is nabhold/shared's v1.2.0 tag (annotated - peeled commit, not the
+    # tag object's own SHA), verified via `git rev-list -n1 v1.2.0^{}`
+    # against a live checkout on 2026-09-05. Re-verify before relying on
+    # this pin if this template is more than a few weeks old.
+    uses: nabhold/shared/.github/workflows/security-codeql.yml@38defb11aacd95a6f68b7db8026fe336417a2af6 # v1.2.0
+    with:
+      # TODO: set to this engine's actual language(s), e.g. '["go"]' or
+      # '["javascript-typescript"]'.
+      languages: '[""]'
+      build-mode: "autobuild"

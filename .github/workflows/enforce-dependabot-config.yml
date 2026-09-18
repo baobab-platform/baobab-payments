@@ -1,0 +1,39 @@
+# ==============================================================================
+# Nabhold Engine Template
+# Enforce Dependabot Config
+#
+# File: .github/workflows/enforce-dependabot-config.yml
+#
+# PURPOSE:
+#   Delegates to nabhold/shared's reusable enforce-dependabot-config.yml -
+#   fails CI if this repo's .github/dependabot.yml drifts from the org's
+#   structural requirements (missing ecosystem entry, missing schedule,
+#   missing labels, etc). Pairs with enforce-action-pinning.yml above the
+#   same way it does in nabhold/shared itself. Toolchain-agnostic: needs no
+#   application code, so it is live (not `.example`) from repository
+#   creation.
+# ==============================================================================
+
+name: Enforce Dependabot Config
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/dependabot.yml"
+  pull_request:
+    paths:
+      - ".github/dependabot.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    permissions:
+      contents: read
+    # SHA is nabhold/shared's v1.2.0 tag (annotated - peeled commit, not the
+    # tag object's own SHA), verified via `git rev-list -n1 v1.2.0^{}`
+    # against a live checkout on 2026-09-05.
+    uses: nabhold/shared/.github/workflows/enforce-dependabot-config.yml@38defb11aacd95a6f68b7db8026fe336417a2af6 # v1.2.0

@@ -1,0 +1,38 @@
+# ==============================================================================
+# Nabhold Engine Template
+# Foundation Repository Gates (CONDITIONAL - needs application code)
+#
+# File: .github/workflows/foundation.yml.example
+#
+# Per TEMPLATE-USAGE.md step 3: rename to foundation.yml (dropping
+# `.example`) once this engine has real application code. Set `dockerfile`
+# to "" below if this engine doesn't build a container image yet - the
+# reusable workflow's default assumes a Dockerfile exists at the repo root.
+# Re-verify the pin below is still current before relying on it (check
+# nabhold/shared's tags for a release newer than v1.2.0).
+# ==============================================================================
+
+name: Foundation Repository Gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    # SHA is nabhold/shared's v1.2.0 tag (annotated - peeled commit, not the
+    # tag object's own SHA), verified via `git rev-list -n1 v1.2.0^{}`
+    # against a live checkout on 2026-09-05.
+    uses: nabhold/shared/.github/workflows/foundation-repository-gates.yml@38defb11aacd95a6f68b7db8026fe336417a2af6 # v1.2.0
+    with:
+      # TODO: set to "" if this engine does not build a container image.
+      dockerfile: "Dockerfile"
+      build_context: "."
+      dependency_review_enabled: true

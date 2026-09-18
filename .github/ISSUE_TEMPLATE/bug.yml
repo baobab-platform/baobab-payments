@@ -1,0 +1,170 @@
+
+name: Bug Report
+description: Report a software defect that requires investigation and resolution.
+title: "[BUG]: "
+labels:
+  - bug
+
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        # Bug Report
+
+        Use this form to report defects in the Baobab platform.
+
+        Please provide enough information for another developer to reproduce the issue.
+
+  - type: input
+    id: related_issue
+    attributes:
+      label: Related Feature / User Story / Technical Task
+      description: Enter the related Issue Number if known.
+      placeholder: "#123"
+
+  - type: input
+    id: summary
+    attributes:
+      label: Bug Summary
+      placeholder: Login API returns HTTP 500 for valid credentials.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Local Development
+        - Development
+        - Test
+        - Staging
+        - Production
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Application Version
+      placeholder: v0.1.0
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Clearly describe the defect.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behaviour
+      description: Describe what should have happened.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behaviour
+      description: Describe what actually happened.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Provide detailed reproduction steps.
+      placeholder: |
+        1. Go to...
+        2. Click...
+        3. Enter...
+        4. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Business Impact
+      description: Explain how this defect affects users or business operations.
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Messages / Logs
+      description: Paste stack traces, logs or error messages if available.
+      render: shell
+
+  - type: textarea
+    id: root_cause
+    attributes:
+      label: Suspected Root Cause
+      description: Optional. Record any initial diagnosis.
+
+  - type: checkboxes
+    id: affected_components
+    attributes:
+      label: Affected Components
+      options:
+        - label: Backend
+        - label: Frontend
+        - label: API
+        - label: Database
+        - label: Authentication
+        - label: Tenant Management
+        - label: CMS
+        - label: Commerce
+        - label: Infrastructure
+        - label: AI Services
+
+  - type: checkboxes
+    id: regression
+    attributes:
+      label: Regression
+      options:
+        - label: This worked previously and is now broken.
+
+  - type: checkboxes
+    id: testing
+    attributes:
+      label: Validation After Fix
+      options:
+        - label: Unit Tests Required
+        - label: Integration Tests Required
+        - label: End-to-End Tests Required
+        - label: Regression Testing Required
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      description: Include screenshots, links, ADR references or any additional context.

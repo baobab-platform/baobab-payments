@@ -1,0 +1,157 @@
+
+name: User Story
+description: Create a user story that describes a user requirement for a Feature.
+title: "[STORY]: "
+labels:
+  - user-story
+
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        # User Story
+
+        A User Story describes a user requirement that contributes to a Feature.
+
+        Every User Story should be linked to a Feature and should result in one or more Technical Tasks.
+
+  - type: input
+    id: feature_reference
+    attributes:
+      label: Feature Reference
+      description: Enter the Feature Issue Number.
+      placeholder: "#25"
+    validations:
+      required: true
+
+  - type: input
+    id: story_title
+    attributes:
+      label: Story Title
+      placeholder: User Login
+    validations:
+      required: true
+
+  - type: textarea
+    id: user_story
+    attributes:
+      label: User Story
+      description: Write the User Story using the standard Agile format.
+      placeholder: |
+        As a ...
+        I want ...
+        So that ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: business_rules
+    attributes:
+      label: Business Rules
+      description: List any business rules or constraints.
+      placeholder: |
+        • Rule 1
+        • Rule 2
+        • Rule 3
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Describe the conditions that must be met for this story to be accepted.
+      placeholder: |
+        Given...
+        When...
+        Then...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: Story Size
+      options:
+        - XS
+        - S
+        - M
+        - L
+        - XL
+    validations:
+      required: true
+
+  - type: dropdown
+    id: persona
+    attributes:
+      label: Primary Persona
+      options:
+        - System Administrator
+        - Tenant Administrator
+        - Staff Member
+        - Customer
+        - Supplier
+        - Finance Officer
+        - Executive
+        - Public User
+        - Developer
+        - Other
+
+  - type: checkboxes
+    id: quality_attributes
+    attributes:
+      label: Quality Attributes
+      options:
+        - label: Security
+        - label: Performance
+        - label: Scalability
+        - label: Accessibility
+        - label: Reliability
+        - label: Multi-Tenant Support
+
+  - type: textarea
+    id: technical_notes
+    attributes:
+      label: Technical Notes
+      description: Any technical guidance or architectural considerations.
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List related Stories, Features, ADRs or external dependencies.
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of Scope
+      description: Clearly identify what is intentionally excluded from this User Story.
+
+  - type: textarea
+    id: implementation_tasks
+    attributes:
+      label: Expected Technical Tasks
+      description: List the Technical Tasks anticipated for implementing this story.
+      placeholder: |
+        • Backend API
+        • Database Migration
+        • Frontend UI
+        • Unit Tests
+        • Documentation
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      description: Add references, links or supporting information.

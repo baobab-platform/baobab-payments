@@ -1,0 +1,39 @@
+# ==============================================================================
+# Nabhold Engine Template
+# Enforce Action Pinning
+#
+# File: .github/workflows/enforce-action-pinning.yml
+#
+# PURPOSE:
+#   Delegates to nabhold/shared's reusable enforce-action-pinning.yml - fails
+#   CI if any `uses:` reference in this repo's .github/workflows or
+#   .github/actions isn't pinned to a full 40-character commit SHA.
+#   Toolchain-agnostic: needs no application code to run cleanly on an empty
+#   scaffold, so it is live (not `.example`) from repository creation.
+# ==============================================================================
+
+name: Enforce Action Pinning
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    permissions:
+      contents: read
+    # SHA is nabhold/shared's v1.2.0 tag (annotated - peeled commit, not the
+    # tag object's own SHA), verified via `git rev-list -n1 v1.2.0^{}`
+    # against a live checkout on 2026-09-05.
+    uses: nabhold/shared/.github/workflows/enforce-action-pinning.yml@38defb11aacd95a6f68b7db8026fe336417a2af6 # v1.2.0

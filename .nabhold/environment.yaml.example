@@ -1,0 +1,75 @@
+# Target path: <new-repo>/.nabhold/environment.yaml (drop the .example
+# suffix once every TODO below is resolved - see TEMPLATE-USAGE.md step 3).
+#
+# Conforms to:
+#   nabhold/shared/contracts/development-environment/schema.yaml (v1.0)
+# Governing decision:
+#   nabhold/shared/docs/adr/ADR-0001
+#
+# Before filling this in: read schema.yaml's `profiles` section and pick
+# the NARROWEST profile that actually covers this engine's real needs, not
+# `full` by default.
+#   - full        Python + Node + Flutter + PostgreSQL client + Docker.
+#                 Used today by baobab-cp (Go, via a temporary devcontainer
+#                 Feature - no dedicated Go profile exists yet), baobab-erp
+#                 (Python/Node for Frappe), baobab-trade and baobab-cms
+#                 (Node + PostgreSQL client), baobab-pulse (Python + Node)
+#                 and equator-estate (Python). If this engine's language
+#                 isn't yet covered by a dedicated profile, `full` plus a
+#                 devcontainer Feature for the missing runtime is the
+#                 established pattern - see baobab-cp's own
+#                 .devcontainer/devcontainer.json for a live example rather
+#                 than inventing a new approach here.
+#   - frontend    Node/pnpm/Turborepo only, no browser binaries. This is
+#                 for the four *digital-estate* repos (nabhold, zuribeans,
+#                 thamani, equator-estate's planned rewrite), not for an
+#                 engine - do not pick this for a backend/API engine even
+#                 if it happens to be Node-only.
+#   - frontend-e2e is CI-only, never a repo's primary devcontainer profile.
+#   - infra       Terraform + AWS CLI only, no application language
+#                 runtimes at all. Used by nabhold/infrastructure only.
+#
+# Confirm the current baobab-dev release tag (check its CHANGELOG.md /
+# GHCR package page - do not assume any version number written elsewhere,
+# including in this template, is still current) and use the SAME version in
+# both minimum_version here and the image tag in
+# .devcontainer/devcontainer.json.
+
+schema:
+  name: "nabhold-development-environment-contract"
+  version: "1.0"
+
+application:
+  name: "<engine-repo-name>" # TODO
+  version: "0.1.0"
+  # entity_id is NOT applicable to an engine (it is for the four
+  # digital-estate repos only, per schema.yaml) - omit this field entirely
+  # for an engine repo rather than setting it to a placeholder.
+
+environment:
+  provider: "baobab-dev"
+  profile: "full" # TODO: confirm against the guidance above
+  minimum_version: "<baobab-dev-version>" # TODO
+  contract_minimum_version: "1.0"
+
+compatibility_policy:
+  # TODO: decide deliberately, per repo - do not copy another repo's
+  # values without considering whether they fit this engine too.
+  strict_runtime_versions: true
+  allow_newer_patch_versions: true
+  allow_newer_minor_versions: false
+  allow_older_versions: false
+
+validation:
+  required_capabilities:
+    # TODO: list only the capability_domains this engine actually needs,
+    # using the EXACT dotted names from schema.yaml's `profiles.<name>.
+    # capability_domains` (e.g. "languages.node", "database.postgresql",
+    # "development.docker", "development.github_cli") - not bare names
+    # like "node" or "docker", which do not match the schema and will fail
+    # once the compatibility validator (schema.yaml's
+    # validator_obligations) is implemented.
+    - "TODO"
+
+notes:
+  - "Codespaces uses ghcr.io/nabhold/baobab-dev:<TODO: same tag as minimum_version above>."

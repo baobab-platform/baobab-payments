@@ -1,0 +1,79 @@
+
+# ==============================================================================
+# Baobab Enterprise Platform
+# ==============================================================================
+#
+# File        : .github/ISSUE_TEMPLATE/config.yml
+# Repository  : https://github.com/nabhold/baobab-cp
+# Organization: NABHOLD Group Africa
+#
+# ------------------------------------------------------------------------------
+# PURPOSE
+# ------------------------------------------------------------------------------
+#
+# Configures GitHub Issue Templates and directs contributors to the appropriate
+# resources before opening a new issue.
+#
+# Responsibilities
+# ----------------
+# • Disable blank issues
+# • Promote self-service documentation
+# • Route discussions to GitHub Discussions
+# • Encourage review of Architecture Decision Records (ADRs)
+# • Improve issue quality and repository governance
+#
+# Documentation
+# -------------
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/configuring-issue-templates-for-your-repository
+#
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Blank Issues
+# ------------------------------------------------------------------------------
+#
+# Contributors must use one of the provided issue templates.
+#
+# ------------------------------------------------------------------------------
+
+blank_issues_enabled: false
+
+# ------------------------------------------------------------------------------
+# Contact Links
+# ------------------------------------------------------------------------------
+#
+# These links are displayed before users create a new issue, helping them find
+# documentation, review architectural decisions, or ask questions without
+# creating unnecessary issues.
+#
+# ------------------------------------------------------------------------------
+
+contact_links:
+
+  - name: 📚 Baobab Project Documentation
+    url: https://github.com/nabhold/baobab-cp/wiki
+    about: >
+      Read the official project documentation, user guides, and engineering
+      standards before creating an issue.
+
+  - name: 🏛️ Architecture Decision Records (ADRs)
+    url: https://github.com/nabhold/baobab-cp/tree/main/docs/adr
+    about: >
+      Review architectural decisions before proposing technical changes or new
+      features.
+
+  - name: 💬 Project Discussions
+    url: https://github.com/nabhold/baobab-cp/discussions
+    about: >
+      Ask questions, share ideas, request guidance, or discuss proposals with
+      the community.
+
+  - name: 🔒 Report a Security Vulnerability
+    url: https://github.com/nabhold/baobab-cp/security/advisories/new
+    about: >
+      Please report security vulnerabilities privately using GitHub Private
+      Vulnerability Reporting rather than opening a public issue.
+
+# ==============================================================================
+# End of File
+# ==============================================================================

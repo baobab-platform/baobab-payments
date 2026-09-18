@@ -1,0 +1,97 @@
+name: Epic
+description: Track a large body of work comprising multiple related issues.
+title: "[Epic]: "
+labels:
+  - epic
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Epic Overview
+
+        Use this template to define a large body of work that will be delivered through multiple related issues.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Provide a concise overview of the Epic.
+      placeholder: Describe the overall purpose of this Epic.
+    validations:
+      required: true
+
+  - type: textarea
+    id: business_value
+    attributes:
+      label: Business Value
+      description: Explain why this Epic is important to the project.
+    validations:
+      required: true
+
+  - type: textarea
+    id: objectives
+    attributes:
+      label: Objectives
+      description: List the key objectives this Epic aims to achieve.
+      placeholder: |
+        - Objective 1
+        - Objective 2
+        - Objective 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Describe what is included in this Epic.
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of Scope
+      description: Clearly state what is intentionally excluded.
+
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Deliverables
+      description: List the expected outputs.
+      placeholder: |
+        - Deliverable 1
+        - Deliverable 2
+        - Deliverable 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: child_issues
+    attributes:
+      label: Child Issues
+      description: Link all related issues once they have been created.
+      placeholder: |
+        - [ ] #123
+        - [ ] #124
+        - [ ] #125
+
+  - type: textarea
+    id: success_criteria
+    attributes:
+      label: Success Criteria
+      description: Define what must be true before this Epic can be considered complete.
+    validations:
+      required: true
+
+  - type: textarea
+    id: risks_dependencies
+    attributes:
+      label: Risks & Dependencies
+      description: Identify dependencies, assumptions, blockers, or risks.
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      description: Any supporting information for reviewers or contributors.

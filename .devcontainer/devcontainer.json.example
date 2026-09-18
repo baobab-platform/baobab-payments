@@ -1,0 +1,44 @@
+// Target path: <new-repo>/.devcontainer/devcontainer.json (drop the
+// .example suffix once every TODO below is resolved - see
+// TEMPLATE-USAGE.md step 3).
+//
+// Two patterns are in live use across the ecosystem; pick the one that
+// matches whether this engine needs local backing services (a database,
+// a queue, a cache) to actually run:
+//
+// PATTERN A - no local backing services (bare image), e.g. a pure
+// frontend or a service that only talks to already-deployed dependencies
+// during local development. See nabhold/baobab-trade or
+// nabhold/baobab-pulse's devcontainer.json for a live reference (both
+// still have a docker-compose.yml alongside for CI/manual use, but their
+// devcontainer.json does not wire to it - a contributor starts those
+// services with a separate `docker compose up` if they need them).
+//
+// PATTERN B - devcontainer runs AS one of docker-compose.yml's services,
+// so opening the repo in a devcontainer brings up its databases/queues
+// automatically. See nabhold/baobab-erp's devcontainer.json +
+// .devcontainer/docker-compose.yml for a live reference. Prefer this
+// pattern for a new engine that needs a database or message broker
+// locally - it gives a one-step "reopen in container" experience instead
+// of a second manual command every contributor has to remember.
+//
+// This file defaults to Pattern B; delete the dockerComposeFile/service
+// keys and add "image" directly (see Pattern A reference above) if this
+// engine genuinely needs no local backing services.
+{
+  "name": "<Engine Display Name>", // TODO
+  "dockerComposeFile": "../docker-compose.yml", // TODO: point at this repo's actual compose file location
+  "service": "<engine-service-name>", // TODO: must match a service name in that compose file
+  "workspaceFolder": "/workspaces/<engine-repo-name>", // TODO
+  "shutdownAction": "stopCompose",
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true,
+  "init": true,
+  "forwardPorts": [],
+  "postCreateCommand": "", // TODO: e.g. dependency install + a fast sanity check
+  "customizations": {
+    "vscode": {
+      "extensions": ["github.vscode-github-actions", "redhat.vscode-yaml"]
+    }
+  }
+}

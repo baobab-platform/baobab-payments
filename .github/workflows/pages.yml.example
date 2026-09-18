@@ -1,0 +1,79 @@
+# ==============================================================================
+# Nabhold Engine Template
+# Deploy Documentation (CONDITIONAL - only if this repo publishes docs via
+# the org's uv + Zensical toolchain)
+#
+# File: .github/workflows/pages.yml.example
+#
+# Per TEMPLATE-USAGE.md step 3: rename to pages.yml (dropping `.example`)
+# only if this engine is a uv-managed Python project with a "docs"
+# dependency group containing the `zensical` package and a native
+# zensical.toml. Zensical is the NABHOLD org default; a different
+# documentation toolchain needs its own reusable workflow in
+# nabhold/shared, not a modified copy of this one. Delete this file
+# instead if this engine doesn't fit that shape.
+# ==============================================================================
+
+name: Deploy Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "zensical.toml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/pages.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "zensical.toml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  resolve-python-version:
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.resolve.outputs.value }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # SHA is nabhold/shared's v1.2.0 tag (annotated - peeled commit, not
+      # the tag object's own SHA), verified via `git rev-list -n1
+      # v1.2.0^{}` against a live checkout on 2026-09-05.
+      - id: resolve
+        uses: nabhold/shared/.github/actions/derive-value-from-yaml@38defb11aacd95a6f68b7db8026fe336417a2af6 # v1.2.0
+        with:
+          # TODO: adjust manifest-path/query if this repo's version manifest
+          # differs (e.g. .python-version, or a different YAML shape).
+          manifest-path: config/versions.yaml
+          query: ".languages.python.version"
+
+  docs:
+    needs: resolve-python-version
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: nabhold/shared/.github/workflows/pages-zensical.yml@38defb11aacd95a6f68b7db8026fe336417a2af6 # v1.2.0
+    with:
+      python-version: ${{ needs.resolve-python-version.outputs.version }}
+      # TODO: uncomment and set if this repo's docs live in a subdirectory
+      # (working-directory) and/or zensical.toml customizes site_dir
+      # (site-dir must match it exactly - Zensical has no --site-dir CLI
+      # flag).
+      # working-directory: "docs"
+      # site-dir: "public"

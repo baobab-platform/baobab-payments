@@ -1,0 +1,172 @@
+name: Technical Task
+description: Create a technical implementation task that contributes to an Epic.
+title: "P?-S?-??: "
+labels:
+  - task
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Technical Task
+
+        Use this template for engineering and implementation work. Each Technical Task should contribute to a single Epic and represent one clearly defined unit of work.
+
+  - type: input
+    id: parent_epic
+    attributes:
+      label: Parent Epic
+      description: Enter the Epic issue number and title.
+      placeholder: "#001 - P3-S1: Foundation & Development Environment"
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Provide a concise summary of the task.
+      placeholder: Briefly describe the purpose of this task.
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: Background
+      description: Provide the architectural, business, or technical context for this task.
+      placeholder: Explain why this work is required.
+    validations:
+      required: true
+
+  - type: textarea
+    id: objectives
+    attributes:
+      label: Objectives
+      description: List the objectives that this task must achieve.
+      placeholder: |
+        - Objective 1
+        - Objective 2
+        - Objective 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Clearly define what is included and excluded.
+      value: |
+        ### In Scope
+
+        -
+
+        ### Out of Scope
+
+        -
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Define the conditions that must be met before the task is accepted.
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] Criterion 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation_checklist
+    attributes:
+      label: Implementation Checklist
+      description: Break the implementation into clear, actionable steps.
+      placeholder: |
+        ## Preparation
+
+        - [ ]
+
+        ## Implementation
+
+        - [ ]
+
+        ## Configuration
+
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: verification_checklist
+    attributes:
+      label: Verification Checklist
+      description: Describe how the completed work will be validated.
+      placeholder: |
+        ## Functional Verification
+
+        - [ ]
+
+        ## Quality Verification
+
+        - [ ]
+
+        ## Repository Verification
+
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List prerequisite issues and downstream work.
+      value: |
+        ### Depends On
+
+        -
+
+        ### Blocks
+
+        -
+
+  - type: checkboxes
+    id: definition_of_done
+    attributes:
+      label: Definition of Done Checklist
+      options:
+        - label: Code implemented
+        - label: Coding standards followed
+        - label: Tests passing
+        - label: Code reviewed
+        - label: Documentation updated
+        - label: CI pipeline passed
+        - label: Ready for merge
+
+  - type: textarea
+    id: definition_of_done
+    attributes:
+      label: Definition of Done
+      description: Define the conditions that must be met before this task can be marked as complete.
+      placeholder: |
+        - All implementation completed.
+        - All verification completed.
+        - Code reviewed and approved.
+        - Documentation updated.
+        - Ready for merge.
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Link to architecture documents, ADRs, specifications, standards, related issues, or external documentation.
+      placeholder: |
+        - Epic: #001
+        - ADR-0001
+        - Architecture Documentation
+        - Related Pull Request

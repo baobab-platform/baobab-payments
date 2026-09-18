@@ -1,0 +1,163 @@
+
+name: Feature Request
+description: Create a business feature that delivers value to users and contributes to an Epic.
+title: "[FEATURE]: "
+labels:
+  - feature
+
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        # Feature Request
+
+        A Feature represents a business capability delivered to users.
+
+        Features belong to an Epic and are implemented through one or more User Stories.
+
+  - type: input
+    id: epic_reference
+    attributes:
+      label: Epic Reference
+      description: Enter the Epic Issue Number.
+      placeholder: "#12"
+
+    validations:
+      required: true
+
+  - type: input
+    id: feature_name
+    attributes:
+      label: Feature Name
+      placeholder: Customer Registration
+
+    validations:
+      required: true
+
+  - type: textarea
+    id: business_problem
+    attributes:
+      label: Business Problem
+      description: Describe the business problem this feature solves.
+
+    validations:
+      required: true
+
+  - type: textarea
+    id: business_value
+    attributes:
+      label: Business Value
+      description: Explain the expected business value.
+
+    validations:
+      required: true
+
+  - type: textarea
+    id: feature_description
+    attributes:
+      label: Feature Description
+      description: Describe the functionality from a business perspective.
+
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+
+    validations:
+      required: true
+
+  - type: dropdown
+    id: business_domain
+    attributes:
+      label: Business Domain
+      options:
+        - Core Platform
+        - Identity & Access
+        - Tenant Management
+        - CMS
+        - Commerce
+        - Finance
+        - Analytics
+        - AI Platform
+        - Infrastructure
+        - Security
+        - Notifications
+        - Reporting
+
+    validations:
+      required: true
+
+  - type: dropdown
+    id: release
+    attributes:
+      label: Target Release
+      options:
+        - v0.1 Foundation
+        - v0.2 Identity
+        - v0.3 Multi-Tenancy
+        - v0.4 CMS
+        - v0.5 Commerce
+        - Future
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Define what must be true for the Feature to be considered complete.
+      placeholder: |
+        • Criterion 1
+        • Criterion 2
+        • Criterion 3
+
+    validations:
+      required: true
+
+  - type: textarea
+    id: user_stories
+    attributes:
+      label: Planned User Stories
+      description: List the expected User Stories for this Feature.
+      placeholder: |
+        • As a...
+        • As an...
+        • As a...
+
+  - type: checkboxes
+    id: quality_attributes
+    attributes:
+      label: Quality Attributes
+      options:
+        - label: Security
+        - label: Performance
+        - label: Scalability
+        - label: Accessibility
+        - label: Reliability
+        - label: Maintainability
+        - label: Multi-Tenant Support
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List related Features, Epics, ADRs or external dependencies.
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks
+      description: Describe known risks.
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      description: Any additional information or references.

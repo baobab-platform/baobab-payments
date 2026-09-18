@@ -1,0 +1,49 @@
+# ==============================================================================
+# Nabhold Engine Template
+# Security - Python (Bandit + pip-audit) (CONDITIONAL - only if this repo is
+# a uv-managed Python project)
+#
+# File: .github/workflows/security-python.yml.example
+#
+# Per TEMPLATE-USAGE.md step 3: rename to security-python.yml (dropping
+# `.example`) if this engine is Python. Requires a `bandit.yaml` at the repo
+# root and a `security` (or caller-named) uv dependency group containing
+# `bandit`/`pip-audit` - see nabhold/baobab-pulse for a working reference.
+# Delete this file instead if this engine is not Python.
+# ==============================================================================
+
+name: Security — Python (Bandit + pip-audit)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.py"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "bandit.yaml"
+  pull_request:
+    paths:
+      - "**/*.py"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "bandit.yaml"
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    permissions:
+      contents: read
+    # SHA is nabhold/shared's v1.2.0 tag (annotated - peeled commit, not the
+    # tag object's own SHA), verified via `git rev-list -n1 v1.2.0^{}`
+    # against a live checkout on 2026-09-05.
+    uses: nabhold/shared/.github/workflows/security-python.yml@38defb11aacd95a6f68b7db8026fe336417a2af6 # v1.2.0
+    with:
+      bandit-config-path: "bandit.yaml"
+      bandit-target: "src"
+      dependency-group: "security"

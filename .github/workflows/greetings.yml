@@ -1,0 +1,58 @@
+# ==============================================================================
+# Nabhold Engine Template
+# Greet First-Time Contributors
+#
+# File: .github/workflows/greetings.yml
+#
+# PURPOSE:
+#   Owns the trigger and the elevated issues/pull-requests permissions;
+#   delegates the greeting mechanism itself to nabhold/shared, per this org's
+#   "build common capabilities once, govern centrally" principle. A reusable
+#   workflow cannot declare its own repository-event trigger (only
+#   workflow_call), so this thin wrapper is the only place
+#   pull_request_target / issues live for this repo.
+#
+# WHY pull_request_target is safe here: this job never checks out the PR's
+# own code (no `actions/checkout` step in this file), so a malicious fork PR
+# has no code-execution surface despite the base-repo token permissions.
+#
+# TODO (per TEMPLATE-USAGE.md step 1): replace "<engine-repo-name>" in the
+# messages below with the real repo name once it's decided, and update the
+# Contributing-guide link if this engine's docs live somewhere other than
+# its own CONTRIBUTING.md.
+# ==============================================================================
+
+name: Greetings
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  contents: read
+
+jobs:
+  greeting:
+    permissions:
+      issues: write
+      pull-requests: write
+    # SHA is nabhold/shared's v1.2.0 tag (annotated tag - peeled commit, not
+    # the tag object's own SHA), verified via
+    # `git rev-list -n1 v1.2.0^{}` against a live checkout on 2026-09-05.
+    # Re-verify before relying on this pin if this template is more than a
+    # few weeks old.
+    uses: nabhold/shared/.github/workflows/greetings.yml@38defb11aacd95a6f68b7db8026fe336417a2af6 # v1.2.0
+    with:
+      issue-message: |
+        👋 Thanks for opening your first issue in **<engine-repo-name>**!
+
+        A maintainer will take a look shortly. In the meantime, if this is a bug
+        report, a repro (what you ran and the exact steps that failed) will help
+        us get to a fix faster.
+      pr-message: |
+        🎉 Thanks for your first pull request to **<engine-repo-name>**!
+
+        A maintainer will review it soon. See the
+        [Contributing guide](../CONTRIBUTING.md) for more.

@@ -1,0 +1,159 @@
+
+name: Documentation
+description: Create or update project documentation.
+title: "[DOCS]: "
+labels:
+  - documentation
+
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        # Documentation Request
+
+        Use this form to create, improve or maintain documentation across the Baobab platform.
+
+        Documentation is considered a first-class project deliverable.
+
+  - type: input
+    id: related_issue
+    attributes:
+      label: Related Issue
+      description: Link the related Epic, Feature, User Story, Technical Task or Bug.
+      placeholder: "#123"
+
+  - type: input
+    id: title
+    attributes:
+      label: Documentation Title
+      placeholder: Update Authentication API Guide
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Documentation Category
+      options:
+        - Architecture
+        - ADR
+        - API Documentation
+        - User Guide
+        - Developer Guide
+        - Installation Guide
+        - Deployment Guide
+        - Operations Guide
+        - Governance
+        - Database
+        - Security
+        - Release Notes
+        - Training Material
+        - README
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Intended Audience
+      options:
+        - Developers
+        - Architects
+        - DevOps Engineers
+        - QA Engineers
+        - Product Owners
+        - Business Users
+        - System Administrators
+        - End Users
+        - Trainers
+        - All Stakeholders
+    validations:
+      required: true
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: Describe why this documentation is needed.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Describe what should be included.
+      placeholder: |
+        • Topic 1
+        • Topic 2
+        • Topic 3
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: documentation_type
+    attributes:
+      label: Documentation Type
+      options:
+        - label: New Document
+        - label: Update Existing Document
+        - label: Correct Errors
+        - label: Improve Clarity
+        - label: Add Examples
+        - label: Add Diagrams
+        - label: Update Screenshots
+        - label: Update References
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Define the criteria for completion.
+      placeholder: |
+        • Documentation reviewed
+        • Examples verified
+        • Links validated
+        • Grammar checked
+        • Approved by reviewer
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: deliverables
+    attributes:
+      label: Expected Deliverables
+      options:
+        - label: Markdown Document
+        - label: Architecture Diagram
+        - label: Sequence Diagram
+        - label: API Examples
+        - label: Screenshots
+        - label: Code Samples
+        - label: Training Material
+        - label: Release Notes
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Include links to related Issues, ADRs, standards or external documentation.
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      description: Any additional context or supporting information.

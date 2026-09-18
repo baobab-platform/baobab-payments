@@ -1,0 +1,162 @@
+
+name: Spike / Research
+description: Investigate a technical, architectural, or business question before implementation.
+title: "[SPIKE]: "
+labels:
+  - spike
+
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        # Spike / Research
+
+        A Spike is a time-boxed investigation used to reduce uncertainty
+        before implementation.
+
+        A Spike should produce recommendations, not production code.
+
+  - type: input
+    id: related_issue
+    attributes:
+      label: Related Epic / Feature / User Story
+      description: Enter the related Issue Number if applicable.
+      placeholder: "#42"
+
+  - type: input
+    id: research_topic
+    attributes:
+      label: Research Topic
+      placeholder: Evaluate PostgreSQL outbox publishing strategies
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Research Category
+      options:
+        - Architecture
+        - Technology Evaluation
+        - Framework Evaluation
+        - Performance
+        - Security
+        - Infrastructure
+        - Database
+        - API Design
+        - AI / Machine Learning
+        - User Experience
+        - Compliance
+        - Proof of Concept
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: Background
+      description: Explain why this investigation is necessary.
+    validations:
+      required: true
+
+  - type: textarea
+    id: research_question
+    attributes:
+      label: Research Question(s)
+      description: What questions should this Spike answer?
+      placeholder: |
+        • Question 1
+        • Question 2
+        • Question 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: approach
+    attributes:
+      label: Investigation Approach
+      description: Describe how the investigation will be carried out.
+      placeholder: |
+        Literature review
+        Prototype
+        Benchmark
+        Vendor comparison
+        Documentation review
+        Community evaluation
+    validations:
+      required: true
+
+  - type: dropdown
+    id: effort
+    attributes:
+      label: Time Box
+      options:
+        - 2 Hours
+        - Half Day
+        - 1 Day
+        - 2 Days
+        - 3 Days
+        - 1 Week
+    validations:
+      required: true
+
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Expected Deliverables
+      description: What outputs are expected from this Spike?
+      placeholder: |
+        • Recommendation
+        • Prototype
+        • Benchmark Results
+        • ADR Draft
+        • Technical Report
+    validations:
+      required: true
+
+  - type: textarea
+    id: success_criteria
+    attributes:
+      label: Success Criteria
+      description: How will we know the Spike has achieved its objective?
+    validations:
+      required: true
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks and Assumptions
+      description: Record known risks, assumptions or limitations.
+
+  - type: checkboxes
+    id: outputs
+    attributes:
+      label: Expected Outputs
+      options:
+        - label: Architecture Decision Record (ADR)
+        - label: Proof of Concept
+        - label: Prototype
+        - label: Benchmark Report
+        - label: Technical Recommendation
+        - label: New Feature
+        - label: Technical Task(s)
+        - label: Documentation Update
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: List documentation, articles, standards, repositories or other sources.
+
+  - type: textarea
+    id: findings
+    attributes:
+      label: Findings and Recommendations
+      description: Complete this section when closing the Spike.
+      placeholder: |
+        Summary:
+
+        Recommendation:
+
+        Next Steps:

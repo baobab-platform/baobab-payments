@@ -1,0 +1,45 @@
+# ==============================================================================
+# Nabhold Engine Template
+# Release (CONDITIONAL - only if this engine's releases are notes-only)
+#
+# File: .github/workflows/release.yml.example
+#
+# Per TEMPLATE-USAGE.md step 3: rename to release.yml (dropping `.example`)
+# only if this engine's release process is notes-only from a
+# CHANGELOG.md - NOT a fit for a repository whose release is inseparable
+# from a bespoke artifact pipeline (container build/sign/attest, package
+# publish, etc; see nabhold/baobab-dev's own publish.yml for that shape
+# instead). Write a repo-specific workflow for that case rather than
+# adopting this one.
+#
+# Assumes a "Keep a Changelog"-style CHANGELOG.md at the repo root with
+# version headings shaped "# [<version>]" or "## [<version>]".
+# ==============================================================================
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+      - "v*.*.*-*"
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    # SHA is nabhold/shared's v1.2.0 tag (annotated - peeled commit, not the
+    # tag object's own SHA), verified via `git rev-list -n1 v1.2.0^{}`
+    # against a live checkout on 2026-09-05.
+    uses: nabhold/shared/.github/workflows/release.yml@38defb11aacd95a6f68b7db8026fe336417a2af6 # v1.2.0
+    with:
+      changelog-path: "CHANGELOG.md"
+      # TODO: set to true only once this repo actually publishes something
+      # (a package, a container image, a doc site with a version-pinned
+      # URL) that belongs in the release notes as a download/reference -
+      # leave unset (no files) for a repo whose release is notes-only.
+      # files: |
+      #   dist/*.whl
