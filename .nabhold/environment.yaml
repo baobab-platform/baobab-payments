@@ -1,0 +1,26 @@
+schema:
+  name: "nabhold-development-environment-contract"
+  version: "1.0"
+application:
+  name: "baobab-payments"
+  version: "0.1.0"
+environment:
+  provider: "baobab-dev"
+  profile: "full"
+  minimum_version: "1.4.1"
+  contract_minimum_version: "1.0"
+compatibility_policy:
+  strict_runtime_versions: true
+  allow_newer_patch_versions: true
+  allow_newer_minor_versions: false
+  allow_older_versions: false
+validation:
+  required_capabilities:
+    - "database.postgresql"
+    - "development.docker"
+    - "development.github_cli"
+notes:
+  - "Headless HyperSwitch engine. baobab-dev has no dedicated Rust profile yet, so Rust is layered via the ghcr.io/devcontainers/features/rust:1 devcontainer Feature on top of the `full` profile image, the same pattern baobab-cp already established for Go — see that repo's own environment.yaml note. Do not list a Rust capability under required_capabilities: it is not something baobab-dev's own contract declares, only something this repo's devcontainer.json layers on top of it."
+  - "Redis is a local backing service declared in docker-compose.yml, not a baobab-dev capability — HyperSwitch needs it for locking/idempotency alongside Postgres."
+  - "Codespaces/Dev Containers run as one of docker-compose.yml's services (workspace), with local Postgres and Redis backing services brought up automatically alongside it."
+  - "This repo is still scaffolded (no HyperSwitch integration code yet) — postCreateCommand intentionally runs only baobab-verify --contract. Add the real dependency-install/bootstrap step here once a Cargo.toml exists."
