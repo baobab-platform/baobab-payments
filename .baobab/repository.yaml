@@ -1,0 +1,11 @@
+schema_version: 1
+repository:
+  lifecycle: experimental
+capabilities:
+  - engine
+environment:
+  baobab_dev:
+    required: true
+    profile: full
+artifacts:
+  container: false
