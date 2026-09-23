@@ -31,10 +31,10 @@ jobs:
   release:
     permissions:
       contents: write
-    # SHA is nabhold/shared's v1.2.0 tag (annotated - peeled commit, not the
+    # SHA is baobab-platform/shared's v1.2.0 tag (annotated - peeled commit, not the
     # tag object's own SHA), verified via `git rev-list -n1 v1.2.0^{}`
     # against a live checkout on 2026-09-05.
-    uses: nabhold/shared/.github/workflows/release.yml@38defb11aacd95a6f68b7db8026fe336417a2af6 # v1.2.0
+    uses: baobab-platform/shared/.github/workflows/release.yml@38defb11aacd95a6f68b7db8026fe336417a2af6 # v1.2.0
     with:
       changelog-path: "CHANGELOG.md"
       # TODO: set to true only once this repo actually publishes something
