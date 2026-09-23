@@ -51,7 +51,7 @@ one yet.
 ## Local development
 
 This repository uses the shared `baobab-dev` devcontainer image. See
-`.nabhold/environment.yaml` for the declared profile and required
+`.baobab/environment.yaml` for the declared profile and required
 capabilities, and `.devcontainer/devcontainer.json` for the pinned image tag.
 
 (Both of those are still `.example` files until this repo's language stack
