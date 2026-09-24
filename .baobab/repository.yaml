@@ -9,3 +9,5 @@ environment:
     profile: full
 artifacts:
   container: false
+security:
+  sast_provider: fallback
