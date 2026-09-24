@@ -11,18 +11,14 @@ on:
 permissions:
   contents: read
   packages: read
+  actions: read
+  security-events: write
 
 jobs:
   foundation:
-    # SHA is nabhold/shared's main HEAD as of 2026-09-18 (includes the
-    # 2026-09-16 GHCR image-resolution check, which needs the packages:
-    # read permission granted above). Re-verify this pin is still current
-    # before relying on it if this file is more than a few weeks old.
-    uses: nabhold/shared/.github/workflows/foundation-repository-gates.yml@317538bfa9cac7d0117420c12984d80d89d9f5ea
+    uses: baobab-platform/shared/.github/workflows/foundation-repository-gates.yml@468f0e6a8e8e4aac5ec37e87264a073752320530
     with:
-      # No Dockerfile yet — this engine has no application code (no
-      # Cargo.toml) and doesn't build a container image. Set this back to
-      # "Dockerfile" (the reusable workflow's default) once one exists.
-      dockerfile: ""
-      build_context: "."
+      foundation_ref: "468f0e6a8e8e4aac5ec37e87264a073752320530"
       dependency_review_enabled: false
+      advanced_security_enabled: false
+      legacy_metadata_enabled: false

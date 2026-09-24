@@ -22,15 +22,15 @@ to run. Nothing below this point requires application code to exist yet.
 
 - [ ] Edit `README.md`: real repo name, real ADR number, real Role/Ownership/
       Contract-dependencies content. File the ADR in
-      `nabhold/shared/docs/adr/` first if it doesn't exist yet (check
-      `docs/adr/` there for the next free number — `nabhold/shared`'s own
+      `baobab-platform/shared/docs/adr/` first if it doesn't exist yet (check
+      `docs/adr/` there for the next free number — `baobab-platform/shared`'s own
       reorg plan expected ADR-0002 for one purpose but a different ADR
       already claimed that number in practice, so don't assume a number
       from an older doc is still free).
 - [ ] Edit `.github/CODEOWNERS`: this template ships it already pointed at
       the real, verified-live org convention
       (`@nabhold/platform-engineering` / `@nabhold/security` — confirmed
-      against `nabhold/shared`, `nabhold/baobab-dev`, and
+      against `baobab-platform/shared`, `nabhold/baobab-dev`, and
       `nabhold/baobab-cp`'s actual CODEOWNERS files on 2026-09-03, not the
       unadopted `@nabhold/<repo>-maintainers` proposal some older project
       docs describe). Re-check it still matches a live repo's CODEOWNERS
@@ -43,7 +43,7 @@ to run. Nothing below this point requires application code to exist yet.
       `dependabot.yml`'s `timezone`/`target-branch` if this repo's team or
       default branch differs from the org default already filled in.
 - [ ] Apply branch protection / a repository ruleset on `main`. Minimum
-      shape, per `nabhold/shared/docs/governance/foundation-4-branch-protection.md`:
+      shape, per `baobab-platform/shared/docs/governance/foundation-4-branch-protection.md`:
       require a pull request before merging; require at least one approval
       and a CODEOWNER review; dismiss stale approvals on new commits;
       require conversation resolution; require branches up to date before
@@ -63,25 +63,25 @@ requirement to do the rest immediately.
 
 - [ ] Decide this engine's language stack and which `baobab-dev` profile
       fits it (`full`, `frontend`, `frontend-e2e`, or `infra` — see
-      `nabhold/shared`'s `contracts/development-environment/schema.yaml` for
+      `baobab-platform/shared`'s `contracts/development-environment/schema.yaml` for
       what each profile actually includes; pick the narrowest one that
       covers this repo's real needs, not `full` by default).
-- [ ] Copy `.nabhold/environment.yaml.example` to `.nabhold/environment.yaml`
+- [ ] Copy `.baobab/environment.yaml.example` to `.baobab/environment.yaml`
       and fill in every placeholder. Confirm the current `baobab-dev`
       release tag (check its `CHANGELOG.md` / GHCR package page — don't
       assume any version number written elsewhere is still current) and use
       the same version in both `minimum_version` here and the image tag in
       `.devcontainer/devcontainer.json`.
 - [ ] Fill in `.devcontainer/devcontainer.json`'s placeholders the same way,
-      then delete `.nabhold/environment.yaml.example` and
+      then delete `.baobab/environment.yaml.example` and
       `.devcontainer/devcontainer.json`'s inline TODO comments.
 - [ ] Rename `.github/workflows/foundation.yml.example` to
       `.github/workflows/foundation.yml` (drop the `.example` suffix — do
       not create a second, differently-named file). Confirm the pinned
-      commit SHA it calls (`nabhold/shared/.github/workflows/
+      commit SHA it calls (`baobab-platform/shared/.github/workflows/
       foundation-repository-gates.yml@<sha>`) is still current — diff it
       against that file's current `main` before relying on an old pin, and
-      check whether a new `nabhold/shared` tag now covers it (as of
+      check whether a new `baobab-platform/shared` tag now covers it (as of
       2026-09-03 it didn't yet — main-only).
 - [ ] Set `dockerfile: ""` in that workflow's `with:` block if this engine
       doesn't build a container image yet (the reusable workflow's default
