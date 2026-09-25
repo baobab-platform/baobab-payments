@@ -2,7 +2,7 @@
 # baobab-payments: the Baobab Payment API (ADR-PAY-0001) with the sandbox provider.
 # Base images are pinned by tag and digest; never latest.
 
-FROM rust:1.94-trixie@sha256:652612f07bfbbdfa3af34761c1e435094c00dde4a98036132fca28c7bb2b165c AS build
+FROM rust:1.98-trixie@sha256:a8a5f0a1e5fe7dfe1d352591e4a1c7dd2c08fd70475cae872cf3458ba0df0546 AS build
 WORKDIR /src
 # Dependencies first, so source changes reuse the cached dependency layer.
 COPY Cargo.toml Cargo.lock ./
