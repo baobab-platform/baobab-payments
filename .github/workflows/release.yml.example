@@ -8,7 +8,7 @@
 # only if this engine's release process is notes-only from a
 # CHANGELOG.md - NOT a fit for a repository whose release is inseparable
 # from a bespoke artifact pipeline (container build/sign/attest, package
-# publish, etc; see nabhold/baobab-dev's own publish.yml for that shape
+# publish, etc; see baobab-platform/baobab-dev's own publish.yml for that shape
 # instead). Write a repo-specific workflow for that case rather than
 # adopting this one.
 #

@@ -1,22 +1,9 @@
-<!-- Target path: nabhold/engine-template/contracts/README.md (becomes <new-repo>/contracts/README.md in any repo created from this template). -->
-
 # Contracts
 
-This directory is a placeholder for how this engine consumes or publishes
-`baobab-platform/shared` contracts (event/AsyncAPI schemas, API contracts, the
-Development Environment Contract this repo already declares under
-`.baobab/`) — not a contract definition of its own. Canonical contract
-schemas live in `baobab-platform/shared`, pinned by tag (e.g. `baobab-platform/shared@v1`),
-not copied or forked into this repo.
+This engine defines no canonical schema of its own. The canonical contracts live in [`baobab-platform/shared`](https://github.com/baobab-platform/shared) and are pinned by commit.
 
-Fill this in once this engine actually consumes or publishes a contract:
+| Shared contract | Role here |
+|---|---|
+| `contracts/payments/v1` | **Producer**: the Baobab Payment API (payment intents, payments, refunds) and `payment.*` events. Sandbox results are always marked `simulated`. |
 
-- Which `baobab-platform/shared` contract(s), at which pinned version.
-- Whether this engine is a producer, a consumer, or both, for each.
-- Where in this repo's own code that contract is enforced (generated types,
-  schema validation, etc.).
-
-Delete this file (or leave it empty with a one-line "none yet") if this
-engine genuinely doesn't touch any shared contract beyond the Development
-Environment Contract — don't leave placeholder content that looks real but
-isn't.
+Where each contract is enforced in code is documented with the runtime.
