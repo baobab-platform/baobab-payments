@@ -2,12 +2,13 @@
 
 **Status:** Accepted
 **Decision Type:** Architecture / Platform Engine
-**Repository:** `nabhold/baobab-payments`
+**Repository:** `baobab-platform/baobab-payments`
 **Scope:** Baobab Platform
 **Engine:** HyperSwitch
 **Owners:** Nabhold / Baobab Platform Architecture
 **Supersedes:** None
-**Related:** Baobab Control Plane, Trade, ERP, IAM, Subscriptions, Shared Contracts, Infrastructure
+**Related:** Baobab Control Plane, Trade, ERP, IAM, Subscriptions (ADR-SUB-0001), Shared Contracts (ADR-SHARED-011), Infrastructure
+**Refreshed:** 2026-09-25: repository namespace (`baobab-platform`), upstream runtime verification (§15.1), and the Baobab façade and sandbox boundary (§15.2)
 
 ---
 
@@ -61,7 +62,7 @@ HyperSwitch is therefore suitable as the foundational implementation of a dedica
 Baobab SHALL adopt **HyperSwitch as the foundational headless payment orchestration engine** implemented and operated through:
 
 ```text
-nabhold/baobab-payments
+baobab-platform/baobab-payments
 ```
 
 The repository SHALL expose HyperSwitch capabilities through Baobab-defined contracts rather than allowing consuming applications to depend directly upon HyperSwitch implementation details.
@@ -533,6 +534,52 @@ The current upstream Compose configuration likewise provides PostgreSQL, Redis, 
 
 Baobab SHALL initially preserve those native runtime responsibilities.
 
+### 15.1 Runtime verification (refreshed 2026-09-25)
+
+The upstream runtime has changed since this ADR was accepted:
+
+- **Superposition is mandatory.** From HyperSwitch **v1.124.0**, Superposition, Juspay's configuration service, is a required dependency: "Deployments must have an active Superposition service it can connect to before upgrading to v1.124.0". The upstream Compose file runs `ghcr.io/juspay/superposition-demo:0.113.0` for it.
+- **Required runtime components** for a current HyperSwitch deployment:
+  - PostgreSQL;
+  - Redis (`redis:7` upstream; standalone or cluster);
+  - Superposition;
+  - the Router;
+  - the Scheduler Producer and Consumer;
+  - the Drainer.
+- **Optional components:**
+  - ClickHouse and Kafka (analytics and event streaming);
+  - the Locker (card vaulting, governed by PAY-0012).
+- **Latest release observed:** `v1.126.0` (August 2026). v1.125.0, v1.124.0 and v1.123.x precede it.
+- **PostgreSQL version:** upstream Compose runs `postgres:latest`, which states no supported major version. Baobab SHALL NOT pin `latest` for any HyperSwitch component, and SHALL NOT assume the devcontainer's `postgres:16` image proves production support. The HyperSwitch integration gate SHALL pin an exact HyperSwitch release plus PostgreSQL, Redis and Superposition versions verified against it.
+
+### 15.2 The Baobab payment façade
+
+HyperSwitch is reached only through the Baobab-owned façade in this repository, written in Rust, the repository's declared runtime:
+
+```text
+Consuming engine ──► Baobab Payment API (contracts/payments/v1)
+                            │
+                     PaymentProvider port
+                   ┌────────┴─────────┐
+                   ▼                  ▼
+            SandboxProvider     HyperSwitch adapter
+          (NON-PRODUCTION ONLY)  (NOT YET IMPLEMENTED)
+```
+
+The façade:
+
+- owns Baobab idempotency, correlation and context validation;
+- persists Baobab payment records in its own PostgreSQL database (PostgreSQL 17, the Baobab service standard), separate from HyperSwitch's schema.
+
+The **SandboxProvider** simulates processor outcomes for integration testing only:
+
+- it runs only with explicit non-production configuration (`PAYMENT_PROVIDER=sandbox` in a non-production environment);
+- the service refuses to start with it in production;
+- every record and event it produces is marked `simulated`;
+- nothing it produces is ever a real-world settlement.
+
+The **HyperSwitch adapter** is NOT YET IMPLEMENTED. No component may be labelled as a HyperSwitch integration until it calls HyperSwitch.
+
 ---
 
 # 16. Database Isolation
@@ -773,7 +820,7 @@ Rejected because commerce and other engines also require payment execution.
 Baobab SHALL establish:
 
 ```text
-nabhold/baobab-payments
+baobab-platform/baobab-payments
 ```
 
 as an independently deployable **Headless Payment Orchestration Engine**, with HyperSwitch serving as its foundational implementation.

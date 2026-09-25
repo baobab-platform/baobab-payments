@@ -1,8 +1,7 @@
-<!-- Target path: nabhold/engine-template/CONTRIBUTING.md (becomes <new-repo>/CONTRIBUTING.md in any repo created from this template). -->
 
 # Contributing
 
-This repository follows the `nabhold` org's standard workflow:
+This repository follows the `baobab-platform` org's standard workflow:
 
 - All changes land through a pull request against `main` — no direct pushes.
 - At least one CODEOWNERS-required review is mandatory (see
