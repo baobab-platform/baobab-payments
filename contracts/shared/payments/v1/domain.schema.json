@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.baobab-platform.com/payments/v1/domain.schema.json",
+  "title": "Baobab Payment Domain Definitions (ADR-PAY-0001, ADR-SHARED-011)",
+  "description": "Identifiers and vocabularies of the Baobab Payment API. HyperSwitch objects are an implementation detail behind these; a Baobab payment is not a HyperSwitch payment.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {},
+  "$defs": {
+    "paymentIntentId": {
+      "type": "string",
+      "pattern": "^payint_[a-z0-9]+$",
+      "minLength": 8,
+      "maxLength": 63
+    },
+    "paymentId": {
+      "type": "string",
+      "pattern": "^pay_[a-z0-9]+$",
+      "minLength": 5,
+      "maxLength": 63
+    },
+    "refundId": {
+      "type": "string",
+      "pattern": "^refund_[a-z0-9]+$",
+      "minLength": 8,
+      "maxLength": 63
+    },
+    "currencyCode": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "ISO 4217."
+    },
+    "paymentIntentStatus": {
+      "type": "string",
+      "enum": [
+        "REQUIRES_PAYMENT_METHOD",
+        "REQUIRES_CAPTURE",
+        "SUCCEEDED",
+        "CANCELLED",
+        "FAILED"
+      ]
+    },
+    "paymentStatus": {
+      "type": "string",
+      "enum": [
+        "AUTHORIZED",
+        "CAPTURED",
+        "FAILED",
+        "CANCELLED",
+        "PARTIALLY_REFUNDED",
+        "REFUNDED"
+      ]
+    },
+    "refundStatus": {
+      "type": "string",
+      "enum": [
+        "SUCCEEDED",
+        "FAILED"
+      ]
+    },
+    "captureMethod": {
+      "type": "string",
+      "enum": [
+        "AUTOMATIC",
+        "MANUAL"
+      ]
+    },
+    "paymentProviderKind": {
+      "type": "string",
+      "enum": [
+        "SANDBOX",
+        "HYPERSWITCH"
+      ],
+      "description": "SANDBOX: non-production simulation (ADR-PAY-0001 section 15.2); always simulated. HYPERSWITCH: the real adapter (not yet implemented)."
+    },
+    "sourceEngine": {
+      "$ref": "../../capability/v1/domain.schema.json#/$defs/engineKey",
+      "description": "The engine that owns the obligation, e.g. baobab-subscriptions, baobab-trade."
+    }
+  }
+}

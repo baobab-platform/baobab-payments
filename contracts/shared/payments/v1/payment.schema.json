@@ -1,0 +1,396 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.baobab-platform.com/payments/v1/payment.schema.json",
+  "title": "Baobab Payment API Resources (ADR-PAY-0001)",
+  "description": "Definition library for the Baobab Payment API served by baobab-payments.\nValidate resources against fragment URIs (e.g. #/$defs/PaymentIntent).\n\nCallers are workloads (e.g. baobab-subscriptions) carrying Control Plane-resolved context; every money-moving request takes an Idempotency-Key and a retry never duplicates an intent, payment or refund. No card or credential data ever crosses this contract: payment methods are opaque references. Every SANDBOX result is marked simulated.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {},
+  "$defs": {
+    "Money": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "currency",
+        "amount_minor"
+      ],
+      "properties": {
+        "currency": {
+          "$ref": "domain.schema.json#/$defs/currencyCode"
+        },
+        "amount_minor": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Amount in the currency's minor unit."
+        }
+      }
+    },
+    "PaymentContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "legal_entity_id",
+        "currency",
+        "source_engine",
+        "source_reference",
+        "correlation_id"
+      ],
+      "description": "Where and for whom money moves. Supplied by a workload acting on Control Plane-resolved context; the payment engine never decides tenant, legal entity or market.",
+      "properties": {
+        "tenant_id": {
+          "$ref": "../../control-plane/v1/domain.schema.json#/$defs/tenantId"
+        },
+        "legal_entity_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "minLength": 2,
+          "maxLength": 63,
+          "description": "The legal entity on whose behalf money moves. Asserted by the calling engine from Control Plane context, never by a browser."
+        },
+        "market_id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "platform_account_id": {
+          "$ref": "../../organisation/v1/domain.schema.json#/$defs/platformAccountId"
+        },
+        "currency": {
+          "$ref": "domain.schema.json#/$defs/currencyCode"
+        },
+        "source_engine": {
+          "$ref": "domain.schema.json#/$defs/sourceEngine"
+        },
+        "source_reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "description": "The source engine's own reference, e.g. a billing_subscription_id or order id."
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "ProviderResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "simulated"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "domain.schema.json#/$defs/paymentProviderKind"
+        },
+        "simulated": {
+          "type": "boolean",
+          "description": "True for every SANDBOX result: no money moved and nothing settled."
+        },
+        "provider_reference": {
+          "type": "string",
+          "maxLength": 255,
+          "description": "Opaque provider-side reference. Never card or credential data."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "SANDBOX"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "simulated": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "HYPERSWITCH"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "simulated": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "CreatePaymentIntentRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "context",
+        "amount",
+        "capture_method"
+      ],
+      "properties": {
+        "context": {
+          "$ref": "#/$defs/PaymentContext"
+        },
+        "amount": {
+          "$ref": "#/$defs/Money"
+        },
+        "capture_method": {
+          "$ref": "domain.schema.json#/$defs/captureMethod"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500
+        }
+      },
+      "description": "The amount's currency must equal context.currency (enforced by baobab-payments; JSON Schema cannot compare the two)."
+    },
+    "PaymentIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "payment_intent_id",
+        "context",
+        "amount",
+        "capture_method",
+        "status",
+        "provider",
+        "version",
+        "created_at",
+        "updated_at"
+      ],
+      "properties": {
+        "payment_intent_id": {
+          "$ref": "domain.schema.json#/$defs/paymentIntentId"
+        },
+        "context": {
+          "$ref": "#/$defs/PaymentContext"
+        },
+        "amount": {
+          "$ref": "#/$defs/Money"
+        },
+        "capture_method": {
+          "$ref": "domain.schema.json#/$defs/captureMethod"
+        },
+        "status": {
+          "$ref": "domain.schema.json#/$defs/paymentIntentStatus"
+        },
+        "payment_id": {
+          "$ref": "domain.schema.json#/$defs/paymentId"
+        },
+        "provider": {
+          "$ref": "#/$defs/ProviderResult"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "ConfirmPaymentIntentRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "payment_method_reference"
+      ],
+      "properties": {
+        "tenant_id": {
+          "$ref": "../../control-plane/v1/domain.schema.json#/$defs/tenantId"
+        },
+        "payment_method_reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "description": "An opaque, already-tokenised payment method reference. Never a card number or credential."
+        }
+      }
+    },
+    "Payment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "payment_id",
+        "payment_intent_id",
+        "tenant_id",
+        "legal_entity_id",
+        "amount",
+        "captured_amount_minor",
+        "refunded_amount_minor",
+        "status",
+        "provider",
+        "created_at",
+        "updated_at"
+      ],
+      "properties": {
+        "payment_id": {
+          "$ref": "domain.schema.json#/$defs/paymentId"
+        },
+        "payment_intent_id": {
+          "$ref": "domain.schema.json#/$defs/paymentIntentId"
+        },
+        "tenant_id": {
+          "$ref": "../../control-plane/v1/domain.schema.json#/$defs/tenantId"
+        },
+        "legal_entity_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "minLength": 2,
+          "maxLength": 63,
+          "description": "The legal entity on whose behalf money moves. Asserted by the calling engine from Control Plane context, never by a browser."
+        },
+        "amount": {
+          "$ref": "#/$defs/Money"
+        },
+        "captured_amount_minor": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "refunded_amount_minor": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "status": {
+          "$ref": "domain.schema.json#/$defs/paymentStatus"
+        },
+        "failure_code": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "provider": {
+          "$ref": "#/$defs/ProviderResult"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "CapturePaymentRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id"
+      ],
+      "properties": {
+        "tenant_id": {
+          "$ref": "../../control-plane/v1/domain.schema.json#/$defs/tenantId"
+        },
+        "amount_minor": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Defaults to the full authorised amount."
+        }
+      }
+    },
+    "CancelPaymentRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "reason"
+      ],
+      "properties": {
+        "tenant_id": {
+          "$ref": "../../control-plane/v1/domain.schema.json#/$defs/tenantId"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      }
+    },
+    "CreateRefundRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "amount_minor",
+        "reason"
+      ],
+      "properties": {
+        "tenant_id": {
+          "$ref": "../../control-plane/v1/domain.schema.json#/$defs/tenantId"
+        },
+        "amount_minor": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      }
+    },
+    "Refund": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "refund_id",
+        "payment_id",
+        "tenant_id",
+        "amount",
+        "status",
+        "reason",
+        "provider",
+        "created_at"
+      ],
+      "properties": {
+        "refund_id": {
+          "$ref": "domain.schema.json#/$defs/refundId"
+        },
+        "payment_id": {
+          "$ref": "domain.schema.json#/$defs/paymentId"
+        },
+        "tenant_id": {
+          "$ref": "../../control-plane/v1/domain.schema.json#/$defs/tenantId"
+        },
+        "amount": {
+          "$ref": "#/$defs/Money"
+        },
+        "status": {
+          "$ref": "domain.schema.json#/$defs/refundStatus"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "provider": {
+          "$ref": "#/$defs/ProviderResult"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+# The baobab-platform/shared contracts this engine is built against. The files
+# under contracts/shared are byte-for-byte copies of this commit, embedded at
+# build time; tests/pinned_contracts.rs fails on any drift (CI checks Shared out
+# at this commit).
+schema: baobab-contract-consumer-lock
+version: "1.0"
+source:
+  repository: baobab-platform/shared
+  commit: f20069d40361db34ea196218e6b28567e8dea11b
+contracts:
+  - contracts/capability/v1/domain.schema.json
+  - contracts/control-plane/v1/domain.schema.json
+  - contracts/errors/v1/problem-details.schema.json
+  - contracts/events/v1/envelope.schema.json
+  - contracts/organisation/v1/domain.schema.json
+  - contracts/payments/v1/capabilities.json
+  - contracts/payments/v1/domain.schema.json
+  - contracts/payments/v1/events.schema.json
+  - contracts/payments/v1/payment.schema.json
+policy:
+  updates: explicit_pull_request
+  compatibility: validate_before_merge
