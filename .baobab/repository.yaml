@@ -3,11 +3,15 @@ repository:
   lifecycle: experimental
 capabilities:
   - engine
+  - rust
+  - container
 environment:
   baobab_dev:
     required: true
     profile: full
+package_managers:
+  rust: cargo
 artifacts:
-  container: false
+  container: true
 security:
   sast_provider: fallback

@@ -1,0 +1,337 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.baobab-platform.com/payments/v1/events.schema.json",
+  "title": "Baobab Payment Event Payloads (ADR-PAY-0001)",
+  "description": "Payloads of the payment events baobab-payments publishes inside the canonical envelope (tenant scope). Emitted only for state that actually occurred. Every payload carries simulated, so a sandbox outcome is always distinguishable from real settlement. HyperSwitch payloads are never canonical.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {},
+  "$defs": {
+    "PaymentCreated": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "A payment intent was created.",
+      "required": [
+        "payment_intent_id",
+        "tenant_id",
+        "legal_entity_id",
+        "source_engine",
+        "source_reference",
+        "amount",
+        "simulated",
+        "occurred_at"
+      ],
+      "properties": {
+        "payment_intent_id": {
+          "$ref": "domain.schema.json#/$defs/paymentIntentId"
+        },
+        "tenant_id": {
+          "$ref": "../../control-plane/v1/domain.schema.json#/$defs/tenantId"
+        },
+        "legal_entity_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "minLength": 2,
+          "maxLength": 63,
+          "description": "The legal entity on whose behalf money moves. Asserted by the calling engine from Control Plane context, never by a browser."
+        },
+        "source_engine": {
+          "$ref": "domain.schema.json#/$defs/sourceEngine"
+        },
+        "source_reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "amount": {
+          "$ref": "payment.schema.json#/$defs/Money"
+        },
+        "simulated": {
+          "type": "boolean",
+          "description": "True when a sandbox produced this outcome: it is not real-world settlement."
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "PaymentAuthorized": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Funds were authorised for a payment.",
+      "required": [
+        "payment_intent_id",
+        "tenant_id",
+        "legal_entity_id",
+        "source_engine",
+        "source_reference",
+        "amount",
+        "simulated",
+        "occurred_at",
+        "payment_id"
+      ],
+      "properties": {
+        "payment_intent_id": {
+          "$ref": "domain.schema.json#/$defs/paymentIntentId"
+        },
+        "tenant_id": {
+          "$ref": "../../control-plane/v1/domain.schema.json#/$defs/tenantId"
+        },
+        "legal_entity_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "minLength": 2,
+          "maxLength": 63,
+          "description": "The legal entity on whose behalf money moves. Asserted by the calling engine from Control Plane context, never by a browser."
+        },
+        "source_engine": {
+          "$ref": "domain.schema.json#/$defs/sourceEngine"
+        },
+        "source_reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "amount": {
+          "$ref": "payment.schema.json#/$defs/Money"
+        },
+        "simulated": {
+          "type": "boolean",
+          "description": "True when a sandbox produced this outcome: it is not real-world settlement."
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "payment_id": {
+          "$ref": "domain.schema.json#/$defs/paymentId"
+        }
+      }
+    },
+    "PaymentCaptured": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "An authorised payment was captured.",
+      "required": [
+        "payment_intent_id",
+        "tenant_id",
+        "legal_entity_id",
+        "source_engine",
+        "source_reference",
+        "amount",
+        "simulated",
+        "occurred_at",
+        "payment_id",
+        "captured_amount_minor"
+      ],
+      "properties": {
+        "payment_intent_id": {
+          "$ref": "domain.schema.json#/$defs/paymentIntentId"
+        },
+        "tenant_id": {
+          "$ref": "../../control-plane/v1/domain.schema.json#/$defs/tenantId"
+        },
+        "legal_entity_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "minLength": 2,
+          "maxLength": 63,
+          "description": "The legal entity on whose behalf money moves. Asserted by the calling engine from Control Plane context, never by a browser."
+        },
+        "source_engine": {
+          "$ref": "domain.schema.json#/$defs/sourceEngine"
+        },
+        "source_reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "amount": {
+          "$ref": "payment.schema.json#/$defs/Money"
+        },
+        "simulated": {
+          "type": "boolean",
+          "description": "True when a sandbox produced this outcome: it is not real-world settlement."
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "payment_id": {
+          "$ref": "domain.schema.json#/$defs/paymentId"
+        },
+        "captured_amount_minor": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "PaymentFailed": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "A payment attempt failed.",
+      "required": [
+        "payment_intent_id",
+        "tenant_id",
+        "legal_entity_id",
+        "source_engine",
+        "source_reference",
+        "amount",
+        "simulated",
+        "occurred_at",
+        "failure_code"
+      ],
+      "properties": {
+        "payment_intent_id": {
+          "$ref": "domain.schema.json#/$defs/paymentIntentId"
+        },
+        "tenant_id": {
+          "$ref": "../../control-plane/v1/domain.schema.json#/$defs/tenantId"
+        },
+        "legal_entity_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "minLength": 2,
+          "maxLength": 63,
+          "description": "The legal entity on whose behalf money moves. Asserted by the calling engine from Control Plane context, never by a browser."
+        },
+        "source_engine": {
+          "$ref": "domain.schema.json#/$defs/sourceEngine"
+        },
+        "source_reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "amount": {
+          "$ref": "payment.schema.json#/$defs/Money"
+        },
+        "simulated": {
+          "type": "boolean",
+          "description": "True when a sandbox produced this outcome: it is not real-world settlement."
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "failure_code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      }
+    },
+    "PaymentCancelled": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "A payment intent or authorisation was cancelled.",
+      "required": [
+        "payment_intent_id",
+        "tenant_id",
+        "legal_entity_id",
+        "source_engine",
+        "source_reference",
+        "amount",
+        "simulated",
+        "occurred_at"
+      ],
+      "properties": {
+        "payment_intent_id": {
+          "$ref": "domain.schema.json#/$defs/paymentIntentId"
+        },
+        "tenant_id": {
+          "$ref": "../../control-plane/v1/domain.schema.json#/$defs/tenantId"
+        },
+        "legal_entity_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "minLength": 2,
+          "maxLength": 63,
+          "description": "The legal entity on whose behalf money moves. Asserted by the calling engine from Control Plane context, never by a browser."
+        },
+        "source_engine": {
+          "$ref": "domain.schema.json#/$defs/sourceEngine"
+        },
+        "source_reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "amount": {
+          "$ref": "payment.schema.json#/$defs/Money"
+        },
+        "simulated": {
+          "type": "boolean",
+          "description": "True when a sandbox produced this outcome: it is not real-world settlement."
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "PaymentRefunded": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "A captured payment was (partially) refunded.",
+      "required": [
+        "payment_intent_id",
+        "tenant_id",
+        "legal_entity_id",
+        "source_engine",
+        "source_reference",
+        "amount",
+        "simulated",
+        "occurred_at",
+        "payment_id",
+        "refund_id",
+        "refunded_amount_minor"
+      ],
+      "properties": {
+        "payment_intent_id": {
+          "$ref": "domain.schema.json#/$defs/paymentIntentId"
+        },
+        "tenant_id": {
+          "$ref": "../../control-plane/v1/domain.schema.json#/$defs/tenantId"
+        },
+        "legal_entity_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "minLength": 2,
+          "maxLength": 63,
+          "description": "The legal entity on whose behalf money moves. Asserted by the calling engine from Control Plane context, never by a browser."
+        },
+        "source_engine": {
+          "$ref": "domain.schema.json#/$defs/sourceEngine"
+        },
+        "source_reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "amount": {
+          "$ref": "payment.schema.json#/$defs/Money"
+        },
+        "simulated": {
+          "type": "boolean",
+          "description": "True when a sandbox produced this outcome: it is not real-world settlement."
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "payment_id": {
+          "$ref": "domain.schema.json#/$defs/paymentId"
+        },
+        "refund_id": {
+          "$ref": "domain.schema.json#/$defs/refundId"
+        },
+        "refunded_amount_minor": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}
