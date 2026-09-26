@@ -2,7 +2,7 @@
 //! request helpers.
 #![allow(dead_code)]
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, HashMap};
 use std::sync::{Arc, OnceLock};
 
 use aws_lc_rs::rand::SystemRandom;
@@ -70,9 +70,15 @@ pub fn harness() -> Harness {
         )])),
         ISSUER.into(),
         "baobab-payments".into(),
-        BTreeSet::from([
-            "baobab-subscriptions".to_string(),
-            "baobab-trade".to_string(),
+        BTreeMap::from([
+            (
+                "baobab-subscriptions-workload".to_string(),
+                "baobab-subscriptions".to_string(),
+            ),
+            (
+                "baobab-trade-workload".to_string(),
+                "baobab-trade".to_string(),
+            ),
         ]),
     ));
     let app = router(AppState {
@@ -89,7 +95,7 @@ pub fn token_with(key: &KeyPair, edit: impl FnOnce(&mut Value)) -> String {
     let mut claims = json!({
         "iss": ISSUER, "sub": "service-account-subscriptions", "aud": "baobab-payments",
         "iat": now, "exp": now + 300, "jti": uuid::Uuid::now_v7().to_string(),
-        "actor_type": "workload", "azp": "baobab-subscriptions",
+        "actor_type": "workload", "azp": "baobab-subscriptions-workload",
         "scope": "payment:execute payment:refund payment:read",
     });
     edit(&mut claims);

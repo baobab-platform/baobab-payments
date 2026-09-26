@@ -3,7 +3,7 @@
 //! allowed client, holding the route's scope and living at most 15 minutes.
 //! Static bearer secrets are not accepted.
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::time::{Duration, Instant};
 
 use jsonwebtoken::jwk::JwkSet;
@@ -19,6 +19,8 @@ const ALGORITHMS: [Algorithm; 3] = [Algorithm::RS256, Algorithm::PS256, Algorith
 pub struct Caller {
     pub subject: String,
     pub client_id: String,
+    /// The engine the client acts for, from configuration, never the token.
+    pub engine: String,
     pub scopes: BTreeSet<String>,
 }
 
@@ -117,7 +119,7 @@ pub struct Authenticator {
     keys: Keys,
     issuer: String,
     audience: String,
-    allowed_clients: BTreeSet<String>,
+    allowed_clients: BTreeMap<String, String>,
 }
 
 impl Authenticator {
@@ -125,7 +127,7 @@ impl Authenticator {
         keys: Keys,
         issuer: String,
         audience: String,
-        allowed_clients: BTreeSet<String>,
+        allowed_clients: BTreeMap<String, String>,
     ) -> Self {
         Self {
             keys,
@@ -185,14 +187,14 @@ impl Authenticator {
             .map(String::from)
             .collect();
         let client = claims.azp.or(claims.client_id);
-        match client {
-            Some(client)
-                if claims.actor_type.as_deref() == Some("workload")
-                    && self.allowed_clients.contains(&client)
-                    && scopes.contains(scope) =>
+        let engine = client.as_ref().and_then(|c| self.allowed_clients.get(c));
+        match (client, engine) {
+            (Some(client), Some(engine))
+                if claims.actor_type.as_deref() == Some("workload") && scopes.contains(scope) =>
             {
                 Ok(Caller {
                     subject: claims.sub,
+                    engine: engine.clone(),
                     client_id: client,
                     scopes,
                 })

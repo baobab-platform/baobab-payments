@@ -56,11 +56,11 @@ A Rust (axum, tokio) service. Requests and events are validated against the Shar
 
 **Guarantees:**
 
-- **Authentication.** Callers present Baobab workload tokens: the issuer, the audience `baobab-payments`, `actor_type: workload`, an allowed client (`baobab-subscriptions` by default), the route's scope, and a lifetime of at most 15 minutes. Static secrets are not accepted.
+- **Authentication.** Callers present Baobab workload tokens: the issuer, the audience `baobab-payments`, `actor_type: workload`, an allowed client (by default `baobab-subscriptions-workload`, the Shared workload registry's identity for `baobab-subscriptions`), the route's scope, and a lifetime of at most 15 minutes. Static secrets are not accepted.
 - **Idempotency.** Every money-moving request needs an `Idempotency-Key`, scoped per tenant. A retry replays the stored response and never authorises, captures or refunds twice. The same key with a different body is refused.
 - **Context.** The payment context comes from the calling engine, which resolved it with the Control Plane.
   - The amount's currency must be the context currency.
-  - A workload can only move money for its own engine: `source_engine` must be the caller's client.
+  - A workload can only move money for its own engine: `source_engine` must be the engine configured for the caller's client.
 - **Tenant isolation.** Every read and write is keyed by tenant. Another tenant's identifiers return 404.
 - **No card data.**
   - Unknown fields are rejected.
@@ -79,7 +79,7 @@ A Rust (axum, tokio) service. Requests and events are validated against the Shar
 | `BAOBAB_ENVIRONMENT` | (required) | `development` or `integration`. Production is refused because of the sandbox, and staging and production are refused because of in-memory state. |
 | `WORKLOAD_ISSUER`, `WORKLOAD_JWKS_URI` | (required) | The JWKS URI must use https outside development. Keys are cached for 5 minutes and refreshed on an unknown `kid`. |
 | `WORKLOAD_AUDIENCE` | `baobab-payments` | |
-| `WORKLOAD_ALLOWED_CLIENTS` | `baobab-subscriptions` | Comma-separated |
+| `WORKLOAD_ALLOWED_CLIENTS` | `baobab-subscriptions-workload=baobab-subscriptions` | Comma-separated `client_id=engine_key` pairs. The engine comes from this mapping, never from the token, and a payment's `source_engine` must equal the calling client's engine. |
 | `HTTP_PORT` | `8080` | |
 | `SHUTDOWN_GRACE_SECONDS` | `10` | |
 

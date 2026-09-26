@@ -376,6 +376,23 @@ async fn the_payment_context_must_be_coherent_and_the_callers_own() {
         "SOURCE_ENGINE_MISMATCH",
     );
 
+    // Trade's own workload identity cannot move money for a Subscriptions
+    // obligation either: the engine comes from configuration, not the body.
+    let trade = token_with(trusted(), |c| c["azp"] = json!("baobab-trade-workload"));
+    assert_problem(
+        &send(
+            &h.app,
+            "POST",
+            "/v1/payment-intents",
+            Some(&trade),
+            Some(&new_key()),
+            Some(intent_request("AUTOMATIC")),
+        )
+        .await,
+        403,
+        "SOURCE_ENGINE_MISMATCH",
+    );
+
     let mut card = intent_request("AUTOMATIC");
     card["card_number"] = json!("4111111111111111");
     assert_problem(
@@ -539,6 +556,13 @@ async fn only_workload_identity_is_accepted() {
         ),
         (
             token_with(trusted(), |c| c["azp"] = json!("baobab-client-portal")),
+            403,
+            "AUTHORIZATION_DENIED",
+        ),
+        // The engine's name is not its workload client: only the registered
+        // workload identity is allowed.
+        (
+            token_with(trusted(), |c| c["azp"] = json!("baobab-subscriptions")),
             403,
             "AUTHORIZATION_DENIED",
         ),
