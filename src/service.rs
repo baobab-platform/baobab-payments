@@ -143,6 +143,8 @@ pub struct PaymentService {
 /// Who is asking: the authenticated workload and the request's correlation.
 pub struct Call<'a> {
     pub client_id: &'a str,
+    /// The engine the authenticated client acts for.
+    pub engine: &'a str,
     pub idempotency_key: &'a str,
     pub correlation_id: &'a str,
 }
@@ -319,7 +321,7 @@ impl PaymentService {
                 "the amount's currency must be the context currency",
             ));
         }
-        if req.context.source_engine != call.client_id {
+        if req.context.source_engine != call.engine {
             return Err(Refusal::new(
                 403,
                 "SOURCE_ENGINE_MISMATCH",

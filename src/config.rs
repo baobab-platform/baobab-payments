@@ -4,7 +4,7 @@
 //! unauthenticated mode and no static secret. The sandbox provider is
 //! simulated and is refused in production (ADR-PAY-0001 section 15.2).
 
-use std::collections::BTreeSet;
+use std::collections::BTreeMap;
 use std::time::Duration;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -45,7 +45,9 @@ pub struct Config {
     pub workload_issuer: String,
     pub workload_jwks_uri: String,
     pub workload_audience: String,
-    pub allowed_clients: BTreeSet<String>,
+    /// Each allowed workload client and the engine it acts for: the engine
+    /// whose obligations its payments must name as `source_engine`.
+    pub allowed_clients: BTreeMap<String, String>,
 }
 
 impl std::fmt::Debug for Config {
@@ -137,12 +139,26 @@ impl Config {
         if audience.is_empty() {
             problems.push("WORKLOAD_AUDIENCE must not be empty".into());
         }
-        let allowed_clients: BTreeSet<String> = get("WORKLOAD_ALLOWED_CLIENTS")
-            .unwrap_or_else(|| "baobab-subscriptions".into())
+        let mut allowed_clients = BTreeMap::new();
+        for entry in get("WORKLOAD_ALLOWED_CLIENTS")
+            .unwrap_or_else(|| DEFAULT_ALLOWED_CLIENTS.into())
             .split(',')
-            .map(|c| c.trim().to_string())
+            .map(str::trim)
             .filter(|c| !c.is_empty())
-            .collect();
+        {
+            match entry.split_once('=').map(|(c, e)| (c.trim(), e.trim())) {
+                Some((client, engine))
+                    if !client.is_empty()
+                        && is_engine_key(engine)
+                        && !allowed_clients.contains_key(client) =>
+                {
+                    allowed_clients.insert(client.to_string(), engine.to_string());
+                }
+                _ => problems.push(format!(
+                    "WORKLOAD_ALLOWED_CLIENTS entry {entry:?} must be client_id=engine_key, once per client"
+                )),
+            }
+        }
         if allowed_clients.is_empty() {
             problems.push("WORKLOAD_ALLOWED_CLIENTS must name at least one client".into());
         }
@@ -160,6 +176,19 @@ impl Config {
             allowed_clients,
         })
     }
+}
+
+/// The registered workload identity of baobab-subscriptions (Shared
+/// `identity/v1/workload-registry.yaml`), acting for its own engine.
+const DEFAULT_ALLOWED_CLIENTS: &str = "baobab-subscriptions-workload=baobab-subscriptions";
+
+/// Shared `capability/v1` `engineKey`: `^[a-z][a-z0-9-]*$`, 2 to 63 characters.
+fn is_engine_key(key: &str) -> bool {
+    (2..=63).contains(&key.len())
+        && key.starts_with(|c: char| c.is_ascii_lowercase())
+        && key
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
 }
 
 fn required_url(
@@ -214,7 +243,45 @@ mod tests {
         .unwrap();
         assert_eq!(c.http_port, 8080);
         assert_eq!(c.workload_audience, "baobab-payments");
-        assert!(c.allowed_clients.contains("baobab-subscriptions"));
+        assert_eq!(
+            c.allowed_clients
+                .get("baobab-subscriptions-workload")
+                .map(String::as_str),
+            Some("baobab-subscriptions")
+        );
+        assert_eq!(c.allowed_clients.len(), 1);
+    }
+
+    #[test]
+    fn allowed_clients_name_their_engine() {
+        let c = Config::from_env(env(&[
+            ("BAOBAB_ENVIRONMENT", "development"),
+            IAM[0],
+            IAM[1],
+            (
+                "WORKLOAD_ALLOWED_CLIENTS",
+                " baobab-subscriptions-workload = baobab-subscriptions , baobab-trade-workload=baobab-trade",
+            ),
+        ]))
+        .unwrap();
+        assert_eq!(c.allowed_clients["baobab-trade-workload"], "baobab-trade");
+        assert_eq!(c.allowed_clients.len(), 2);
+        for bad in [
+            "baobab-subscriptions",
+            "baobab-subscriptions-workload=",
+            "=baobab-subscriptions",
+            "baobab-subscriptions-workload=Baobab Subscriptions",
+            "a=baobab-subscriptions,a=baobab-trade",
+        ] {
+            let e = Config::from_env(env(&[
+                ("BAOBAB_ENVIRONMENT", "development"),
+                IAM[0],
+                IAM[1],
+                ("WORKLOAD_ALLOWED_CLIENTS", bad),
+            ]))
+            .unwrap_err();
+            assert!(e.contains("must be client_id=engine_key"), "{bad}: {e}");
+        }
     }
 
     #[test]
