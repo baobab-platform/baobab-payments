@@ -21,6 +21,10 @@
 # no adapter yet, so it is not declared; declare it here, with PARTIAL or
 # IMPLEMENTED support and evidence, when its adapter lands.
 #
+# payment.intent.cancel, first recorded here as a census candidate, was
+# accepted into the catalogue by the EA-02B candidate review (Shared
+# docs/architecture/ea-02b-candidate-review.md).
+#
 # Validate with a Shared checkout:
 #   python3 <shared>/scripts/capability_catalogue.py validate-declaration \
 #     .baobab/capability-provider.yaml --engine-id baobab-payments --repository-root .
@@ -53,6 +57,23 @@ providers:
             path: src/http.rs
           - type: source
             path: src/service.rs
+          - type: integration-test
+            path: tests/payments.rs
+      # Cancelling an uncaptured intent also voids its authorisation.
+      - capability_key: payment.intent.cancel
+        contract_versions: [1]
+        implementation_status: IMPLEMENTED
+        provenance:
+          authority:
+            repository: baobab-platform/baobab-payments
+            decision: ADR-PAY-0008
+        implementation_evidence:
+          - type: source
+            path: src/http.rs
+          - type: source
+            path: src/service.rs
+          - type: simulation
+            path: src/provider.rs
           - type: integration-test
             path: tests/payments.rs
       - capability_key: payment.payment.authorize
@@ -91,17 +112,3 @@ providers:
             path: tests/payments.rs
       # Every contract above is also checked against the pinned Shared schemas.
       # tests/pinned_contracts.rs holds that conformance fixture.
-
-planned_capabilities:
-  # Implemented here (POST /v1/payment-intents/{id}/cancel), and Shared
-  # payments/v1 already defines CancelPaymentRequest and PaymentCancelled,
-  # but no canonical capability exists yet. Proposed for census review, not
-  # claimed as support.
-  - proposed_key: payment.intent.cancel
-    proposal_status: CANDIDATE
-    description: Cancel a payment intent before capture (ADR-PAY-0008 lifecycle).
-    target_provider_key: baobab-payments.sandbox
-    provenance:
-      authority:
-        repository: baobab-platform/baobab-payments
-        decision: ADR-PAY-0008
