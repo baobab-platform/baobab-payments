@@ -1,6 +1,6 @@
 schema_version: 1
 repository:
-  lifecycle: experimental
+  lifecycle: active
 capabilities:
   - engine
   - rust
