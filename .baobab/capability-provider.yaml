@@ -1,0 +1,107 @@
+# Baobab Capability Provider Declaration: baobab-payments
+#
+# Conforms to:
+#   baobab-platform/shared/contracts/capability/v1/provider-declaration.schema.json
+# Governing decision:
+#   baobab-platform/shared ADR-SHARED-017 (EA-02)
+#
+# Declares which canonical Baobab capabilities this engine's providers
+# implement. It references Shared's catalogue.yaml; it defines no
+# capability. It does not state certification (EA-09), activation,
+# bindings, grants, engine instances or health: the Control Plane owns
+# those.
+#
+# The three .baobab contracts are distinct:
+#   repository.yaml          Foundation technical traits
+#   environment.yaml         baobab-dev toolchain
+#   capability-provider.yaml canonical capability support  <- this file
+#
+# Census (EA-02A, 2026-09-30): only the deterministic sandbox provider is
+# implemented (src/provider.rs). The HyperSwitch provider (ADR-PAY-0001) has
+# no adapter yet, so it is not declared; declare it here, with PARTIAL or
+# IMPLEMENTED support and evidence, when its adapter lands.
+#
+# Validate with a Shared checkout:
+#   python3 <shared>/scripts/capability_catalogue.py validate-declaration \
+#     .baobab/capability-provider.yaml --engine-id baobab-payments --repository-root .
+
+schema:
+  name: baobab-capability-provider-declaration
+  version: "1.0"
+
+engine:
+  engine_id: baobab-payments
+
+providers:
+  - provider_key: baobab-payments.sandbox
+    name: Sandbox payment provider (non-production only)
+    provider_type: BAOBAB_ENGINE
+    implementation_key: sandbox
+    # Contacts nothing, moves no money and marks every result simulated.
+    simulated: true
+    production_permitted: false
+    provenance:
+      authority:
+        repository: baobab-platform/baobab-payments
+        decision: ADR-PAY-0001
+    support:
+      - capability_key: payment.intent.create
+        contract_versions: [1]
+        implementation_status: IMPLEMENTED
+        implementation_evidence:
+          - type: source
+            path: src/http.rs
+          - type: source
+            path: src/service.rs
+          - type: integration-test
+            path: tests/payments.rs
+      - capability_key: payment.payment.authorize
+        contract_versions: [1]
+        implementation_status: IMPLEMENTED
+        implementation_evidence:
+          - type: source
+            path: src/service.rs
+          - type: simulation
+            path: src/provider.rs
+          - type: integration-test
+            path: tests/payments.rs
+      - capability_key: payment.payment.capture
+        contract_versions: [1]
+        implementation_status: IMPLEMENTED
+        implementation_evidence:
+          - type: source
+            path: src/service.rs
+          - type: simulation
+            path: src/provider.rs
+          - type: integration-test
+            path: tests/payments.rs
+      - capability_key: payment.refund.create
+        contract_versions: [1]
+        implementation_status: IMPLEMENTED
+        provenance:
+          authority:
+            repository: baobab-platform/baobab-payments
+            decision: ADR-PAY-0013
+        implementation_evidence:
+          - type: source
+            path: src/service.rs
+          - type: simulation
+            path: src/provider.rs
+          - type: integration-test
+            path: tests/payments.rs
+      # Every contract above is also checked against the pinned Shared schemas.
+      # tests/pinned_contracts.rs holds that conformance fixture.
+
+planned_capabilities:
+  # Implemented here (POST /v1/payment-intents/{id}/cancel), and Shared
+  # payments/v1 already defines CancelPaymentRequest and PaymentCancelled,
+  # but no canonical capability exists yet. Proposed for census review, not
+  # claimed as support.
+  - proposed_key: payment.intent.cancel
+    proposal_status: CANDIDATE
+    description: Cancel a payment intent before capture (ADR-PAY-0008 lifecycle).
+    target_provider_key: baobab-payments.sandbox
+    provenance:
+      authority:
+        repository: baobab-platform/baobab-payments
+        decision: ADR-PAY-0008
