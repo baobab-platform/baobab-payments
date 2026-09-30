@@ -58,6 +58,20 @@
       "type": "string",
       "enum": ["local", "development", "staging", "production"]
     },
+    "engineId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "minLength": 3,
+      "maxLength": 63,
+      "description": "A registered engine: the service that owns a capability provider, named as its repository, e.g. baobab-trade. Distinct from capability/v1 engineKey, the technology family (e.g. medusa), which an ExternalReference names as its system_namespace (ADR-SHARED-012)."
+    },
+    "engineInstanceId": {
+      "type": "string",
+      "pattern": "^ei_[a-z0-9]+$",
+      "minLength": 6,
+      "maxLength": 63,
+      "description": "Control Plane-minted identifier of a concrete engine deployment. The single grammar for engine_instance_id in every contract (ADR-SHARED-012)."
+    },
     "mappingId": {
       "type": "string",
       "pattern": "^map_[a-z0-9]+$",
@@ -121,7 +135,57 @@
     "tenantProvisioningPhase": {
       "type": "string",
       "enum": ["DRAFT", "VALIDATING", "PLANNED", "REGISTERING", "CONFIGURING_CONTEXT", "PROVISIONING_ENTITLEMENTS", "PROVISIONING_PROVIDERS", "VALIDATING_SECURITY", "VERIFYING_READINESS", "BLOCKED", "REMEDIATING", "READY"],
-      "description": "Fine-grained orchestration phase within a TenantProvisioning run (Technical Specification SS22). Deliberately distinct from, and a sub-classification of, the coarser provisioning-state-machine.yaml lifecycle state (e.g. several of these phases all occur while the coarse state is \"provisioning\" or \"reconciling\") -- this enum does not replace or renumber that already-implemented state machine."
+      "description": "Deprecated (ADR-SHARED-015): the orchestration phases of Technical Specification SS22 without the terminal states. Use tenantProvisioningState, the canonical TenantProvisioning lifecycle."
+    },
+    "tenantProvisioningState": {
+      "type": "string",
+      "enum": ["DRAFT", "VALIDATING", "PLANNED", "REGISTERING", "CONFIGURING_CONTEXT", "PROVISIONING_ENTITLEMENTS", "PROVISIONING_PROVIDERS", "VALIDATING_SECURITY", "VERIFYING_READINESS", "BLOCKED", "REMEDIATING", "READY", "ACTIVE", "FAILED", "CANCELLED", "DEPROVISIONED"],
+      "description": "The canonical TenantProvisioning lifecycle (Technical Specification SS22, ADR-SHARED-015; transitions in tenant-provisioning-lifecycle.yaml). BLOCKED is a known, remediable condition; FAILED an operational failure; REMEDIATING the deliberate resolution of known blockers. Distinct from ExecutionOperation status and readiness status."
+    },
+    "provisioningPlanId": {
+      "type": "string",
+      "pattern": "^plan_[a-z0-9]+$",
+      "minLength": 8,
+      "maxLength": 63,
+      "description": "Control Plane-minted identifier of an immutable plan (a ChangePlan, ADR-BCP-021 SS21)."
+    },
+    "changesetId": {
+      "type": "string",
+      "pattern": "^cs_[a-z0-9]+$",
+      "minLength": 6,
+      "maxLength": 63,
+      "description": "Control Plane-minted identifier of a Changeset (ADR-BCP-021 section 7)."
+    },
+    "providerMigrationId": {
+      "type": "string",
+      "pattern": "^pmg_[a-z0-9]+$",
+      "minLength": 7,
+      "maxLength": 63,
+      "description": "Control Plane-minted identifier of a ProviderMigration (ADR-BCP-006 section 119)."
+    },
+    "approvalDecisionId": {
+      "type": "string",
+      "pattern": "^apd_[a-z0-9]+$",
+      "minLength": 7,
+      "maxLength": 63,
+      "description": "Control Plane-minted identifier of an ApprovalDecision (ADR-BCP-021 SS50)."
+    },
+    "operationId": {
+      "type": "string",
+      "pattern": "^op_[a-z0-9]+$",
+      "minLength": 6,
+      "maxLength": 63,
+      "description": "Control Plane-minted identifier of a durable ExecutionOperation (ADR-BCP-022 SS58)."
+    },
+    "marketParticipationCapability": {
+      "type": "string",
+      "enum": ["LEGAL_PRESENCE", "SOURCING", "PROCUREMENT", "SELLING", "IMPORTING", "EXPORTING", "WAREHOUSING", "DISTRIBUTION", "FULFILMENT", "PROCESSING", "TRANSIT"],
+      "description": "What a tenant may do in a market (ADR-BCP-011 section 6). A governed vocabulary: extended only through controlled registry evolution, never with arbitrary strings."
+    },
+    "planDigest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "Digest of a plan's material execution semantics (ADR-BCP-021 SS23). An approval binds to it; any material change produces another digest."
     },
     "readinessSnapshotId": {
       "type": "string",
@@ -132,8 +196,8 @@
     },
     "readinessStatus": {
       "type": "string",
-      "enum": ["READY", "DEGRADED", "BLOCKED", "NOT_READY"],
-      "description": "Readiness verdict for one object in the readiness hierarchy (Provider/Capability/Product/Estate/Tenant, Technical Specification SS44)."
+      "enum": ["UNKNOWN", "NOT_READY", "BLOCKED", "DEGRADED", "READY"],
+      "description": "Readiness verdict for one object in the readiness hierarchy (Provider/Capability/Product/Estate/Tenant, Technical Specification SS44). UNKNOWN until readiness has been evaluated."
     },
     "driftRecordId": {
       "type": "string",
@@ -144,7 +208,7 @@
     },
     "driftObjectType": {
       "type": "string",
-      "enum": ["TENANT", "LEGAL_ENTITY", "DIGITAL_ESTATE", "MARKET_PARTICIPATION", "PRODUCT_SUBSCRIPTION", "CAPABILITY_GRANT", "CAPABILITY_BINDING", "PROVIDER_CONFIGURATION"],
+      "enum": ["TENANT", "LEGAL_ENTITY", "DIGITAL_ESTATE", "MARKET_PARTICIPATION", "PRODUCT_SUBSCRIPTION", "CAPABILITY_GRANT", "CAPABILITY_BINDING", "PROVIDER_CONFIGURATION", "TRADE_LANE"],
       "description": "The class of object a Drift record compares desired vs. observed state for. Intentionally the set of objects Programme Gate P0's classification (phase-0-architecture-inventory-and-lock.md) identified as carrying desired/observed state, not an open-ended free-text field."
     },
     "driftResolution": {
