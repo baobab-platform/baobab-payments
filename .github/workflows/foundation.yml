@@ -20,3 +20,8 @@ jobs:
     with:
       foundation_ref: "31de2bc3dcd56128c019c640dc7e12c10ae9ca69"
       dependency_review_enabled: false
+      # The distroless cc base ships libssl, which this rustls-only binary never
+      # links. Debian had no fix for CVE-2026-84782 when it was published, so
+      # the container scan ignores findings with no upstream fix; anything with
+      # a fixed version still fails. Remove once the base image is patched.
+      container_ignore_unfixed: true
