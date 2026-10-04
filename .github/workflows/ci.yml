@@ -24,6 +24,12 @@ jobs:
           repository: baobab-platform/shared
           ref: ${{ steps.pin.outputs.commit }}
           path: .shared-contracts
+          token: ${{ secrets.SHARED_READ_TOKEN || github.token }}
+          persist-credentials: false
+      - name: Verify exact Shared checkout
+        env:
+          EXPECTED_SHARED_COMMIT: ${{ steps.pin.outputs.commit }}
+        run: test "$(git -C .shared-contracts rev-parse HEAD)" = "$EXPECTED_SHARED_COMMIT"
       - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # v1
         with:
           toolchain: stable
