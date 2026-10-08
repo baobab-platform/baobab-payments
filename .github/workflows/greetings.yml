@@ -43,7 +43,7 @@ jobs:
     # `git rev-list -n1 v1.2.0^{}` against a live checkout on 2026-09-05.
     # Re-verify before relying on this pin if this template is more than a
     # few weeks old.
-    uses: baobab-platform/shared/.github/workflows/greetings.yml@80d7f2556ba05d4a9524acd525152892a55316fa # v2.0.0
+    uses: baobab-platform/shared/.github/workflows/greetings.yml@31de2bc3dcd56128c019c640dc7e12c10ae9ca69 # v2.3.0
     with:
       issue-message: |
         👋 Thanks for opening your first issue in **<engine-repo-name>**!
