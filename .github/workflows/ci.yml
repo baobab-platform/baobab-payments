@@ -33,10 +33,4 @@ jobs:
       - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # v1
         with:
           toolchain: stable
-      - name: LA05E temporary exact Rust format capture
-        run: |
-          rustfmt --edition 2024 src/legal_actor.rs
-          printf 'LA05E_FMT:'
-          base64 -w0 src/legal_actor.rs
-          printf '\n'
       - run: cargo test --workspace --all-features --locked
