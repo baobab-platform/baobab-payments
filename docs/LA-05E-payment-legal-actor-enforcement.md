@@ -13,3 +13,5 @@ The request explicitly does not include tenant, Organisation, provider/legal act
 4. Durable idempotency, outbox, and PSP results are established; currently the engine is sandbox-only.
 
 No Nabhold or subsidiary legal beneficiary is inferred or enrolled. PEO-02/03 and LA-06 remain independent onboarding work.
+
+**Status of this seam:** an execution guard only. Provider publication must stay unsupported and staging/production money movement disabled. Completion also requires routing every real `create/confirm/capture/refund` HTTP handler through `execute_with_current_payment_actor`, a workload-authenticated CP client using the principal-owned RUNTIME context, and end-to-end revocation tests. No company account or beneficiary is provisioned or inferred.
