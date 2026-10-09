@@ -7,5 +7,6 @@ pub mod config;
 pub mod contracts;
 pub mod domain;
 pub mod http;
+pub mod legal_actor;
 pub mod provider;
 pub mod service;
