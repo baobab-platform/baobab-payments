@@ -9,3 +9,5 @@ pub mod domain;
 pub mod http;
 pub mod provider;
 pub mod service;
+
+pub mod legal_actor;
