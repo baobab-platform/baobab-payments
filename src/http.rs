@@ -280,6 +280,53 @@ async fn read(
 /// HyperSwitch routing. Returning READY here would fabricate authority.
 /// Once Payments implements certified activation, replace this refusal with
 /// an independently audited, short-lived decision and versioned contract.
+/// Mirrors Shared `payments/v1/merchant-readiness.schema.json#ReadinessRequest`
+/// (additionalProperties=false, patterns, length bounds, uuid format).
+fn validate_readiness_request(request: &Value) -> Result<(), &'static str> {
+    const FIELDS: [&str; 8] = [
+        "tenant_id",
+        "organisation_id",
+        "responsible_legal_entity_id",
+        "market",
+        "currency_code",
+        "capability",
+        "operation_reference",
+        "mandate_id",
+    ];
+    let obj = request.as_object().ok_or("valid request required")?;
+    if obj.keys().any(|k| !FIELDS.contains(&k.as_str())) {
+        return Err("unknown request property");
+    }
+    let field = |key: &str| obj.get(key).and_then(Value::as_str);
+    let bounded = |key: &str, min: usize| {
+        field(key).is_some_and(|v| (min..=160).contains(&v.chars().count()))
+    };
+    let upper = |key: &str, len: usize| {
+        field(key).is_some_and(|v| v.len() == len && v.bytes().all(|b| b.is_ascii_uppercase()))
+    };
+    let tenant_ok = field("tenant_id").is_some_and(|v| {
+        v.strip_prefix("tn_").is_some_and(|rest| {
+            (3..=60).contains(&rest.len())
+                && rest
+                    .bytes()
+                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit())
+        })
+    });
+    let valid = tenant_ok
+        && bounded("organisation_id", 1)
+        && bounded("responsible_legal_entity_id", 1)
+        && upper("market", 2)
+        && upper("currency_code", 3)
+        && bounded("capability", 3)
+        && bounded("operation_reference", 1)
+        && field("mandate_id").is_some_and(uuid_like);
+    if valid {
+        Ok(())
+    } else {
+        Err("request does not match the canonical readiness contract")
+    }
+}
+
 async fn assess_merchant_readiness(
     State(s): State<Arc<AppState>>,
     axum::Extension(c): axum::Extension<Correlation>,
@@ -325,30 +372,10 @@ async fn assess_merchant_readiness(
             );
         }
     };
-    if [
-        "tenant_id",
-        "organisation_id",
-        "responsible_legal_entity_id",
-        "market",
-        "currency_code",
-        "capability",
-        "operation_reference",
-        "mandate_id",
-    ]
-    .iter()
-    .any(|key| {
-        request
-            .get(*key)
-            .and_then(Value::as_str)
-            .is_none_or(str::is_empty)
-    }) {
+    if let Err(reason) = validate_readiness_request(&request) {
         return with_client(
             problem_response(
-                &Refusal::new(
-                    400,
-                    "INVALID_MERCHANT_READINESS_REQUEST",
-                    "required canonical fields missing",
-                ),
+                &Refusal::new(400, "INVALID_MERCHANT_READINESS_REQUEST", reason),
                 Some(&c),
             ),
             Some(&caller),

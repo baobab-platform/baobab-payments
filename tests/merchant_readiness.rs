@@ -95,3 +95,27 @@ async fn scoped_trade_token_never_gets_ready_without_certified_provider() {
     assert_problem(&missing_fields, 400, "INVALID_MERCHANT_READINESS_REQUEST");
     assert!(h.service.events(TENANT).is_empty());
 }
+
+#[tokio::test]
+async fn readiness_request_must_match_the_shared_contract_strictly() {
+    let h = harness();
+    let authorized = trade_token("merchant-readiness:assess");
+    let mutations: Vec<(&str, serde_json::Value)> = vec![
+        ("outcome", json!("READY")),
+        ("provider", json!("user-selected")),
+        ("tenant_id", json!("TN_UPPER")),
+        ("tenant_id", json!("tn_ab")),
+        ("market", json!("za")),
+        ("market", json!("ZAF")),
+        ("currency_code", json!("zar")),
+        ("capability", json!("ab")),
+        ("operation_reference", json!("x".repeat(161))),
+        ("mandate_id", json!("not-a-uuid")),
+    ];
+    for (key, value) in mutations {
+        let mut body = request();
+        body[key] = value;
+        let res = send(&h.app, "POST", PATH, Some(&authorized), None, Some(body)).await;
+        assert_problem(&res, 400, "INVALID_MERCHANT_READINESS_REQUEST");
+    }
+}
