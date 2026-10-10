@@ -44,7 +44,15 @@ async fn unrelated_workload_with_scope_cannot_assert_trade_merchant_readiness() 
     let unrelated = token_with(trusted(), |claims| {
         claims["scope"] = json!("merchant-readiness:assess");
     });
-    let denied = send(&h.app, "POST", PATH, Some(&unrelated), None, Some(request())).await;
+    let denied = send(
+        &h.app,
+        "POST",
+        PATH,
+        Some(&unrelated),
+        None,
+        Some(request()),
+    )
+    .await;
     assert_problem(&denied, 403, "MERCHANT_READINESS_FORBIDDEN");
 }
 
@@ -52,11 +60,27 @@ async fn unrelated_workload_with_scope_cannot_assert_trade_merchant_readiness() 
 async fn scoped_trade_token_never_gets_ready_without_certified_provider() {
     let h = harness();
     let authorized = trade_token("merchant-readiness:assess");
-    let fail_closed = send(&h.app, "POST", PATH, Some(&authorized), None, Some(request())).await;
+    let fail_closed = send(
+        &h.app,
+        "POST",
+        PATH,
+        Some(&authorized),
+        None,
+        Some(request()),
+    )
+    .await;
     assert_problem(&fail_closed, 503, "MERCHANT_CERTIFICATION_NOT_CONFIGURED");
     assert_ne!(fail_closed.body["outcome"], "READY");
     assert_eq!(fail_closed.headers["cache-control"], "no-store");
-    let replay = send(&h.app, "POST", PATH, Some(&authorized), None, Some(request())).await;
+    let replay = send(
+        &h.app,
+        "POST",
+        PATH,
+        Some(&authorized),
+        None,
+        Some(request()),
+    )
+    .await;
     assert_problem(&replay, 503, "MERCHANT_CERTIFICATION_NOT_CONFIGURED");
 
     let missing_fields = send(
