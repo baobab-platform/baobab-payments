@@ -314,11 +314,15 @@ async fn assess_merchant_readiness(
         _ => {
             return with_client(
                 problem_response(
-                    &Refusal::new(400, "INVALID_MERCHANT_READINESS_REQUEST", "valid request required"),
+                    &Refusal::new(
+                        400,
+                        "INVALID_MERCHANT_READINESS_REQUEST",
+                        "valid request required",
+                    ),
                     Some(&c),
                 ),
                 Some(&caller),
-            )
+            );
         }
     };
     if [
@@ -332,11 +336,19 @@ async fn assess_merchant_readiness(
         "mandate_id",
     ]
     .iter()
-    .any(|key| request.get(*key).and_then(Value::as_str).is_none_or(str::is_empty))
-    {
+    .any(|key| {
+        request
+            .get(*key)
+            .and_then(Value::as_str)
+            .is_none_or(str::is_empty)
+    }) {
         return with_client(
             problem_response(
-                &Refusal::new(400, "INVALID_MERCHANT_READINESS_REQUEST", "required canonical fields missing"),
+                &Refusal::new(
+                    400,
+                    "INVALID_MERCHANT_READINESS_REQUEST",
+                    "required canonical fields missing",
+                ),
                 Some(&c),
             ),
             Some(&caller),
