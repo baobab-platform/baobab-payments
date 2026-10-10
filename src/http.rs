@@ -41,6 +41,12 @@ pub fn router(state: AppState) -> Router {
             get(|| async { json_response(StatusCode::OK, &json!({ "status": "UP" }), false) }),
         )
         .route("/health/ready", get(ready))
+        // LA-05C3: authenticated workload boundary; sandbox can never mint
+        // a provider-certified READY response.
+        .route(
+            "/internal/merchant-readiness/v1/assess",
+            post(assess_merchant_readiness),
+        )
         .route("/v1/payment-intents", post(create_intent))
         .route("/v1/payment-intents/{id}/confirm", post(confirm_intent))
         .route("/v1/payment-intents/{id}/cancel", post(cancel_intent))
@@ -267,6 +273,87 @@ async fn read(
         Err(refusal) => problem_response(&refusal, Some(correlation)),
     };
     with_client(response, Some(&caller))
+}
+
+/// A private workload-only governance API seam. This engine currently has
+/// no durable merchant certifications, provider activations or production
+/// HyperSwitch routing. Returning READY here would fabricate authority.
+/// Once Payments implements certified activation, replace this refusal with
+/// an independently audited, short-lived decision and versioned contract.
+async fn assess_merchant_readiness(
+    State(s): State<Arc<AppState>>,
+    axum::Extension(c): axum::Extension<Correlation>,
+    headers: HeaderMap,
+    body: Result<Bytes, BytesRejection>,
+) -> Response {
+    let caller = match authorize(&s, &headers, "merchant-readiness:assess").await {
+        Ok(caller) => caller,
+        Err(refusal) => return problem_response(&refusal, Some(&c)),
+    };
+    if caller.engine != "baobab-trade" {
+        return with_client(
+            problem_response(
+                &Refusal::new(
+                    403,
+                    "MERCHANT_READINESS_FORBIDDEN",
+                    "workload has no Trade merchant-readiness authority",
+                ),
+                Some(&c),
+            ),
+            Some(&caller),
+        );
+    }
+    let raw = match body_bytes(body) {
+        Ok(raw) => raw,
+        Err(refusal) => return with_client(problem_response(&refusal, Some(&c)), Some(&caller)),
+    };
+    // Accept only well-formed JSON objects. Never accept an asserted READY
+    // field, user-selected provider, or a claim in lieu of actual records.
+    let request: Value = match serde_json::from_slice(&raw) {
+        Ok(Value::Object(obj)) if !obj.is_empty() => Value::Object(obj),
+        _ => {
+            return with_client(
+                problem_response(
+                    &Refusal::new(400, "INVALID_MERCHANT_READINESS_REQUEST", "valid request required"),
+                    Some(&c),
+                ),
+                Some(&caller),
+            )
+        }
+    };
+    if [
+        "tenant_id",
+        "organisation_id",
+        "responsible_legal_entity_id",
+        "market",
+        "currency_code",
+        "capability",
+        "operation_reference",
+        "mandate_id",
+    ]
+    .iter()
+    .any(|key| request.get(*key).and_then(Value::as_str).is_none_or(str::is_empty))
+    {
+        return with_client(
+            problem_response(
+                &Refusal::new(400, "INVALID_MERCHANT_READINESS_REQUEST", "required canonical fields missing"),
+                Some(&c),
+            ),
+            Some(&caller),
+        );
+    }
+
+    with_client(
+        problem_response(
+            &Refusal::new(
+                503,
+                "MERCHANT_CERTIFICATION_NOT_CONFIGURED",
+                "Payments has no independently certified live merchant, provider activation or durable market evidence",
+            ),
+            Some(&c),
+        ),
+        Some(&caller),
+    )
 }
 
 async fn create_intent(
