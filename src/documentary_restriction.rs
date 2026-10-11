@@ -89,7 +89,10 @@ pub fn execute_with_current_documentary_payment_authority<T>(
 ) -> Result<T, LegalActorGateError> {
     let mandate = require_current_payment_actor(operation, &current_legal_actor()?, now())?;
     require_current_documentary_clearance(
-        operation, organisation_id, &current_documentary_scope()?, now(),
+        operation,
+        organisation_id,
+        &current_documentary_scope()?,
+        now(),
     )?;
     provider.require_ready(operation, &mandate)?;
     let final_mandate = require_current_payment_actor(operation, &current_legal_actor()?, now())?;
@@ -97,7 +100,10 @@ pub fn execute_with_current_documentary_payment_authority<T>(
         return Err(LegalActorGateError::NotAuthorised);
     }
     require_current_documentary_clearance(
-        operation, organisation_id, &current_documentary_scope()?, now(),
+        operation,
+        organisation_id,
+        &current_documentary_scope()?,
+        now(),
     )?;
     Ok(execute())
 }
@@ -158,18 +164,28 @@ mod tests {
             _: &PaymentLegalOperation<'_>,
             _: &str,
         ) -> Result<(), LegalActorGateError> {
-            if self.0 { Ok(()) } else { Err(LegalActorGateError::ProviderNotReady) }
+            if self.0 {
+                Ok(())
+            } else {
+                Err(LegalActorGateError::ProviderNotReady)
+            }
         }
     }
 
     #[test]
     fn clear_scope_has_no_positive_authority_and_validates_exact_tuple() {
         let now = OffsetDateTime::now_utc();
-        assert_eq!(require_current_documentary_clearance(&op(), ORGANISATION, &clear(now), now), Ok(()));
+        assert_eq!(
+            require_current_documentary_clearance(&op(), ORGANISATION, &clear(now), now),
+            Ok(())
+        );
         let mut altered = Vec::new();
         for (field, value) in [
             ("context_id", json!("other-context")),
-            ("organisation_id", json!("0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f599")),
+            (
+                "organisation_id",
+                json!("0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f599"),
+            ),
             ("market", json!("UG")),
             ("capability", json!("payments.refund")),
             ("operation_reference", json!("another-operation")),
@@ -177,9 +193,18 @@ mod tests {
             ("blocked", json!("false")),
             ("authority_granted", json!(true)),
             ("policy_reference", json!("forged-policy")),
-            ("expires_at", json!((now + Duration::seconds(20)).format(&Rfc3339).unwrap())),
-            ("expires_at", json!((now - Duration::seconds(1)).format(&Rfc3339).unwrap())),
-            ("evaluated_at", json!((now - Duration::seconds(10)).format(&Rfc3339).unwrap())),
+            (
+                "expires_at",
+                json!((now + Duration::seconds(20)).format(&Rfc3339).unwrap()),
+            ),
+            (
+                "expires_at",
+                json!((now - Duration::seconds(1)).format(&Rfc3339).unwrap()),
+            ),
+            (
+                "evaluated_at",
+                json!((now - Duration::seconds(10)).format(&Rfc3339).unwrap()),
+            ),
         ] {
             let mut forged = clear(now);
             forged[field] = value;
@@ -200,22 +225,34 @@ mod tests {
         let legal_calls = Cell::new(0);
         let documentary_calls = Cell::new(0);
         let result = execute_with_current_documentary_payment_authority(
-            &op(), ORGANISATION,
-            || { legal_calls.set(legal_calls.get() + 1); Ok(legal(now)) },
+            &op(),
+            ORGANISATION,
+            || {
+                legal_calls.set(legal_calls.get() + 1);
+                Ok(legal(now))
+            },
             || {
                 documentary_calls.set(documentary_calls.get() + 1);
                 let mut decision = clear(now);
-                if documentary_calls.get() == 2 { decision["blocked"] = json!(true); }
+                if documentary_calls.get() == 2 {
+                    decision["blocked"] = json!(true);
+                }
                 Ok(decision)
             },
-            &Ready(true), || now, || executions.set(executions.get() + 1),
+            &Ready(true),
+            || now,
+            || executions.set(executions.get() + 1),
         );
         assert_eq!(result, Err(LegalActorGateError::NotAuthorised));
-        assert_eq!((legal_calls.get(), documentary_calls.get(), executions.get()), (2, 2, 0));
+        assert_eq!(
+            (legal_calls.get(), documentary_calls.get(), executions.get()),
+            (2, 2, 0)
+        );
 
         let calls = Cell::new(0);
         let result = execute_with_current_documentary_payment_authority(
-            &op(), ORGANISATION,
+            &op(),
+            ORGANISATION,
             || {
                 calls.set(calls.get() + 1);
                 let mut evidence = legal(now);
@@ -226,14 +263,21 @@ mod tests {
                 Ok(evidence)
             },
             || Ok(clear(now)),
-            &Ready(true), || now, || executions.set(executions.get() + 1),
+            &Ready(true),
+            || now,
+            || executions.set(executions.get() + 1),
         );
         assert_eq!(result, Err(LegalActorGateError::NotAuthorised));
         assert_eq!(executions.get(), 0);
 
         let result = execute_with_current_documentary_payment_authority(
-            &op(), ORGANISATION, || Ok(legal(now)), || Ok(clear(now)),
-            &Ready(false), || now, || executions.set(executions.get() + 1),
+            &op(),
+            ORGANISATION,
+            || Ok(legal(now)),
+            || Ok(clear(now)),
+            &Ready(false),
+            || now,
+            || executions.set(executions.get() + 1),
         );
         assert_eq!(result, Err(LegalActorGateError::ProviderNotReady));
         assert_eq!(executions.get(), 0);
@@ -243,8 +287,13 @@ mod tests {
     fn only_independently_ready_and_double_checked_synthetic_execution_reaches_callback() {
         let now = OffsetDateTime::now_utc();
         let result = execute_with_current_documentary_payment_authority(
-            &op(), ORGANISATION, || Ok(legal(now)), || Ok(clear(now)),
-            &Ready(true), || now, || "synthetic",
+            &op(),
+            ORGANISATION,
+            || Ok(legal(now)),
+            || Ok(clear(now)),
+            &Ready(true),
+            || now,
+            || "synthetic",
         );
         assert_eq!(result, Ok("synthetic"));
     }
