@@ -237,6 +237,25 @@ async fn mutate(
         Ok(caller) => caller,
         Err(refusal) => return problem_response(&refusal, Some(correlation)),
     };
+    // LA-05E2: until the actual provider adapter is wrapped by a live,
+    // workload-owned CP legal-actor + negative documentary + PSP PEP, no
+    // protected environment may execute ANY financial mutation or replay.
+    // OAuth payment:execute/payment:refund alone is NOT legal authority.
+    // Production cannot boot with SANDBOX, but enforce independently here
+    // so a future provider/config change cannot silently restore a bypass.
+    if !matches!(state.environment, "development" | "integration") {
+        return with_client(
+            problem_response(
+                &Refusal::new(
+                    503,
+                    "PAYMENT_EXECUTION_NOT_CERTIFIED",
+                    "protected payment execution requires current legal actor, documentary and certified provider gates",
+                ),
+                Some(correlation),
+            ),
+            Some(&caller),
+        );
+    }
     let result = idempotency_key(headers).and_then(|key| {
         let bytes = body_bytes(body)?;
         let call = Call {
