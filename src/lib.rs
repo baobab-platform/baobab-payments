@@ -10,5 +10,5 @@ pub mod http;
 pub mod provider;
 pub mod service;
 
-pub mod legal_actor;
 pub mod documentary_restriction;
+pub mod legal_actor;
