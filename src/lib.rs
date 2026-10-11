@@ -11,3 +11,4 @@ pub mod provider;
 pub mod service;
 
 pub mod legal_actor;
+pub mod documentary_restriction;
