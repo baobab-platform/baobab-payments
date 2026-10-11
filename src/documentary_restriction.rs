@@ -249,7 +249,8 @@ mod tests {
             &Ready(true),
             || now,
             || async { executions.set(executions.get() + 1) },
-        ).await;
+        )
+        .await;
         assert_eq!(result, Err(LegalActorGateError::NotAuthorised));
         assert_eq!(
             (legal_calls.get(), documentary_calls.get(), executions.get()),
@@ -273,7 +274,8 @@ mod tests {
             &Ready(true),
             || now,
             || async { executions.set(executions.get() + 1) },
-        ).await;
+        )
+        .await;
         assert_eq!(result, Err(LegalActorGateError::NotAuthorised));
         assert_eq!(executions.get(), 0);
 
@@ -285,7 +287,8 @@ mod tests {
             &Ready(false),
             || now,
             || async { executions.set(executions.get() + 1) },
-        ).await;
+        )
+        .await;
         assert_eq!(result, Err(LegalActorGateError::ProviderNotReady));
         assert_eq!(executions.get(), 0);
     }
@@ -301,7 +304,8 @@ mod tests {
             &Ready(true),
             || now,
             || async { "synthetic" },
-        ).await;
+        )
+        .await;
         assert_eq!(result, Ok("synthetic"));
     }
 }
