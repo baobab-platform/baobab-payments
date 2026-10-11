@@ -59,6 +59,12 @@ pub struct Harness {
 }
 
 pub fn harness() -> Harness {
+    harness_for_environment("development")
+}
+
+// Explicit runtime fixture: protected environments can authenticate, but
+// they must NEVER mutate sandbox money without certified CP/PSP gating.
+pub fn harness_for_environment(environment: &'static str) -> Harness {
     let service = Arc::new(PaymentService::new(
         Arc::new(SandboxProvider),
         Arc::new(OffsetDateTime::now_utc),
@@ -84,7 +90,7 @@ pub fn harness() -> Harness {
     let app = router(AppState {
         service: service.clone(),
         auth,
-        environment: "development",
+        environment,
     });
     Harness { app, service }
 }
