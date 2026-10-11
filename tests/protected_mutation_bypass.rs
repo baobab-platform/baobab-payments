@@ -11,38 +11,84 @@ async fn staging_and_production_never_execute_any_legacy_money_mutation_or_repla
         let bearer = token();
         let operations = [
             ("POST", "/v1/payment-intents", "payment:execute"),
-            ("POST", "/v1/payment-intents/pi_synthetic/confirm", "payment:execute"),
-            ("POST", "/v1/payment-intents/pi_synthetic/cancel", "payment:execute"),
-            ("POST", "/v1/payments/pay_synthetic/capture", "payment:execute"),
-            ("POST", "/v1/payments/pay_synthetic/refunds", "payment:refund"),
+            (
+                "POST",
+                "/v1/payment-intents/pi_synthetic/confirm",
+                "payment:execute",
+            ),
+            (
+                "POST",
+                "/v1/payment-intents/pi_synthetic/cancel",
+                "payment:execute",
+            ),
+            (
+                "POST",
+                "/v1/payments/pay_synthetic/capture",
+                "payment:execute",
+            ),
+            (
+                "POST",
+                "/v1/payments/pay_synthetic/refunds",
+                "payment:refund",
+            ),
         ];
         for (verb, route, _scope) in operations {
             // Use a scope-bearing workload token and a valid idempotency key.
             // A *replayed* key must still be refused in protected runtimes.
             let key = new_key();
             for _ in 0..2 {
-                let result = send(&h.app,verb,route,Some(&bearer),Some(&key),
+                let result = send(
+                    &h.app,
+                    verb,
+                    route,
+                    Some(&bearer),
+                    Some(&key),
                     Some(json!({"tenant_id":TENANT,"context":{
                         "tenant_id": TENANT, "legal_entity_id": "LE-SYNTHETIC",
                         "source_engine": "baobab-subscriptions"
-                    }}))).await;
-                assert_problem(&result,503,"PAYMENT_EXECUTION_NOT_CERTIFIED");
-                assert_ne!(result.headers.get("idempotent-replayed").map(|v|v.as_bytes()),Some(b"true".as_slice()));
+                    }})),
+                )
+                .await;
+                assert_problem(&result, 503, "PAYMENT_EXECUTION_NOT_CERTIFIED");
+                assert_ne!(
+                    result
+                        .headers
+                        .get("idempotent-replayed")
+                        .map(|v| v.as_bytes()),
+                    Some(b"true".as_slice())
+                );
             }
         }
-        assert!(h.service.events(TENANT).is_empty(),"protected bypass published simulated financial events");
+        assert!(
+            h.service.events(TENANT).is_empty(),
+            "protected bypass published simulated financial events"
+        );
     }
 }
 
 #[tokio::test]
 async fn protected_denial_does_not_skip_workload_authentication() {
     let h = harness_for_environment("staging");
-    let denied=send(&h.app,"POST","/v1/payment-intents",None,Some(&new_key()),
-        Some(intent_request("AUTOMATIC"))).await;
-    assert_problem(&denied,401,"AUTH_TOKEN_REQUIRED");
-    let unscoped = token_with(trusted(),|claims|claims["scope"]=json!("payment:read"));
-    let denied=send(&h.app,"POST","/v1/payment-intents",Some(&unscoped),Some(&new_key()),
-        Some(intent_request("AUTOMATIC"))).await;
-    assert_problem(&denied,403,"AUTHORIZATION_DENIED");
+    let denied = send(
+        &h.app,
+        "POST",
+        "/v1/payment-intents",
+        None,
+        Some(&new_key()),
+        Some(intent_request("AUTOMATIC")),
+    )
+    .await;
+    assert_problem(&denied, 401, "AUTH_TOKEN_REQUIRED");
+    let unscoped = token_with(trusted(), |claims| claims["scope"] = json!("payment:read"));
+    let denied = send(
+        &h.app,
+        "POST",
+        "/v1/payment-intents",
+        Some(&unscoped),
+        Some(&new_key()),
+        Some(intent_request("AUTOMATIC")),
+    )
+    .await;
+    assert_problem(&denied, 403, "AUTHORIZATION_DENIED");
     assert!(h.service.events(TENANT).is_empty());
 }
