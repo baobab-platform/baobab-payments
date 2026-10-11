@@ -3,6 +3,8 @@
 //! A clear scope NEVER grants PSP, merchant, financial or legal authority.
 //! No runtime activation: PaymentService remains an in-memory sandbox.
 
+use std::future::Future;
+
 use serde_json::Value;
 use time::format_description::well_known::Rfc3339;
 use time::{Duration, OffsetDateTime};
@@ -78,15 +80,18 @@ pub fn require_current_documentary_clearance(
 /// These callbacks MUST query CP with the same authenticated workload Context
 /// at point of use; passing cached event or client assertions is prohibited.
 /// No current PaymentService HTTP handler wires or activates this seam.
-pub fn execute_with_current_documentary_payment_authority<T>(
+pub async fn execute_with_current_documentary_payment_authority<T, F>(
     operation: &PaymentLegalOperation<'_>,
     organisation_id: &str,
     mut current_legal_actor: impl FnMut() -> Result<Value, LegalActorGateError>,
     mut current_documentary_scope: impl FnMut() -> Result<Value, LegalActorGateError>,
     provider: &dyn PaymentProviderLegalReadiness,
     now: impl Fn() -> OffsetDateTime,
-    execute: impl FnOnce() -> T,
-) -> Result<T, LegalActorGateError> {
+    execute: impl FnOnce() -> F,
+) -> Result<T, LegalActorGateError>
+where
+    F: Future<Output = T>,
+{
     let mandate = require_current_payment_actor(operation, &current_legal_actor()?, now())?;
     require_current_documentary_clearance(
         operation,
@@ -105,7 +110,9 @@ pub fn execute_with_current_documentary_payment_authority<T>(
         &current_documentary_scope()?,
         now(),
     )?;
-    Ok(execute())
+    // The mutation future must be awaited IN this guarded operation. Returning
+    // an unpolled future would let a caller execute after this lease expired.
+    Ok(execute().await)
 }
 
 #[cfg(test)]
@@ -218,8 +225,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn live_rechecks_deny_new_holds_mandate_revocation_and_unready_psp() {
+    #[tokio::test]
+    async fn live_rechecks_deny_new_holds_mandate_revocation_and_unready_psp() {
         let now = OffsetDateTime::now_utc();
         let executions = Cell::new(0);
         let legal_calls = Cell::new(0);
@@ -241,8 +248,8 @@ mod tests {
             },
             &Ready(true),
             || now,
-            || executions.set(executions.get() + 1),
-        );
+            || async { executions.set(executions.get() + 1) },
+        ).await;
         assert_eq!(result, Err(LegalActorGateError::NotAuthorised));
         assert_eq!(
             (legal_calls.get(), documentary_calls.get(), executions.get()),
@@ -265,8 +272,8 @@ mod tests {
             || Ok(clear(now)),
             &Ready(true),
             || now,
-            || executions.set(executions.get() + 1),
-        );
+            || async { executions.set(executions.get() + 1) },
+        ).await;
         assert_eq!(result, Err(LegalActorGateError::NotAuthorised));
         assert_eq!(executions.get(), 0);
 
@@ -277,14 +284,14 @@ mod tests {
             || Ok(clear(now)),
             &Ready(false),
             || now,
-            || executions.set(executions.get() + 1),
-        );
+            || async { executions.set(executions.get() + 1) },
+        ).await;
         assert_eq!(result, Err(LegalActorGateError::ProviderNotReady));
         assert_eq!(executions.get(), 0);
     }
 
-    #[test]
-    fn only_independently_ready_and_double_checked_synthetic_execution_reaches_callback() {
+    #[tokio::test]
+    async fn only_independently_ready_and_double_checked_synthetic_execution_reaches_callback() {
         let now = OffsetDateTime::now_utc();
         let result = execute_with_current_documentary_payment_authority(
             &op(),
@@ -293,8 +300,8 @@ mod tests {
             || Ok(clear(now)),
             &Ready(true),
             || now,
-            || "synthetic",
-        );
+            || async { "synthetic" },
+        ).await;
         assert_eq!(result, Ok("synthetic"));
     }
 }
