@@ -14,7 +14,10 @@ and payment operation reference. It accepts only CP's canonical
 positive, unexpired and at most two seconds. It never infers merchant KYC,
 regulated PSP permissions or settlement authority.
 
-The opt-in callback-based PEP checks **both** CP legal actor and current
+The opt-in **async** callback-based PEP awaits the provider execution
+future **inside the guarded method**; callers cannot receive an unpolled
+future to execute outside the current decision window. It checks **both**
+CP legal actor and current
 documentary veto before PSP readiness, then checks them **again** afterwards
 at the consequential point of use. Any missing CP response, stale/mismatched
 scope, newly imposed hold, changed legal mandate or unready PSP denies.
