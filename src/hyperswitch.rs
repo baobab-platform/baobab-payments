@@ -56,9 +56,15 @@ impl NativeOperation<'_> {
     fn path(&self) -> Result<String, HyperSwitchError> {
         match self {
             Self::Create => Ok("payments".into()),
-            Self::Confirm { payment_id } => Ok(format!("payments/{}/confirm", record_id(payment_id)?)),
-            Self::Capture { payment_id } => Ok(format!("payments/{}/capture", record_id(payment_id)?)),
-            Self::Cancel { payment_id } => Ok(format!("payments/{}/cancel", record_id(payment_id)?)),
+            Self::Confirm { payment_id } => {
+                Ok(format!("payments/{}/confirm", record_id(payment_id)?))
+            }
+            Self::Capture { payment_id } => {
+                Ok(format!("payments/{}/capture", record_id(payment_id)?))
+            }
+            Self::Cancel { payment_id } => {
+                Ok(format!("payments/{}/cancel", record_id(payment_id)?))
+            }
             Self::Refund => Ok("refunds".into()),
         }
     }
@@ -73,7 +79,9 @@ pub struct ProviderObservation {
 
 fn record_id(id: &str) -> Result<&str, HyperSwitchError> {
     if (3..=120).contains(&id.len())
-        && id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+        && id
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
     {
         Ok(id)
     } else {
@@ -83,7 +91,9 @@ fn record_id(id: &str) -> Result<&str, HyperSwitchError> {
 
 fn idempotency_key(value: &str) -> Result<&str, HyperSwitchError> {
     if (16..=128).contains(&value.len())
-        && value.bytes().all(|b| b.is_ascii_alphanumeric() || b"._:-".contains(&b))
+        && value
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"._:-".contains(&b))
     {
         Ok(value)
     } else {
@@ -100,8 +110,15 @@ fn reject_sensitive_data(value: &Value) -> Result<(), HyperSwitchError> {
                 let normalised = key.to_ascii_lowercase();
                 if matches!(
                     normalised.as_str(),
-                    "card_number" | "card_cvc" | "cvc" | "cvv" | "pan"
-                        | "account_number" | "bank_account_number" | "card_exp_month" | "card_exp_year"
+                    "card_number"
+                        | "card_cvc"
+                        | "cvc"
+                        | "cvv"
+                        | "pan"
+                        | "account_number"
+                        | "bank_account_number"
+                        | "card_exp_month"
+                        | "card_exp_year"
                 ) {
                     return Err(HyperSwitchError::InvalidOperation);
                 }
@@ -129,10 +146,15 @@ impl HyperSwitchTransport {
         Self::with_policy(origin, "synthetic-only-secret".into(), true)
     }
 
-    fn with_policy(origin: &str, api_key: String, test_loopback_http: bool) -> Result<Self, HyperSwitchError> {
+    fn with_policy(
+        origin: &str,
+        api_key: String,
+        test_loopback_http: bool,
+    ) -> Result<Self, HyperSwitchError> {
         let url = Url::parse(origin).map_err(|_| HyperSwitchError::Configuration)?;
         let loopback = matches!(url.host_str(), Some("localhost" | "127.0.0.1" | "[::1]"));
-        if !((url.scheme() == "https") || (test_loopback_http && loopback && url.scheme() == "http"))
+        if !((url.scheme() == "https")
+            || (test_loopback_http && loopback && url.scheme() == "http"))
             || url.username() != ""
             || url.password().is_some()
             || url.query().is_some()
@@ -149,7 +171,11 @@ impl HyperSwitchTransport {
             .redirect(reqwest::redirect::Policy::none())
             .build()
             .map_err(|_| HyperSwitchError::Configuration)?;
-        Ok(Self { client, origin: url, api_key })
+        Ok(Self {
+            client,
+            origin: url,
+            api_key,
+        })
     }
 
     /// A caller MUST already hold CP-issued, operation-scoped legal actor,
@@ -170,13 +196,20 @@ impl HyperSwitchTransport {
             return Err(HyperSwitchError::InvalidOperation);
         }
         reject_sensitive_data(governed_body)?;
-        let url = self.origin.join(&path).map_err(|_| HyperSwitchError::Configuration)?;
-        let response = self.client.request(Method::POST, url)
+        let url = self
+            .origin
+            .join(&path)
+            .map_err(|_| HyperSwitchError::Configuration)?;
+        let response = self
+            .client
+            .request(Method::POST, url)
             .header("api-key", self.api_key.as_str())
             .header("idempotency-key", key)
             .header("accept", "application/json")
             .json(governed_body)
-            .send().await.map_err(|_| HyperSwitchError::Unavailable)?;
+            .send()
+            .await
+            .map_err(|_| HyperSwitchError::Unavailable)?;
         let status = response.status();
         if !status.is_success() {
             return Err(if status.is_server_error() || status.as_u16() == 429 {
@@ -185,21 +218,43 @@ impl HyperSwitchTransport {
                 HyperSwitchError::Rejected
             });
         }
-        if response.content_length().is_some_and(|len| len > MAX_PROVIDER_RESPONSE_BYTES as u64) {
+        if response
+            .content_length()
+            .is_some_and(|len| len > MAX_PROVIDER_RESPONSE_BYTES as u64)
+        {
             return Err(HyperSwitchError::InvalidResponse);
         }
-        let bytes = response.bytes().await.map_err(|_| HyperSwitchError::Unavailable)?;
+        let bytes = response
+            .bytes()
+            .await
+            .map_err(|_| HyperSwitchError::Unavailable)?;
         if bytes.len() > MAX_PROVIDER_RESPONSE_BYTES {
             return Err(HyperSwitchError::InvalidResponse);
         }
-        let value: Value = serde_json::from_slice(&bytes).map_err(|_| HyperSwitchError::InvalidResponse)?;
-        let field = if operation == NativeOperation::Refund { "refund_id" } else { "payment_id" };
-        let native_reference = value.get(field).and_then(Value::as_str)
-            .filter(|s| (3..=120).contains(&s.len()) && s.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-'))
+        let value: Value =
+            serde_json::from_slice(&bytes).map_err(|_| HyperSwitchError::InvalidResponse)?;
+        let field = if operation == NativeOperation::Refund {
+            "refund_id"
+        } else {
+            "payment_id"
+        };
+        let native_reference = value
+            .get(field)
+            .and_then(Value::as_str)
+            .filter(|s| {
+                (3..=120).contains(&s.len())
+                    && s.bytes()
+                        .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+            })
             .ok_or(HyperSwitchError::InvalidResponse)?;
-        let provider_status = value.get("status").and_then(Value::as_str)
-            .filter(|s| !s.is_empty() && s.len() <= 64
-                && s.bytes().all(|b| b.is_ascii_lowercase() || b == b'_'))
+        let provider_status = value
+            .get("status")
+            .and_then(Value::as_str)
+            .filter(|s| {
+                !s.is_empty()
+                    && s.len() <= 64
+                    && s.bytes().all(|b| b.is_ascii_lowercase() || b == b'_')
+            })
             .ok_or(HyperSwitchError::InvalidResponse)?;
         Ok(ProviderObservation {
             native_reference: native_reference.into(),
@@ -211,10 +266,10 @@ impl HyperSwitchTransport {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axum::Router;
     use axum::extract::Json;
     use axum::http::{HeaderMap, StatusCode};
     use axum::routing::post;
-    use axum::Router;
     use serde_json::json;
 
     fn intent() -> Value {
@@ -238,7 +293,9 @@ mod tests {
                 HyperSwitchError::Configuration
             );
         }
-        let client = HyperSwitchTransport::new("https://payments.example.com/", "synthetic-secret".into()).unwrap();
+        let client =
+            HyperSwitchTransport::new("https://payments.example.com/", "synthetic-secret".into())
+                .unwrap();
         let debug = format!("{client:?}");
         assert!(!debug.contains("synthetic-secret"));
         assert!(debug.contains("<redacted>"));
@@ -259,8 +316,12 @@ mod tests {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
         let task = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
-        let transport = HyperSwitchTransport::loopback_test_client(&format!("http://{addr}/")).unwrap();
-        let response = transport.execute(NativeOperation::Create, &intent(), "stable-test-key-0001").await.unwrap();
+        let transport =
+            HyperSwitchTransport::loopback_test_client(&format!("http://{addr}/")).unwrap();
+        let response = transport
+            .execute(NativeOperation::Create, &intent(), "stable-test-key-0001")
+            .await
+            .unwrap();
         assert_eq!(response.native_reference, "pay_synthetic_001");
         assert_eq!(response.provider_status, "requires_payment_method");
         task.abort();
@@ -268,34 +329,57 @@ mod tests {
 
     #[tokio::test]
     async fn refuses_card_data_path_traversal_bad_key_and_unsafe_provider_response() {
-        let client = HyperSwitchTransport::new("https://payments.example.com/", "synthetic".into()).unwrap();
+        let client =
+            HyperSwitchTransport::new("https://payments.example.com/", "synthetic".into()).unwrap();
         for bad in [
             json!({"payment_method_data":{"card":{"card_number":"4242424242424242"}}}),
             json!({"account_number":"12345"}),
             json!({"card_cvc":"001"}),
         ] {
             assert_eq!(
-                client.execute(NativeOperation::Create, &bad, "stable-test-key-0001").await.unwrap_err(),
+                client
+                    .execute(NativeOperation::Create, &bad, "stable-test-key-0001")
+                    .await
+                    .unwrap_err(),
                 HyperSwitchError::InvalidOperation
             );
         }
         assert_eq!(
-            client.execute(NativeOperation::Confirm {payment_id:"../other"}, &intent(), "stable-test-key-0001").await.unwrap_err(),
+            client
+                .execute(
+                    NativeOperation::Confirm {
+                        payment_id: "../other"
+                    },
+                    &intent(),
+                    "stable-test-key-0001"
+                )
+                .await
+                .unwrap_err(),
             HyperSwitchError::InvalidOperation
         );
         assert_eq!(
-            client.execute(NativeOperation::Create, &intent(), "short").await.unwrap_err(),
+            client
+                .execute(NativeOperation::Create, &intent(), "short")
+                .await
+                .unwrap_err(),
             HyperSwitchError::InvalidOperation
         );
-        let app = Router::new().route("/payments", post(|| async {
-            Json(json!({"payment_id":"pay_synthetic_001", "status": "unknown;success"}))
-        }));
+        let app = Router::new().route(
+            "/payments",
+            post(|| async {
+                Json(json!({"payment_id":"pay_synthetic_001", "status": "unknown;success"}))
+            }),
+        );
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
         let task = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
-        let client = HyperSwitchTransport::loopback_test_client(&format!("http://{addr}/")).unwrap();
+        let client =
+            HyperSwitchTransport::loopback_test_client(&format!("http://{addr}/")).unwrap();
         assert_eq!(
-            client.execute(NativeOperation::Create, &intent(), "stable-test-key-0001").await.unwrap_err(),
+            client
+                .execute(NativeOperation::Create, &intent(), "stable-test-key-0001")
+                .await
+                .unwrap_err(),
             HyperSwitchError::InvalidResponse
         );
         task.abort();
@@ -303,15 +387,25 @@ mod tests {
 
     #[tokio::test]
     async fn rejects_provider_error_without_automatic_money_retry() {
-        let app = Router::new().route("/payments", post(|| async {
-            (StatusCode::SERVICE_UNAVAILABLE, Json(json!({"error":"provider down"})))
-        }));
+        let app = Router::new().route(
+            "/payments",
+            post(|| async {
+                (
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    Json(json!({"error":"provider down"})),
+                )
+            }),
+        );
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
         let task = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
-        let client = HyperSwitchTransport::loopback_test_client(&format!("http://{addr}/")).unwrap();
+        let client =
+            HyperSwitchTransport::loopback_test_client(&format!("http://{addr}/")).unwrap();
         assert_eq!(
-            client.execute(NativeOperation::Create, &intent(), "stable-test-key-0001").await.unwrap_err(),
+            client
+                .execute(NativeOperation::Create, &intent(), "stable-test-key-0001")
+                .await
+                .unwrap_err(),
             HyperSwitchError::Unavailable
         );
         task.abort();
