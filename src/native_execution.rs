@@ -11,7 +11,12 @@ use serde_json::{json, Value};
 use tokio_postgres::NoTls;
 use uuid::Uuid;
 
-use crate::documentary_restriction::execute_with_current_documentary_payment_authority;
+use crate::documentary_restriction::{
+    execute_with_current_documentary_payment_mandate,
+    require_current_documentary_clearance,
+};
+use crate::legal_actor::require_current_payment_actor;
+use std::cell::RefCell;
 use crate::hyperswitch::{HyperSwitchError, HyperSwitchTransport, NativeOperation, ProviderObservation};
 use crate::legal_actor::{LegalActorGateError, PaymentLegalOperation, PaymentProviderLegalReadiness};
 use time::OffsetDateTime;
@@ -94,8 +99,8 @@ impl NativeTransactionService {
         stable_idempotency_key: &str,
         native_operation: NativeOperation<'_>,
         body: &Value,
-        mut fresh_cp_actor: L,
-        mut fresh_documentary: D,
+        fresh_cp_actor: L,
+        fresh_documentary: D,
         readiness: &dyn PaymentProviderLegalReadiness,
         now: N,
     ) -> Result<ExecutionResult, ExecutionError>
@@ -105,22 +110,47 @@ impl NativeTransactionService {
         N: Fn() -> OffsetDateTime,
     {
         self.validate(context, operation, binding, stable_idempotency_key, &native_operation, body)?;
-        // The authority seam rechecks both CP actor and negative-only
-        // documentary clearance immediately before any DB/PSP mutation.
-        let mandate = crate::legal_actor::require_current_payment_actor(
-            operation, &fresh_cp_actor().map_err(|_| ExecutionError::GovernanceDenied)?,
-            now(),
-        ).map_err(|_| ExecutionError::GovernanceDenied)?;
-        let result = execute_with_current_documentary_payment_authority(
-            operation, &context.organisation_id.to_string(),
-            || fresh_cp_actor(),
-            || fresh_documentary(),
+        HyperSwitchTransport::validate_operation(&native_operation, body, stable_idempotency_key)
+            .map_err(|_| ExecutionError::InvalidScope)?;
+        // Shared references permit the authoritative sources to be re-queried
+        // after the journal transaction, not just before it. RefCell borrows
+        // are released synchronously before each async DB/network boundary.
+        let actor = RefCell::new(fresh_cp_actor);
+        let documentary = RefCell::new(fresh_documentary);
+        let result = execute_with_current_documentary_payment_mandate(
+            operation,
+            &context.organisation_id.to_string(),
+            || (actor.borrow_mut())(),
+            || (documentary.borrow_mut())(),
             readiness,
-            now,
-            || async {
+            || now(),
+            |mandate| async {
                 self.execute_after_authority(
                     context, binding, &mandate, stable_idempotency_key,
                     native_operation, body,
+                    || {
+                        // A DB connection/lock/commit may have consumed the
+                        // original negative-only two-second documentary lease.
+                        let checked = require_current_payment_actor(
+                            operation,
+                            &(actor.borrow_mut())()
+                                .map_err(|_| ExecutionError::GovernanceDenied)?,
+                            now(),
+                        ).map_err(|_| ExecutionError::GovernanceDenied)?;
+                        if checked != mandate {
+                            return Err(ExecutionError::GovernanceDenied);
+                        }
+                        require_current_documentary_clearance(
+                            operation,
+                            &context.organisation_id.to_string(),
+                            &(documentary.borrow_mut())()
+                                .map_err(|_| ExecutionError::GovernanceDenied)?,
+                            now(),
+                        ).map_err(|_| ExecutionError::GovernanceDenied)?;
+                        readiness.require_ready(operation, &mandate)
+                            .map_err(|_| ExecutionError::GovernanceDenied)?;
+                        Ok(())
+                    },
                 ).await
             },
         ).await.map_err(|_| ExecutionError::GovernanceDenied)?;
@@ -170,7 +200,7 @@ impl NativeTransactionService {
         Ok(())
     }
 
-    async fn execute_after_authority(
+    async fn execute_after_authority<F>(
         &self,
         scope: &NativePaymentContext,
         binding: &ProviderBinding,
@@ -178,7 +208,11 @@ impl NativeTransactionService {
         key: &str,
         operation: NativeOperation<'_>,
         body: &Value,
-    ) -> Result<ExecutionResult, ExecutionError> {
+        mut verify_again_at_send: F,
+    ) -> Result<ExecutionResult, ExecutionError>
+    where
+        F: FnMut() -> Result<(), ExecutionError>,
+    {
         let mandate = Uuid::parse_str(mandate_id).map_err(|_| ExecutionError::GovernanceDenied)?;
         let (mut client, connection) = tokio_postgres::connect(&self.database_url, NoTls)
             .await.map_err(|_| ExecutionError::JournalUnavailable)?;
@@ -235,6 +269,10 @@ impl NativeTransactionService {
             ],
         ).await.map_err(|_| ExecutionError::JournalUnavailable)?;
         trx.commit().await.map_err(|_| ExecutionError::JournalUnavailable)?;
+        // No PSP instruction can cross the durable DB commit boundary without
+        // a fresh second CP+documentary+provider readiness decision.
+        // A denial leaves the reservation held, never silently replays money.
+        verify_again_at_send()?;
         // The irreversible send happens only AFTER durable commit. A timeout
         // can mean remote success; do not silently resend on retry.
         let observed = self.transport.execute(operation, body, key).await;
@@ -408,12 +446,12 @@ mod tests {
         let key = format!("synthetic-{}", Uuid::now_v7()).replace("-", "");
         let first = service.execute_after_authority(
             &ctx, &binding(), "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
-            &key, NativeOperation::Create, &body(),
+            &key, NativeOperation::Create, &body(), || Ok(()),
         ).await.unwrap();
         assert!(matches!(first, ExecutionResult::ProviderObserved { .. }));
         let again = service.execute_after_authority(
             &ctx, &binding(), "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
-            &key, NativeOperation::Create, &body(),
+            &key, NativeOperation::Create, &body(), || Ok(()),
         ).await;
         assert_eq!(again, Err(ExecutionError::AlreadyReservedNeedsReconciliation));
         assert_eq!(calls.load(Ordering::SeqCst), 1);
