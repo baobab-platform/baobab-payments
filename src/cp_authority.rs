@@ -232,9 +232,9 @@ impl IamCpAuthority {
         self.verify_restriction(context, operation).await?;
         readiness.require_ready(operation, &first)
             .map_err(|_| CpAuthorityError::NotAuthorised)?;
-        let second = self.verified_mandate(context, operation, OffsetDateTime::now_utc()).await?;
+        let second = self.verified_mandate(context, operation).await?;
         if first != second { return Err(CpAuthorityError::NotAuthorised); }
-        self.verify_restriction(context, operation, OffsetDateTime::now_utc()).await?;
+        self.verify_restriction(context, operation).await?;
         Ok(second)
     }
 }
