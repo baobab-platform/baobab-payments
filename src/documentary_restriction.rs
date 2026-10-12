@@ -132,7 +132,10 @@ where
 {
     let first = require_current_payment_actor(operation, &current_legal_actor()?, now())?;
     require_current_documentary_clearance(
-        operation, organisation_id, &current_documentary_scope()?, now(),
+        operation,
+        organisation_id,
+        &current_documentary_scope()?,
+        now(),
     )?;
     provider.require_ready(operation, &first)?;
     let final_mandate = require_current_payment_actor(operation, &current_legal_actor()?, now())?;
@@ -140,7 +143,10 @@ where
         return Err(LegalActorGateError::NotAuthorised);
     }
     require_current_documentary_clearance(
-        operation, organisation_id, &current_documentary_scope()?, now(),
+        operation,
+        organisation_id,
+        &current_documentary_scope()?,
+        now(),
     )?;
     Ok(execute(final_mandate).await)
 }
