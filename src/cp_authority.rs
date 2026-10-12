@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use crate::documentary_restriction::require_current_documentary_clearance;
 use crate::legal_actor::{
-    LegalActorGateError, PaymentLegalOperation, PaymentProviderLegalReadiness,
+    PaymentLegalOperation, PaymentProviderLegalReadiness,
     require_current_payment_actor,
 };
 
@@ -49,6 +49,21 @@ impl std::fmt::Debug for IamCpAuthority {
             .field("client_secret", &"<redacted>")
             .finish_non_exhaustive()
     }
+}
+
+/// application/x-www-form-urlencoded: encode every non-unreserved byte so
+/// client credentials cannot inject extra OAuth request parameters.
+fn form_encode(value: &str) -> String {
+    let mut out = String::new();
+    for byte in value.bytes() {
+        if byte.is_ascii_alphanumeric() || b"-._~".contains(&byte) {
+            out.push(char::from(byte));
+        } else {
+            use std::fmt::Write;
+            let _ = write!(out, "%{byte:02X}");
+        }
+    }
+    out
 }
 
 impl IamCpAuthority {
@@ -93,13 +108,15 @@ impl IamCpAuthority {
     }
 
     async fn token(&self) -> Result<String, CpAuthorityError> {
+        let form = format!(
+            "grant_type=client_credentials&client_id={}&client_secret={}&scope={}",
+            form_encode(&self.workload_client_id),
+            form_encode(&self.workload_secret),
+            form_encode("context:resolve legal-actor:assess documentary:restriction-assess"),
+        );
         let response = self.http.post(self.token_endpoint.clone())
-            .form(&[
-                ("grant_type","client_credentials"),
-                ("client_id", self.workload_client_id.as_str()),
-                ("client_secret", self.workload_secret.as_str()),
-                ("scope","context:resolve legal-actor:assess documentary:restriction-assess"),
-            ])
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(form)
             .send().await.map_err(|_| CpAuthorityError::Unavailable)?;
         if !response.status().is_success() {
             return Err(CpAuthorityError::NotAuthorised);
