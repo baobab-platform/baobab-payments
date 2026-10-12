@@ -103,34 +103,22 @@ fn idempotency_key(value: &str) -> Result<&str, HyperSwitchError> {
 
 /// Reject un-tokenised card/bank details even if a caller accidentally places
 /// them in a provider request. Consumers pass only PSP-issued method tokens.
+/// Only tokenised scalar provider fields are allowed in this transport
+/// increment. Unknown or nested fields (including IBAN, direct-debit mandates,
+/// raw bank accounts and PCI card blocks) are deliberately denied.
 fn reject_sensitive_data(value: &Value) -> Result<(), HyperSwitchError> {
-    match value {
-        Value::Object(fields) => {
-            for (key, nested) in fields {
-                let normalised = key.to_ascii_lowercase();
-                if matches!(
-                    normalised.as_str(),
-                    "card_number"
-                        | "card_cvc"
-                        | "cvc"
-                        | "cvv"
-                        | "pan"
-                        | "account_number"
-                        | "bank_account_number"
-                        | "card_exp_month"
-                        | "card_exp_year"
-                ) {
-                    return Err(HyperSwitchError::InvalidOperation);
-                }
-                reject_sensitive_data(nested)?;
-            }
+    const TOKEN_ONLY_FIELDS: &[&str] = &[
+        "amount", "amount_to_capture", "currency", "capture_method",
+        "confirm", "profile_id", "payment_id", "refund_id",
+        "payment_token", "payment_method", "payment_method_type", "reason",
+    ];
+    let fields = value.as_object().ok_or(HyperSwitchError::InvalidOperation)?;
+    for (key, value) in fields {
+        if !TOKEN_ONLY_FIELDS.contains(&key.as_str())
+            || !(value.is_string() || value.is_boolean() || value.is_number())
+        {
+            return Err(HyperSwitchError::InvalidOperation);
         }
-        Value::Array(items) => {
-            for nested in items {
-                reject_sensitive_data(nested)?;
-            }
-        }
-        _ => {}
     }
     Ok(())
 }
@@ -200,7 +188,7 @@ impl HyperSwitchTransport {
             .origin
             .join(&path)
             .map_err(|_| HyperSwitchError::Configuration)?;
-        let response = self
+        let mut response = self
             .client
             .request(Method::POST, url)
             .header("api-key", self.api_key.as_str())
@@ -224,15 +212,22 @@ impl HyperSwitchTransport {
         {
             return Err(HyperSwitchError::InvalidResponse);
         }
-        let bytes = response
-            .bytes()
+        // Response::bytes() buffers an unbounded body when Content-Length
+        // is absent or false. Stop reading at the policy cap even for chunked
+        // or deliberately misreported provider responses.
+        let mut body = Vec::new();
+        while let Some(chunk) = response
+            .chunk()
             .await
-            .map_err(|_| HyperSwitchError::Unavailable)?;
-        if bytes.len() > MAX_PROVIDER_RESPONSE_BYTES {
-            return Err(HyperSwitchError::InvalidResponse);
+            .map_err(|_| HyperSwitchError::Unavailable)?
+        {
+            if chunk.len() > MAX_PROVIDER_RESPONSE_BYTES.saturating_sub(body.len()) {
+                return Err(HyperSwitchError::InvalidResponse);
+            }
+            body.extend_from_slice(&chunk);
         }
         let value: Value =
-            serde_json::from_slice(&bytes).map_err(|_| HyperSwitchError::InvalidResponse)?;
+            serde_json::from_slice(&body).map_err(|_| HyperSwitchError::InvalidResponse)?;
         let field = if operation == NativeOperation::Refund {
             "refund_id"
         } else {
