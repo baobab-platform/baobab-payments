@@ -12,7 +12,7 @@ DECLARE
 BEGIN
     BEGIN
         PERFORM payment_ops.reserve_native_execution(
-            'tn_synthetic_a','CAPTURE','synthetic-idemp-0001',repeat('a',64),
+            'tn_synthetica','CAPTURE','synthetic-idemp-0001',repeat('a',64),
             'pay_synthetic_001','0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c',
             'LE-SYNTHETIC-A','0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d',
             'synthetic/evidence','synthetic/cert','synthetic/activation','ZA','ZAR',1200);
@@ -23,7 +23,7 @@ BEGIN
 END;
 $$;
 
-SET baobab.tenant_id = 'tn_synthetic_a';
+SET baobab.tenant_id = 'tn_synthetica';
 DO $$
 DECLARE
     first_id uuid;
@@ -31,12 +31,12 @@ DECLARE
     denied boolean;
 BEGIN
     first_id := payment_ops.reserve_native_execution(
-        'tn_synthetic_a','CAPTURE','synthetic-idemp-0001',repeat('a',64),
+        'tn_synthetica','CAPTURE','synthetic-idemp-0001',repeat('a',64),
         'pay_synthetic_001','0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c',
         'LE-SYNTHETIC-A','0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d',
         'synthetic/evidence','synthetic/cert','synthetic/activation','ZA','ZAR',1200);
     replay_id := payment_ops.reserve_native_execution(
-        'tn_synthetic_a','CAPTURE','synthetic-idemp-0001',repeat('a',64),
+        'tn_synthetica','CAPTURE','synthetic-idemp-0001',repeat('a',64),
         'pay_synthetic_001','0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c',
         'LE-SYNTHETIC-A','0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d',
         'synthetic/evidence','synthetic/cert','synthetic/activation','ZA','ZAR',1200);
@@ -46,7 +46,7 @@ BEGIN
     denied := false;
     BEGIN
         PERFORM payment_ops.reserve_native_execution(
-            'tn_synthetic_a','CAPTURE','synthetic-idemp-0001',repeat('b',64),
+            'tn_synthetica','CAPTURE','synthetic-idemp-0001',repeat('b',64),
             'pay_synthetic_001','0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c',
             'LE-SYNTHETIC-A','0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d',
             'synthetic/evidence','synthetic/cert','synthetic/activation','ZA','ZAR',1200);
@@ -56,7 +56,7 @@ BEGIN
     denied := false;
     BEGIN
         PERFORM payment_ops.reserve_native_execution(
-            'tn_synthetic_a','CAPTURE','synthetic-idemp-0001',repeat('a',64),
+            'tn_synthetica','CAPTURE','synthetic-idemp-0001',repeat('a',64),
             'pay_synthetic_001','0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c',
             'LE-SYNTHETIC-OTHER','0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d',
             'synthetic/evidence','synthetic/cert','synthetic/activation','ZA','ZAR',1200);
@@ -66,10 +66,10 @@ BEGIN
 
     INSERT INTO payment_ops.provider_receipt
         (tenant_id, execution_id, provider_name, provider_event_id, observed_status, verified_payload_sha256)
-    VALUES ('tn_synthetic_a', first_id, 'hyperswitch-test', 'synthetic-psp-event-001', 'PENDING', repeat('c',64));
+    VALUES ('tn_synthetica', first_id, 'hyperswitch-test', 'synthetic-psp-event-001', 'PENDING', repeat('c',64));
     INSERT INTO payment_ops.transaction_outbox
         (tenant_id, execution_id, event_type, event_payload, correlation_id)
-    VALUES ('tn_synthetic_a', first_id, 'payments.native-operation.reserved.v1',
+    VALUES ('tn_synthetica', first_id, 'payments.native-operation.reserved.v1',
             jsonb_build_object('reference','pay_synthetic_001','simulated',true),
             '0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5000');
 
@@ -90,7 +90,7 @@ END;
 $$;
 
 -- RLS must hide another tenant's history and refuse cross-tenant writes.
-SET baobab.tenant_id = 'tn_synthetic_b';
+SET baobab.tenant_id = 'tn_syntheticb';
 DO $$
 DECLARE denied boolean := false;
 BEGIN
@@ -110,12 +110,12 @@ BEGIN
           cp_mandate_id,legal_actor_evidence_reference,provider_certification_reference,
           merchant_activation_reference,market_code,currency_code,amount_minor
         ) VALUES (
-          'tn_synthetic_a','CAPTURE','synthetic-idemp-0002',repeat('d',64),
+          'tn_synthetica','CAPTURE','synthetic-idemp-0002',repeat('d',64),
           'pay_synthetic_002','0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c','LE-SYNTHETIC-A',
           '0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d',
           'synthetic/evidence','synthetic/cert','synthetic/activation','ZA','ZAR',1200
         );
-    EXCEPTION WHEN check_violation THEN denied := true;
+    EXCEPTION WHEN check_violation OR insufficient_privilege THEN denied := true;
     END;
     IF NOT denied THEN RAISE EXCEPTION 'cross-tenant direct insertion succeeded'; END IF;
 END;
