@@ -329,6 +329,9 @@ mod tests {
         for bad in [
             json!({"payment_method_data":{"card":{"card_number":"4242424242424242"}}}),
             json!({"account_number":"12345"}),
+            json!({"iban":"DE89370400440532013000"}),
+            json!({"payment_method_data":{"sepa":{"iban":"DE89370400440532013000"}}}),
+            json!({"payment_method_data":{"bank":{"routing_number":"123"}}}),
             json!({"card_cvc":"001"}),
         ] {
             assert_eq!(
@@ -375,6 +378,34 @@ mod tests {
                 .execute(NativeOperation::Create, &intent(), "stable-test-key-0001")
                 .await
                 .unwrap_err(),
+            HyperSwitchError::InvalidResponse
+        );
+        task.abort();
+    }
+
+    #[tokio::test]
+    async fn refuses_oversized_chunked_response_without_buffering_whole_body() {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let task = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let mut request = [0_u8; 8192];
+            let _ = socket.read(&mut request).await;
+            let _ = socket.write_all(
+                b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Type: application/json\r\n\r\n",
+            ).await;
+            for _ in 0..75 {
+                if socket.write_all(b"400\r\n").await.is_err() { break; }
+                if socket.write_all(&vec![b'x'; 1024]).await.is_err() { break; }
+                if socket.write_all(b"\r\n").await.is_err() { break; }
+            }
+            let _ = socket.write_all(b"0\r\n\r\n").await;
+        });
+        let client = HyperSwitchTransport::loopback_test_client(&format!("http://{addr}/")).unwrap();
+        assert_eq!(
+            client.execute(NativeOperation::Create, &intent(), "stable-test-key-0001").await.unwrap_err(),
             HyperSwitchError::InvalidResponse
         );
         task.abort();
