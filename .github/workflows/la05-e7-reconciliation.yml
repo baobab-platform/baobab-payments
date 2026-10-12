@@ -1,0 +1,56 @@
+name: LA-05E7 Signed Webhook and Settlement Reconciliation
+on:
+  pull_request:
+    paths:
+      - "src/webhook_reconciliation.rs"
+      - "src/settlement_reconciliation.rs"
+      - "db/migrations/0002_webhook_settlement_reconciliation.sql"
+      - "db/tests/0002_webhook_settlement_reconciliation.sql"
+      - "Cargo.*"
+      - ".github/workflows/la05-e7-reconciliation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/webhook_reconciliation.rs"
+      - "src/settlement_reconciliation.rs"
+      - "db/migrations/0002_webhook_settlement_reconciliation.sql"
+      - "db/tests/0002_webhook_settlement_reconciliation.sql"
+      - "Cargo.*"
+      - ".github/workflows/la05-e7-reconciliation.yml"
+permissions:
+  contents: read
+jobs:
+  verified-webhook-settlement:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: baobab_payments_test
+          POSTGRES_USER: baobab
+          POSTGRES_PASSWORD: synthetic_only_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U baobab -d baobab_payments_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f
+        with:
+          toolchain: stable
+      - name: Apply native payment journal, signed receipt and settlement migration
+        run: |
+          docker run --rm --network host --volume "${GITHUB_WORKSPACE}/db:/db:ro" \
+            --env PGPASSWORD=synthetic_only_password postgres:17-alpine sh -euc '
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0001_native_payment_journal.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/tests/0001_native_payment_journal.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0002_webhook_settlement_reconciliation.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/tests/0002_webhook_settlement_reconciliation.sql
+            '
+      - name: Signed raw HMAC-SHA512 and independent bank verifier negative tests
+        run: |
+          cargo test --locked webhook_reconciliation::tests -- --nocapture
+          cargo test --locked settlement_reconciliation::tests -- --nocapture
