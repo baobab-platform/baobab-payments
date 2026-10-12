@@ -137,13 +137,13 @@ impl NativeTransactionService {
         // are released synchronously before each async DB/network boundary.
         let actor = RefCell::new(fresh_cp_actor);
         let documentary = RefCell::new(fresh_documentary);
-        let result = execute_with_current_documentary_payment_mandate(
+        execute_with_current_documentary_payment_mandate(
             operation,
             &context.organisation_id.to_string(),
             || (actor.borrow_mut())(),
             || (documentary.borrow_mut())(),
             readiness,
-            || now(),
+            &now,
             |mandate| {
                 let actor_ref = &actor;
                 let documentary_ref = &documentary;
@@ -188,8 +188,7 @@ impl NativeTransactionService {
             },
         )
         .await
-        .map_err(|_| ExecutionError::GovernanceDenied)?;
-        result
+        .map_err(|_| ExecutionError::GovernanceDenied)?
     }
 
     fn validate(
@@ -241,6 +240,7 @@ impl NativeTransactionService {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     async fn execute_after_authority<F>(
         &self,
         scope: &NativePaymentContext,
