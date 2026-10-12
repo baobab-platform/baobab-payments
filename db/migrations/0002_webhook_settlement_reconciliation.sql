@@ -39,6 +39,33 @@ CREATE TABLE payment_ops.settlement_evidence (
     UNIQUE (source_kind, independent_source, provider_engine_instance_id, provider_environment, external_event_id)
 );
 
+-- Unmatched PSP/BANK evidence is a first-class immutable exception,
+-- not lost because the native execution cannot yet be resolved.
+CREATE TABLE payment_ops.unmatched_settlement_evidence (
+    evidence_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id text NOT NULL,
+    responsible_legal_entity_id text NOT NULL,
+    source_kind text NOT NULL CHECK (source_kind IN ('PSP','BANK')),
+    independent_source text NOT NULL CHECK (length(btrim(independent_source)) BETWEEN 3 AND 160),
+    provider_engine_instance_id text NOT NULL,
+    provider_environment text NOT NULL CHECK (provider_environment IN ('SANDBOX','STAGING','PRODUCTION')),
+    batch_reference text NOT NULL,
+    external_event_id text NOT NULL,
+    payment_reference text NOT NULL,
+    currency_code text NOT NULL CHECK (currency_code ~ '^[A-Z]{3}$'),
+    gross_minor bigint NOT NULL CHECK (gross_minor > 0),
+    fee_minor bigint NOT NULL CHECK (fee_minor >= 0),
+    net_minor bigint NOT NULL CHECK (net_minor >= 0),
+    verified_source_proof_sha256 text NOT NULL CHECK (verified_source_proof_sha256 ~ '^[a-f0-9]{64}$'),
+    verification_method text NOT NULL,
+    exception_reason text NOT NULL DEFAULT 'NATIVE_EXECUTION_NOT_IDENTIFIED'
+       CHECK (exception_reason = 'NATIVE_EXECUTION_NOT_IDENTIFIED'),
+    recorded_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
+    CHECK (gross_minor = fee_minor + net_minor),
+    UNIQUE (source_kind, independent_source, provider_engine_instance_id,
+            provider_environment, external_event_id)
+);
+
 CREATE TABLE payment_ops.settlement_match (
     match_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id text NOT NULL,
@@ -63,9 +90,16 @@ CREATE TABLE payment_ops.settlement_match (
 ALTER TABLE payment_ops.settlement_evidence ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payment_ops.settlement_evidence FORCE ROW LEVEL SECURITY;
 ALTER TABLE payment_ops.settlement_match ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payment_ops.unmatched_settlement_evidence ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payment_ops.unmatched_settlement_evidence FORCE ROW LEVEL SECURITY;
 ALTER TABLE payment_ops.settlement_match FORCE ROW LEVEL SECURITY;
 
 CREATE POLICY settlement_evidence_actor ON payment_ops.settlement_evidence
+  USING (tenant_id = nullif(current_setting('baobab.tenant_id',true),'')
+    AND responsible_legal_entity_id = nullif(current_setting('baobab.responsible_legal_entity_id',true),''))
+  WITH CHECK (tenant_id = nullif(current_setting('baobab.tenant_id',true),'')
+    AND responsible_legal_entity_id = nullif(current_setting('baobab.responsible_legal_entity_id',true),''));
+CREATE POLICY unmatched_settlement_actor ON payment_ops.unmatched_settlement_evidence
   USING (tenant_id = nullif(current_setting('baobab.tenant_id',true),'')
     AND responsible_legal_entity_id = nullif(current_setting('baobab.responsible_legal_entity_id',true),''))
   WITH CHECK (tenant_id = nullif(current_setting('baobab.tenant_id',true),'')
@@ -79,6 +113,9 @@ CREATE POLICY settlement_match_actor ON payment_ops.settlement_match
 CREATE TRIGGER immutable_settlement_evidence BEFORE UPDATE OR DELETE
   ON payment_ops.settlement_evidence FOR EACH ROW
   EXECUTE FUNCTION payment_ops.refuse_historical_rewrite();
+CREATE TRIGGER immutable_unmatched_settlement_evidence BEFORE UPDATE OR DELETE
+ ON payment_ops.unmatched_settlement_evidence FOR EACH ROW
+ EXECUTE FUNCTION payment_ops.refuse_historical_rewrite();
 CREATE TRIGGER immutable_settlement_match BEFORE UPDATE OR DELETE
   ON payment_ops.settlement_match FOR EACH ROW
   EXECUTE FUNCTION payment_ops.refuse_historical_rewrite();
