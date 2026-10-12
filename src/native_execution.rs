@@ -124,7 +124,11 @@ impl NativeTransactionService {
             || (documentary.borrow_mut())(),
             readiness,
             || now(),
-            |mandate| async {
+            |mandate| {
+                let actor_ref = &actor;
+                let documentary_ref = &documentary;
+                let now_ref = &now;
+                async move {
                 self.execute_after_authority(
                     context, binding, &mandate, stable_idempotency_key,
                     native_operation, body,
@@ -133,9 +137,9 @@ impl NativeTransactionService {
                         // original negative-only two-second documentary lease.
                         let checked = require_current_payment_actor(
                             operation,
-                            &(actor.borrow_mut())()
+                            &(actor_ref.borrow_mut())()
                                 .map_err(|_| ExecutionError::GovernanceDenied)?,
-                            now(),
+                            now_ref(),
                         ).map_err(|_| ExecutionError::GovernanceDenied)?;
                         if checked != mandate {
                             return Err(ExecutionError::GovernanceDenied);
@@ -143,15 +147,16 @@ impl NativeTransactionService {
                         require_current_documentary_clearance(
                             operation,
                             &context.organisation_id.to_string(),
-                            &(documentary.borrow_mut())()
+                            &(documentary_ref.borrow_mut())()
                                 .map_err(|_| ExecutionError::GovernanceDenied)?,
-                            now(),
+                            now_ref(),
                         ).map_err(|_| ExecutionError::GovernanceDenied)?;
                         readiness.require_ready(operation, &mandate)
                             .map_err(|_| ExecutionError::GovernanceDenied)?;
                         Ok(())
                     },
                 ).await
+                }
             },
         ).await.map_err(|_| ExecutionError::GovernanceDenied)?;
         result
