@@ -119,18 +119,16 @@ BEGIN
   END IF;
   SELECT * INTO p FROM payment_ops.settlement_evidence
     WHERE evidence_id=p_psp AND tenant_id=p_tenant AND responsible_legal_entity_id=p_actor
-      AND execution_id=p_execution AND source_kind='PSP'
-    FOR KEY SHARE;
+      AND execution_id=p_execution AND source_kind='PSP';
   SELECT * INTO b FROM payment_ops.settlement_evidence
     WHERE evidence_id=p_bank AND tenant_id=p_tenant AND responsible_legal_entity_id=p_actor
-      AND execution_id=p_execution AND source_kind='BANK'
-    FOR KEY SHARE;
+      AND execution_id=p_execution AND source_kind='BANK';
   IF p.evidence_id IS NULL OR b.evidence_id IS NULL THEN
       RAISE EXCEPTION 'two independently verified evidence entries required' USING ERRCODE='23514';
   END IF;
   SELECT * INTO n FROM payment_ops.native_execution
    WHERE execution_id=p_execution AND tenant_id=p_tenant
-     AND responsible_legal_entity_id=p_actor FOR KEY SHARE;
+     AND responsible_legal_entity_id=p_actor;
   IF n.execution_id IS NULL THEN
      RAISE EXCEPTION 'native payment intent not present' USING ERRCODE='23514';
   END IF;
