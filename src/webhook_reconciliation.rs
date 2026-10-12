@@ -309,6 +309,50 @@ impl NativeWebhookReconciler {
     }
 }
 
+
+/// Explicit opt-in webhook HTTP ingress. This is NOT attached to the main
+/// PaymentService router and cannot be installed with production credentials
+/// through the local-only NativeWebhookReconciler constructor. In protected
+/// environments an ingress gateway additionally needs TLS, source routing,
+/// request limits, secret rotation and audit.
+pub fn synthetic_webhook_router(
+    source: std::sync::Arc<NativeWebhookReconciler>,
+) -> axum::Router {
+    use axum::{routing::post, extract::DefaultBodyLimit};
+    axum::Router::new()
+        .route("/internal/providers/hyperswitch/v1/webhooks", post(
+            |axum::extract::State(handler): axum::extract::State<std::sync::Arc<NativeWebhookReconciler>>,
+             headers: axum::http::HeaderMap,
+             payload: Result<axum::body::Bytes, axum::extract::rejection::BytesRejection>| async move {
+                let Some(signature) = headers.get("x-webhook-signature-512")
+                    .and_then(|v| v.to_str().ok()) else {
+                    return axum::http::StatusCode::FORBIDDEN;
+                };
+                if headers.get(axum::http::header::CONTENT_TYPE)
+                    .and_then(|v| v.to_str().ok())
+                    .is_none_or(|v| !v.eq_ignore_ascii_case("application/json"))
+                {
+                    return axum::http::StatusCode::UNSUPPORTED_MEDIA_TYPE;
+                }
+                let Ok(raw) = payload else {
+                    return axum::http::StatusCode::PAYLOAD_TOO_LARGE;
+                };
+                match handler.receive_signed(&raw, signature).await {
+                    Ok(WebhookResult::Stored{..} | WebhookResult::Duplicate{..}) =>
+                        axum::http::StatusCode::ACCEPTED,
+                    Err(WebhookError::SignatureDenied | WebhookError::ScopeMismatch) =>
+                        axum::http::StatusCode::FORBIDDEN,
+                    Err(WebhookError::UnrecognisedEvent) =>
+                        axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                    Err(WebhookError::Unavailable | WebhookError::ReconciliationRequired) =>
+                        axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                }
+            }
+        ))
+        .layer(DefaultBodyLimit::max(32*1024))
+        .with_state(source)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
