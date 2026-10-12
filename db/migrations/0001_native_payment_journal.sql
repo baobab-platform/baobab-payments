@@ -24,7 +24,8 @@ CREATE TABLE payment_ops.native_execution (
     amount_minor bigint NOT NULL CHECK (amount_minor > 0),
     recorded_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
     UNIQUE (tenant_id, responsible_legal_entity_id, operation_kind, idempotency_key),
-    UNIQUE (tenant_id, execution_id)
+    UNIQUE (tenant_id, execution_id),
+    UNIQUE (tenant_id, responsible_legal_entity_id, execution_id)
 );
 COMMENT ON TABLE payment_ops.native_execution IS
     'Immutable operation intent only; reference columns are not proof that external authorities or PSP certification exist.';
@@ -36,6 +37,7 @@ CREATE TABLE payment_ops.provider_receipt (
     receipt_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id text NOT NULL,
     execution_id uuid NOT NULL,
+    responsible_legal_entity_id text NOT NULL CHECK (length(btrim(responsible_legal_entity_id)) BETWEEN 3 AND 160),
     provider_name text NOT NULL CHECK (length(btrim(provider_name)) BETWEEN 2 AND 100),
     provider_engine_instance_id text NOT NULL CHECK (length(btrim(provider_engine_instance_id)) BETWEEN 3 AND 160),
     provider_environment text NOT NULL CHECK (provider_environment IN ('SANDBOX','STAGING','PRODUCTION')),
@@ -44,8 +46,8 @@ CREATE TABLE payment_ops.provider_receipt (
         ('AUTHORIZED','CAPTURED','DECLINED','PENDING','REFUNDED','VOIDED','SETTLED','DISPUTED')),
     verified_payload_sha256 text NOT NULL CHECK (verified_payload_sha256 ~ '^[a-f0-9]{64}$'),
     received_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
-    FOREIGN KEY (tenant_id, execution_id)
-       REFERENCES payment_ops.native_execution (tenant_id, execution_id),
+    FOREIGN KEY (tenant_id, responsible_legal_entity_id, execution_id)
+       REFERENCES payment_ops.native_execution (tenant_id, responsible_legal_entity_id, execution_id),
     UNIQUE (provider_name, provider_engine_instance_id, provider_environment, provider_event_id)
 );
 
@@ -55,6 +57,7 @@ CREATE TABLE payment_ops.transaction_outbox (
     event_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id text NOT NULL,
     execution_id uuid NOT NULL,
+    responsible_legal_entity_id text NOT NULL CHECK (length(btrim(responsible_legal_entity_id)) BETWEEN 3 AND 160),
     event_type text NOT NULL CHECK (event_type IN
        ('payments.native-operation.reserved.v1',
         'payments.provider-response.observed.v1',
@@ -62,8 +65,8 @@ CREATE TABLE payment_ops.transaction_outbox (
     event_payload jsonb NOT NULL CHECK (jsonb_typeof(event_payload) = 'object'),
     correlation_id uuid NOT NULL,
     recorded_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
-    FOREIGN KEY (tenant_id, execution_id)
-       REFERENCES payment_ops.native_execution (tenant_id, execution_id)
+    FOREIGN KEY (tenant_id, responsible_legal_entity_id, execution_id)
+       REFERENCES payment_ops.native_execution (tenant_id, responsible_legal_entity_id, execution_id)
 );
 
 CREATE INDEX native_execution_actor_scope_idx
@@ -84,14 +87,38 @@ ALTER TABLE payment_ops.transaction_outbox ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payment_ops.transaction_outbox FORCE ROW LEVEL SECURITY;
 
 CREATE POLICY execution_tenant ON payment_ops.native_execution
-    USING (tenant_id = nullif(current_setting('baobab.tenant_id', true), ''))
-    WITH CHECK (tenant_id = nullif(current_setting('baobab.tenant_id', true), ''));
+    USING (
+        tenant_id = nullif(current_setting('baobab.tenant_id', true), '')
+        AND responsible_legal_entity_id =
+            nullif(current_setting('baobab.responsible_legal_entity_id', true), '')
+    )
+    WITH CHECK (
+        tenant_id = nullif(current_setting('baobab.tenant_id', true), '')
+        AND responsible_legal_entity_id =
+            nullif(current_setting('baobab.responsible_legal_entity_id', true), '')
+    );
 CREATE POLICY receipt_tenant ON payment_ops.provider_receipt
-    USING (tenant_id = nullif(current_setting('baobab.tenant_id', true), ''))
-    WITH CHECK (tenant_id = nullif(current_setting('baobab.tenant_id', true), ''));
+    USING (
+        tenant_id = nullif(current_setting('baobab.tenant_id', true), '')
+        AND responsible_legal_entity_id =
+            nullif(current_setting('baobab.responsible_legal_entity_id', true), '')
+    )
+    WITH CHECK (
+        tenant_id = nullif(current_setting('baobab.tenant_id', true), '')
+        AND responsible_legal_entity_id =
+            nullif(current_setting('baobab.responsible_legal_entity_id', true), '')
+    );
 CREATE POLICY outbox_tenant ON payment_ops.transaction_outbox
-    USING (tenant_id = nullif(current_setting('baobab.tenant_id', true), ''))
-    WITH CHECK (tenant_id = nullif(current_setting('baobab.tenant_id', true), ''));
+    USING (
+        tenant_id = nullif(current_setting('baobab.tenant_id', true), '')
+        AND responsible_legal_entity_id =
+            nullif(current_setting('baobab.responsible_legal_entity_id', true), '')
+    )
+    WITH CHECK (
+        tenant_id = nullif(current_setting('baobab.tenant_id', true), '')
+        AND responsible_legal_entity_id =
+            nullif(current_setting('baobab.responsible_legal_entity_id', true), '')
+    );
 
 CREATE FUNCTION payment_ops.refuse_historical_rewrite() RETURNS trigger
 LANGUAGE plpgsql AS $$
@@ -129,7 +156,9 @@ DECLARE
     v_execution uuid;
     v_prior payment_ops.native_execution%ROWTYPE;
 BEGIN
-    IF p_tenant IS DISTINCT FROM nullif(current_setting('baobab.tenant_id', true), '') THEN
+    IF p_tenant IS DISTINCT FROM nullif(current_setting('baobab.tenant_id', true), '')
+        OR p_legal_actor IS DISTINCT FROM
+           nullif(current_setting('baobab.responsible_legal_entity_id', true), '') THEN
         RAISE EXCEPTION 'tenant context required' USING ERRCODE = '42501';
     END IF;
     INSERT INTO payment_ops.native_execution (
