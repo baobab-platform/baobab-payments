@@ -160,7 +160,11 @@ impl NativeWebhookReconciler {
         let payment_id =
             limited_id(object.get("payment_id"), 160).ok_or(WebhookError::UnrecognisedEvent)?;
         let is_refund = event_type == "refund_succeeded";
-        let expected_type = if is_refund { "refund_details" } else { "payment_details" };
+        let expected_type = if is_refund {
+            "refund_details"
+        } else {
+            "payment_details"
+        };
         if content.get("type").and_then(Value::as_str) != Some(expected_type) {
             return Err(WebhookError::UnrecognisedEvent);
         }
@@ -220,16 +224,23 @@ impl NativeWebhookReconciler {
                 AND o.event_payload->>'merchant_id'=$4
                 AND o.event_payload->>'provider_engine_instance_id'=$5
                 AND o.event_payload->>'provider_environment'=$6",
-                &[&source.tenant_id, &source.legal_entity_id, &payment_id,
-                &source.merchant_id, &source.provider_engine_instance_id,
-                &source.provider_environment],
+                &[
+                    &source.tenant_id,
+                    &source.legal_entity_id,
+                    &payment_id,
+                    &source.merchant_id,
+                    &source.provider_engine_instance_id,
+                    &source.provider_environment,
+                ],
             )
             .await
             .map_err(|_| WebhookError::Unavailable)?;
         if rows.len() != 1
             || (if is_refund {
                 amount_minor > rows[0].get::<_, i64>("amount_minor")
-            } else { rows[0].get::<_, i64>("amount_minor") != amount_minor })
+            } else {
+                rows[0].get::<_, i64>("amount_minor") != amount_minor
+            })
             || rows[0].get::<_, String>("currency_code") != currency
         {
             return Err(WebhookError::ScopeMismatch);
