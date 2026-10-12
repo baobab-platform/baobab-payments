@@ -134,6 +134,66 @@ CREATE INDEX settlement_match_execution_idx
  ON payment_ops.settlement_match
  (tenant_id,responsible_legal_entity_id,execution_id,recorded_at);
 
+-- Guard direct database inserts too: no client with INSERT privilege may
+-- fabricate a MATCHED fact by skipping the reconcile function.
+CREATE FUNCTION payment_ops.guard_settlement_match_insert() RETURNS trigger
+LANGUAGE plpgsql SECURITY INVOKER AS $$
+DECLARE
+  p payment_ops.settlement_evidence%ROWTYPE;
+  b payment_ops.settlement_evidence%ROWTYPE;
+  n payment_ops.native_execution%ROWTYPE;
+  actual_reason text;
+  actual_state text;
+BEGIN
+  IF NEW.tenant_id IS DISTINCT FROM nullif(current_setting('baobab.tenant_id',true),'')
+    OR NEW.responsible_legal_entity_id IS DISTINCT FROM
+        nullif(current_setting('baobab.responsible_legal_entity_id',true),'') THEN
+     RAISE EXCEPTION 'settlement actor denied' USING ERRCODE='42501';
+  END IF;
+  SELECT * INTO p FROM payment_ops.settlement_evidence
+    WHERE evidence_id=NEW.psp_evidence_id AND source_kind='PSP'
+      AND tenant_id=NEW.tenant_id
+      AND responsible_legal_entity_id=NEW.responsible_legal_entity_id
+      AND execution_id=NEW.execution_id;
+  SELECT * INTO b FROM payment_ops.settlement_evidence
+    WHERE evidence_id=NEW.bank_evidence_id AND source_kind='BANK'
+      AND tenant_id=NEW.tenant_id
+      AND responsible_legal_entity_id=NEW.responsible_legal_entity_id
+      AND execution_id=NEW.execution_id;
+  SELECT * INTO n FROM payment_ops.native_execution
+    WHERE execution_id=NEW.execution_id
+      AND tenant_id=NEW.tenant_id
+      AND responsible_legal_entity_id=NEW.responsible_legal_entity_id;
+  IF p.evidence_id IS NULL OR b.evidence_id IS NULL OR n.execution_id IS NULL THEN
+    RAISE EXCEPTION 'verified PSP, independent bank and native obligation required'
+      USING ERRCODE='23514';
+  END IF;
+  actual_reason = CASE
+    WHEN p.gross_minor<>n.amount_minor OR p.currency_code<>n.currency_code
+      OR p.payment_reference<>n.canonical_payment_reference
+      THEN 'PROVIDER_SCOPE_MISMATCH'
+    WHEN p.independent_source=b.independent_source THEN 'PROVIDER_SCOPE_MISMATCH'
+    WHEN p.provider_engine_instance_id<>b.provider_engine_instance_id
+      OR p.provider_environment<>b.provider_environment
+      OR p.batch_reference<>b.batch_reference
+      OR p.payment_reference<>b.payment_reference
+      THEN 'PROVIDER_SCOPE_MISMATCH'
+    WHEN p.currency_code<>b.currency_code THEN 'CURRENCY_MISMATCH'
+    WHEN p.net_minor<>b.net_minor OR b.fee_minor<>0 OR b.gross_minor<>b.net_minor
+      THEN 'BANK_AMOUNT_MISMATCH'
+    ELSE 'THREE_WAY_MATCH' END;
+  actual_state = CASE WHEN actual_reason='THREE_WAY_MATCH' THEN 'MATCHED' ELSE 'EXCEPTION' END;
+  IF NEW.reason_code IS DISTINCT FROM actual_reason
+    OR NEW.state IS DISTINCT FROM actual_state THEN
+     RAISE EXCEPTION 'settlement match contradicts independently verified source evidence'
+       USING ERRCODE='23514';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER guarded_settlement_match_insert BEFORE INSERT
+ON payment_ops.settlement_match FOR EACH ROW
+EXECUTE FUNCTION payment_ops.guard_settlement_match_insert();
+
 -- This function is deliberately *NOT* an approval for a payout, a financial
 -- ERP posting or certification. It deterministically appends a comparison
 -- of two independently ingested verified source records in the same actor
