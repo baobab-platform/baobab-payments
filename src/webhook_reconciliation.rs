@@ -159,11 +159,19 @@ impl NativeWebhookReconciler {
             .ok_or(WebhookError::UnrecognisedEvent)?;
         let payment_id =
             limited_id(object.get("payment_id"), 160).ok_or(WebhookError::UnrecognisedEvent)?;
-        if content.get("type").and_then(Value::as_str) != Some("payment_details") {
+        let is_refund = event_type == "refund_succeeded";
+        let expected_type = if is_refund { "refund_details" } else { "payment_details" };
+        if content.get("type").and_then(Value::as_str) != Some(expected_type) {
+            return Err(WebhookError::UnrecognisedEvent);
+        }
+        // Refund is a separate financial fact linked to its parent PSP
+        // payment, NOT a wholesale payment-status replacement. Partial
+        // refunds are bounded against the immutable original payment.
+        if is_refund && limited_id(object.get("refund_id"), 160).is_none() {
             return Err(WebhookError::UnrecognisedEvent);
         }
         let amount_minor = object
-            .get("amount")
+            .get(if is_refund { "refund_amount" } else { "amount" })
             .and_then(Value::as_i64)
             .filter(|a| *a > 0)
             .ok_or(WebhookError::UnrecognisedEvent)?;
@@ -219,7 +227,9 @@ impl NativeWebhookReconciler {
             .await
             .map_err(|_| WebhookError::Unavailable)?;
         if rows.len() != 1
-            || rows[0].get::<_, i64>("amount_minor") != amount_minor
+            || (if is_refund {
+                amount_minor > rows[0].get::<_, i64>("amount_minor")
+            } else { rows[0].get::<_, i64>("amount_minor") != amount_minor })
             || rows[0].get::<_, String>("currency_code") != currency
         {
             return Err(WebhookError::ScopeMismatch);
