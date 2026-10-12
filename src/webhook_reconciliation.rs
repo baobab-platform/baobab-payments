@@ -208,8 +208,13 @@ impl NativeWebhookReconciler {
                 AND o.responsible_legal_entity_id=n.responsible_legal_entity_id
               WHERE n.tenant_id=$1 AND n.responsible_legal_entity_id=$2
                 AND o.event_type='payments.provider-response.observed.v1'
-                AND o.event_payload->>'provider_reference'=$3",
-                &[&source.tenant_id, &source.legal_entity_id, &payment_id],
+                AND o.event_payload->>'provider_reference'=$3
+                AND o.event_payload->>'merchant_id'=$4
+                AND o.event_payload->>'provider_engine_instance_id'=$5
+                AND o.event_payload->>'provider_environment'=$6",
+                &[&source.tenant_id, &source.legal_entity_id, &payment_id,
+                &source.merchant_id, &source.provider_engine_instance_id,
+                &source.provider_environment],
             )
             .await
             .map_err(|_| WebhookError::Unavailable)?;
