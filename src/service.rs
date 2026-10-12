@@ -691,7 +691,6 @@ impl PaymentService {
         cp: &crate::cp_authority::IamCpAuthority,
         role: &str,
         activity: &str,
-        capability: &str,
         binding: &crate::native_execution::ProviderBinding,
         key: &str,
         body: &serde_json::Value,
@@ -709,7 +708,7 @@ impl PaymentService {
             role,
             activity,
             market: &context.market,
-            capability,
+            capability: "payments.intent.create",
             operation_reference: &context.payment_reference,
         };
         let native = self.native_execution.as_ref()
