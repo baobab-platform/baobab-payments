@@ -5,11 +5,11 @@
 pub mod auth;
 pub mod config;
 pub mod contracts;
+pub mod cp_authority;
 pub mod domain;
 pub mod http;
 pub mod hyperswitch;
 pub mod native_execution;
-pub mod cp_authority;
 pub mod provider;
 pub mod service;
 
