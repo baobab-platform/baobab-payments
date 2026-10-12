@@ -670,7 +670,7 @@ mod tests {
                 &key,
                 NativeOperation::Create,
                 &body(),
-                || Ok(()),
+                || async { Ok(()) },
             )
             .await;
         assert_eq!(
