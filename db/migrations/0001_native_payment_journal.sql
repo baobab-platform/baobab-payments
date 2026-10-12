@@ -23,7 +23,7 @@ CREATE TABLE payment_ops.native_execution (
     currency_code text NOT NULL CHECK (currency_code ~ '^[A-Z]{3}$'),
     amount_minor bigint NOT NULL CHECK (amount_minor > 0),
     recorded_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
-    UNIQUE (tenant_id, operation_kind, idempotency_key),
+    UNIQUE (tenant_id, responsible_legal_entity_id, operation_kind, idempotency_key),
     UNIQUE (tenant_id, execution_id)
 );
 COMMENT ON TABLE payment_ops.native_execution IS
@@ -37,6 +37,8 @@ CREATE TABLE payment_ops.provider_receipt (
     tenant_id text NOT NULL,
     execution_id uuid NOT NULL,
     provider_name text NOT NULL CHECK (length(btrim(provider_name)) BETWEEN 2 AND 100),
+    provider_engine_instance_id text NOT NULL CHECK (length(btrim(provider_engine_instance_id)) BETWEEN 3 AND 160),
+    provider_environment text NOT NULL CHECK (provider_environment IN ('SANDBOX','STAGING','PRODUCTION')),
     provider_event_id text NOT NULL CHECK (length(btrim(provider_event_id)) BETWEEN 3 AND 180),
     observed_status text NOT NULL CHECK (observed_status IN
         ('AUTHORIZED','CAPTURED','DECLINED','PENDING','REFUNDED','VOIDED','SETTLED','DISPUTED')),
@@ -44,7 +46,7 @@ CREATE TABLE payment_ops.provider_receipt (
     received_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
     FOREIGN KEY (tenant_id, execution_id)
        REFERENCES payment_ops.native_execution (tenant_id, execution_id),
-    UNIQUE (provider_name, provider_event_id)
+    UNIQUE (provider_name, provider_engine_instance_id, provider_environment, provider_event_id)
 );
 
 -- Immutable dispatch facts; retry delivery state belongs in a separate
@@ -140,14 +142,14 @@ BEGIN
         p_tenant, p_kind, p_key, p_hash, p_payment_ref, p_organisation,
         p_legal_actor, p_mandate, p_actor_evidence, p_certification,
         p_merchant_activation, p_market, p_currency, p_amount
-    ) ON CONFLICT (tenant_id, operation_kind, idempotency_key)
+    ) ON CONFLICT (tenant_id, responsible_legal_entity_id, operation_kind, idempotency_key)
         DO NOTHING RETURNING execution_id INTO v_execution;
     IF v_execution IS NOT NULL THEN
         RETURN v_execution;
     END IF;
     SELECT * INTO v_prior FROM payment_ops.native_execution
-      WHERE tenant_id = p_tenant AND operation_kind = p_kind
-        AND idempotency_key = p_key;
+      WHERE tenant_id = p_tenant AND responsible_legal_entity_id = p_legal_actor
+        AND operation_kind = p_kind AND idempotency_key = p_key;
     IF NOT FOUND OR v_prior.request_sha256 <> p_hash
         OR v_prior.canonical_payment_reference <> p_payment_ref
         OR v_prior.operating_organisation_id <> p_organisation
