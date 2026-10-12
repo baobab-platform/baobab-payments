@@ -1,0 +1,23 @@
+name: LA-05E7 one-off rustfmt
+on:
+  push:
+    branches: [feat/la05-webhook-settlement-reconciliation]
+    paths: [.github/workflows/la05-e7-fmt-once.yml]
+permissions:
+  contents: read
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f
+        with:
+          toolchain: stable
+          components: rustfmt
+      - run: |
+          cargo fmt --all
+          for f in src/native_execution.rs src/settlement_reconciliation.rs src/webhook_reconciliation.rs; do
+            echo "###FMT_START $f###"
+            cat "$f"
+            echo "###FMT_END $f###"
+          done
