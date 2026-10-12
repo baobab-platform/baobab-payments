@@ -11,9 +11,9 @@ pub mod http;
 pub mod hyperswitch;
 pub mod native_execution;
 pub mod provider;
+pub mod service;
 pub mod settlement_reconciliation;
 pub mod webhook_reconciliation;
-pub mod service;
 
 pub mod documentary_restriction;
 pub mod legal_actor;
