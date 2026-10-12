@@ -28,6 +28,7 @@ use time::OffsetDateTime;
 /// from a browser, payment Create body, webhook or mutable tenant display name.
 #[derive(Debug, Clone)]
 pub struct ProviderBinding {
+    pub merchant_id: String,
     pub certification_reference: String,
     pub merchant_activation_reference: String,
     pub provider_engine_instance_id: String,
@@ -200,7 +201,10 @@ impl NativeTransactionService {
         native: &NativeOperation<'_>,
         body: &Value,
     ) -> Result<(), ExecutionError> {
-        if !context.tenant_id.starts_with("tn_")
+        if binding.merchant_id.len() < 3 || binding.merchant_id.len() > 160
+            || !binding.merchant_id.bytes().all(|x|
+                x.is_ascii_alphanumeric() || b"._:-".contains(&x))
+            || !context.tenant_id.starts_with("tn_")
             || context.tenant_id.len() > 63
             || context.tenant_id[3..].is_empty()
             || !context.tenant_id[3..]
@@ -355,7 +359,7 @@ impl NativeTransactionService {
         // The irreversible send happens only AFTER durable commit. A timeout
         // can mean remote success; do not silently resend on retry.
         let observed = self.transport.execute(operation, body, key).await;
-        self.persist_observation(scope, execution_id, &observed)
+        self.persist_observation(scope, binding, execution_id, &observed)
             .await?;
         match observed {
             Ok(ProviderObservation {
@@ -379,6 +383,7 @@ impl NativeTransactionService {
     async fn persist_observation(
         &self,
         scope: &NativePaymentContext,
+        binding: &ProviderBinding,
         execution: Uuid,
         observed: &Result<ProviderObservation, HyperSwitchError>,
     ) -> Result<(), ExecutionError> {
@@ -409,7 +414,10 @@ impl NativeTransactionService {
         let (kind, evidence) = match observed {
             Ok(state) => (
                 "payments.provider-response.observed.v1",
-                json!({"provider_reference":state.native_reference, "provider_status":state.provider_status}),
+                json!({"provider_reference":state.native_reference, "provider_status":state.provider_status,
+                    "provider_engine_instance_id": binding.provider_engine_instance_id,
+                    "provider_environment": "SANDBOX",
+                    "merchant_id": binding.merchant_id}),
             ),
             Err(_) => (
                 "payments.settlement.reconciliation-requested.v1",
@@ -475,6 +483,7 @@ mod tests {
 
     fn binding() -> ProviderBinding {
         ProviderBinding {
+            merchant_id: "merchant_synthetic".into(),
             certification_reference: "synthetic-certification-not-valid".into(),
             merchant_activation_reference: "synthetic-merchant-not-valid".into(),
             provider_engine_instance_id: "synthetic-hyperswitch".into(),
