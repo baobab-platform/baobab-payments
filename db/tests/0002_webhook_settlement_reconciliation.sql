@@ -85,5 +85,36 @@ BEGIN
     RAISE EXCEPTION 'RLS leaked foreign settlement matches';
   END IF;
 END $$;
+-- Preserve an independently verified but unlinked bank deposit without
+-- inventing an iDempiere order or native payment execution.
+DO $$
+DECLARE
+  unmatched_id uuid;
+  denied boolean := false;
+BEGIN
+  INSERT INTO payment_ops.unmatched_settlement_evidence
+    (tenant_id,responsible_legal_entity_id,source_kind,independent_source,
+     provider_engine_instance_id,provider_environment,batch_reference,
+     external_event_id,payment_reference,currency_code,gross_minor,
+     fee_minor,net_minor,verified_source_proof_sha256,verification_method)
+  VALUES('tn_syntheticrecon','LE-SYNTHETIC-ZA','BANK','synthetic.bank',
+    'synthetic-engine','SANDBOX','unmatched-batch',
+    'unmatched-bank-event','unknown-bank-deposit','ZAR',999,0,999,
+    repeat('f',64),'synthetic-independent-bank-proof')
+  RETURNING evidence_id INTO unmatched_id;
+  IF unmatched_id IS NULL THEN RAISE EXCEPTION 'unmatched source evidence was lost'; END IF;
+  BEGIN
+    UPDATE payment_ops.unmatched_settlement_evidence
+       SET payment_reference='fraudulent-relink'
+     WHERE evidence_id=unmatched_id;
+  EXCEPTION WHEN insufficient_privilege OR raise_exception THEN denied := true;
+  END;
+  IF NOT denied THEN RAISE EXCEPTION 'unmatched historical source was mutable'; END IF;
+  PERFORM set_config('baobab.tenant_id','tn_another',true);
+  IF EXISTS (SELECT 1 FROM payment_ops.unmatched_settlement_evidence
+              WHERE evidence_id=unmatched_id) THEN
+    RAISE EXCEPTION 'unmatched source leaked across tenant';
+  END IF;
+END $$;
 RESET ROLE;
 SELECT 'LA-05E7 PostgreSQL matching/RLS/immutable exception tests passed' AS result;
