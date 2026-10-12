@@ -141,7 +141,7 @@ impl HyperSwitchTransport {
     }
 
     #[cfg(test)]
-    fn loopback_test_client(origin: &str) -> Result<Self, HyperSwitchError> {
+    pub(crate) fn loopback_test_client(origin: &str) -> Result<Self, HyperSwitchError> {
         Self::with_policy(origin, "synthetic-only-secret".into(), true)
     }
 
