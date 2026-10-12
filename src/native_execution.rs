@@ -334,7 +334,7 @@ impl NativeTransactionService {
                (tenant_id, responsible_legal_entity_id, execution_id,
                 event_type, event_payload, correlation_id)
              VALUES ($1,$2,$3,'payments.native-operation.reserved.v1',
-                jsonb_build_object('payment_reference',$4,'kind','CREATE_INTENT'),$5)",
+                jsonb_build_object('payment_reference',$4::text,'kind','CREATE_INTENT'),$5)",
             &[
                 &scope.tenant_id,
                 &scope.legal_entity_id,
