@@ -167,6 +167,62 @@ impl LocalSettlementJournal {
         Ok(id)
     }
 
+    /// Keep a signed/independently attested bank/PSP line even when no
+    /// canonical payment execution has been identified. This is an immutable
+    /// exception, not a matched or paid state. Later resolution inserts
+    /// separate attribution evidence rather than rewriting this row.
+    pub async fn append_unmatched_verified(
+        &self, actor: &AttributionScope, statement: &StatementLine,
+        verifier: &dyn EvidenceVerifier,
+    ) -> Result<Uuid, ReconciliationError> {
+        if !verifier.independently_verified(statement)
+            || statement.raw_source.is_empty()
+            || statement.raw_source.len() > 256*1024
+            || statement.independent_source.trim().len() < 3
+            || statement.source_event_id.trim().len() < 3
+            || statement.batch_reference.trim().len() < 3
+            || statement.verified_method.trim().len() < 3
+            || statement.engine_instance_id.trim().len() < 3
+            || statement.canonical_payment_reference.trim().len() < 3
+            || statement.currency.len() != 3
+            || statement.gross_minor <= 0 || statement.fee_minor < 0
+            || statement.net_minor < 0
+            || statement.gross_minor.checked_sub(statement.fee_minor) != Some(statement.net_minor)
+            || !matches!(statement.environment.as_str(),"SANDBOX"|"STAGING")
+        { return Err(ReconciliationError::InvalidEvidence); }
+        let hash = hex::encode(Sha256::digest(&statement.raw_source));
+        let (mut db, connection) = tokio_postgres::connect(&self.database_url,NoTls)
+            .await.map_err(|_|ReconciliationError::DatabaseUnavailable)?;
+        tokio::spawn(async move { let _ = connection.await; });
+        let tx = db.transaction().await.map_err(|_|ReconciliationError::DatabaseUnavailable)?;
+        tx.query_one("SELECT set_config('baobab.tenant_id',$1,true)", &[&actor.tenant_id])
+            .await.map_err(|_|ReconciliationError::DatabaseUnavailable)?;
+        tx.query_one("SELECT set_config('baobab.responsible_legal_entity_id',$1,true)",
+            &[&actor.responsible_legal_entity_id]).await
+            .map_err(|_|ReconciliationError::DatabaseUnavailable)?;
+        let record=tx.query_one(
+            "INSERT INTO payment_ops.unmatched_settlement_evidence
+             (tenant_id,responsible_legal_entity_id,source_kind,independent_source,
+              provider_engine_instance_id,provider_environment,batch_reference,external_event_id,
+              payment_reference,currency_code,gross_minor,fee_minor,net_minor,
+              verified_source_proof_sha256,verification_method)
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+              RETURNING evidence_id",
+            &[
+                &actor.tenant_id,&actor.responsible_legal_entity_id,
+                &statement.source_kind.as_str(),&statement.independent_source,
+                &statement.engine_instance_id,&statement.environment,
+                &statement.batch_reference,&statement.source_event_id,
+                &statement.canonical_payment_reference,&statement.currency,
+                &statement.gross_minor,&statement.fee_minor,&statement.net_minor,
+                &hash,&statement.verified_method,
+            ],
+        ).await.map_err(|_|ReconciliationError::AlreadyRecorded)?;
+        let id: Uuid=record.get(0);
+        tx.commit().await.map_err(|_|ReconciliationError::DatabaseUnavailable)?;
+        Ok(id)
+    }
+
     /// Append a deterministic reconciliation decision; a MATCHED pair is
     /// still NOT an authorisation to disburse funds or post an ERP invoice.
     pub async fn reconcile(
