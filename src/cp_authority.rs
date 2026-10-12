@@ -193,19 +193,19 @@ impl IamCpAuthority {
     }
 
     pub async fn verified_mandate(&self, context: &CpRuntimeContext,
-        operation: &PaymentLegalOperation<'_>, now: OffsetDateTime,
+        operation: &PaymentLegalOperation<'_>,
     ) -> Result<String, CpAuthorityError> {
         if operation.context_id != context.context_id.to_string()
             || operation.expected_legal_entity_id != context.expected_legal_entity_id
         { return Err(CpAuthorityError::NotAuthorised); }
         let response = self.post("/internal/legal-actor/v1/assess", &operation.request()
             .map_err(|_| CpAuthorityError::NotAuthorised)?).await?;
-        require_current_payment_actor(operation, &response, now)
+        require_current_payment_actor(operation, &response, OffsetDateTime::now_utc())
             .map_err(|_| CpAuthorityError::NotAuthorised)
     }
 
     pub async fn verify_restriction(&self, context: &CpRuntimeContext,
-        operation: &PaymentLegalOperation<'_>, now: OffsetDateTime,
+        operation: &PaymentLegalOperation<'_>,
     ) -> Result<(), CpAuthorityError> {
         if operation.context_id != context.context_id.to_string()
         { return Err(CpAuthorityError::NotAuthorised); }
@@ -217,7 +217,7 @@ impl IamCpAuthority {
         });
         let result = self.post("/internal/documentary/v1/restrictions/assess", &body).await?;
         require_current_documentary_clearance(
-            operation, &context.primary_organisation_id.to_string(), &result, now,
+            operation, &context.primary_organisation_id.to_string(), &result, OffsetDateTime::now_utc(),
         ).map_err(|_| CpAuthorityError::NotAuthorised)
     }
 
@@ -225,8 +225,11 @@ impl IamCpAuthority {
         operation: &PaymentLegalOperation<'_>,
         readiness: &dyn PaymentProviderLegalReadiness,
     ) -> Result<String, CpAuthorityError> {
-        let first = self.verified_mandate(context, operation, OffsetDateTime::now_utc()).await?;
-        self.verify_restriction(context, operation, OffsetDateTime::now_utc()).await?;
+        if operation.capability != "payments.intent.create" {
+            return Err(CpAuthorityError::NotAuthorised);
+        }
+        let first = self.verified_mandate(context, operation).await?;
+        self.verify_restriction(context, operation).await?;
         readiness.require_ready(operation, &first)
             .map_err(|_| CpAuthorityError::NotAuthorised)?;
         let second = self.verified_mandate(context, operation, OffsetDateTime::now_utc()).await?;
@@ -279,7 +282,7 @@ mod tests {
             primary_organisation_id: Uuid::now_v7(),
             expected_legal_entity_id: operation.expected_legal_entity_id.into(),
         };
-        assert_eq!(a.verified_mandate(&context, &operation, OffsetDateTime::now_utc()).await,
+        assert_eq!(a.verified_mandate(&context, &operation).await,
             Err(CpAuthorityError::NotAuthorised));
         server.abort();
     }
