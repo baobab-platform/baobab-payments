@@ -8,7 +8,7 @@
 
 use sha2::{Digest, Sha256};
 use serde_json::{json, Value};
-use tokio_postgres::{NoTls, Error as DbError};
+use tokio_postgres::NoTls;
 use uuid::Uuid;
 
 use crate::documentary_restriction::execute_with_current_documentary_payment_authority;
@@ -161,8 +161,8 @@ impl NativeTransactionService {
         // requires its own certification, amount and beneficiary invariants.
         if *native != NativeOperation::Create
             || body.get("amount").and_then(Value::as_i64) != Some(context.amount_minor)
-            || body.get("currency").and_then(Value::as_str) != Some(&context.currency)
-            || body.get("profile_id").and_then(Value::as_str) != Some(&binding.profile_id)
+            || body.get("currency").and_then(Value::as_str) != Some(context.currency.as_str())
+            || body.get("profile_id").and_then(Value::as_str) != Some(binding.profile_id.as_str())
             || body.get("confirm").and_then(Value::as_bool) != Some(false)
         {
             return Err(ExecutionError::InvalidScope);
@@ -190,14 +190,14 @@ impl NativeTransactionService {
         let trx = client.transaction().await.map_err(|_| ExecutionError::JournalUnavailable)?;
         // Session-local trusted context. Never pass it via request-supplied
         // headers or provider callbacks; FORCE RLS binds every child row.
-        trx.execute("SELECT set_config('baobab.tenant_id',$1,true)", &[&scope.tenant_id])
+        trx.query_one("SELECT set_config('baobab.tenant_id',$1,true)", &[&scope.tenant_id])
             .await.map_err(|_| ExecutionError::JournalUnavailable)?;
         trx.execute("SELECT set_config('baobab.responsible_legal_entity_id',$1,true)", &[&scope.legal_entity_id])
             .await.map_err(|_| ExecutionError::JournalUnavailable)?;
         let body_hash = hex::encode(Sha256::digest(body.to_string().as_bytes()));
         // Serialize competing workers at the exact tenant/actor/operation/key
         // boundary. A replay never initiates another native provider call.
-        trx.execute(
+        trx.query_one(
             "SELECT pg_advisory_xact_lock(hashtextextended($1, 0))",
             &[&format!("{}|{}|CREATE_INTENT|{}", scope.tenant_id, scope.legal_entity_id, key)],
         ).await.map_err(|_| ExecutionError::JournalUnavailable)?;
