@@ -8,6 +8,7 @@ pub mod contracts;
 pub mod domain;
 pub mod http;
 pub mod hyperswitch;
+pub mod native_execution;
 pub mod provider;
 pub mod service;
 

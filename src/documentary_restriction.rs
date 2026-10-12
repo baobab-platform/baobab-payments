@@ -115,6 +115,42 @@ where
     Ok(execute().await)
 }
 
+/// Variant for durable PSP execution: the only mandate passed to the
+/// transaction boundary is the SAME mandate verified in both live CP reads.
+/// A preliminary caller-side mandate must never be journalled as the actor.
+pub async fn execute_with_current_documentary_payment_mandate<T, F>(
+    operation: &PaymentLegalOperation<'_>,
+    organisation_id: &str,
+    mut current_legal_actor: impl FnMut() -> Result<Value, LegalActorGateError>,
+    mut current_documentary_scope: impl FnMut() -> Result<Value, LegalActorGateError>,
+    provider: &dyn PaymentProviderLegalReadiness,
+    now: impl Fn() -> OffsetDateTime,
+    execute: impl FnOnce(String) -> F,
+) -> Result<T, LegalActorGateError>
+where
+    F: Future<Output = T>,
+{
+    let first = require_current_payment_actor(operation, &current_legal_actor()?, now())?;
+    require_current_documentary_clearance(
+        operation,
+        organisation_id,
+        &current_documentary_scope()?,
+        now(),
+    )?;
+    provider.require_ready(operation, &first)?;
+    let final_mandate = require_current_payment_actor(operation, &current_legal_actor()?, now())?;
+    if first != final_mandate {
+        return Err(LegalActorGateError::NotAuthorised);
+    }
+    require_current_documentary_clearance(
+        operation,
+        organisation_id,
+        &current_documentary_scope()?,
+        now(),
+    )?;
+    Ok(execute(final_mandate).await)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

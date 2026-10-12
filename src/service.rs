@@ -138,6 +138,7 @@ pub struct PaymentService {
     state: Mutex<State>,
     provider: Arc<dyn PaymentProvider>,
     clock: Clock,
+    native_execution: Option<Arc<crate::native_execution::NativeTransactionService>>,
 }
 
 /// Who is asking: the authenticated workload and the request's correlation.
@@ -185,6 +186,7 @@ impl PaymentService {
             state: Mutex::new(State::default()),
             provider,
             clock,
+            native_execution: None,
         }
     }
 
@@ -619,5 +621,61 @@ impl PaymentService {
                     .collect()
             })
             .unwrap_or_default()
+    }
+}
+
+impl PaymentService {
+    /// Explicit, non-default native integration dependency. The public HTTP
+    /// production handlers are deliberately NOT wired to this local synthetic
+    /// executor; authenticating the CP caller and verifying PSP certification
+    /// remain independently required.
+    pub fn with_local_native_transaction_service(
+        mut self,
+        native: Arc<crate::native_execution::NativeTransactionService>,
+    ) -> Self {
+        self.native_execution = Some(native);
+        self
+    }
+
+    /// Unlike the in-memory SandboxProvider lifecycle, this exercises the
+    /// durable PostgreSQL reservation and actual HyperSwitch transport.
+    /// Missing native runtime always denies; a caller cannot silently fall
+    /// back to simulated capture.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn create_native_intent<'a, L, D, N>(
+        &self,
+        context: &crate::native_execution::NativePaymentContext,
+        operation: &crate::legal_actor::PaymentLegalOperation<'a>,
+        binding: &crate::native_execution::ProviderBinding,
+        key: &str,
+        body: &serde_json::Value,
+        current_actor: L,
+        current_documentary: D,
+        readiness: &dyn crate::legal_actor::PaymentProviderLegalReadiness,
+        now: N,
+    ) -> Result<crate::native_execution::ExecutionResult, crate::native_execution::ExecutionError>
+    where
+        L: FnMut() -> Result<serde_json::Value, crate::legal_actor::LegalActorGateError>,
+        D: FnMut() -> Result<serde_json::Value, crate::legal_actor::LegalActorGateError>,
+        N: Fn() -> time::OffsetDateTime,
+    {
+        let native = self
+            .native_execution
+            .as_ref()
+            .ok_or(crate::native_execution::ExecutionError::GovernanceDenied)?;
+        native
+            .execute(
+                context,
+                operation,
+                binding,
+                key,
+                crate::hyperswitch::NativeOperation::Create,
+                body,
+                current_actor,
+                current_documentary,
+                readiness,
+                now,
+            )
+            .await
     }
 }

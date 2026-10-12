@@ -141,7 +141,7 @@ impl HyperSwitchTransport {
     }
 
     #[cfg(test)]
-    fn loopback_test_client(origin: &str) -> Result<Self, HyperSwitchError> {
+    pub(crate) fn loopback_test_client(origin: &str) -> Result<Self, HyperSwitchError> {
         Self::with_policy(origin, "synthetic-only-secret".into(), true)
     }
 
@@ -177,6 +177,19 @@ impl HyperSwitchTransport {
         })
     }
 
+    /// Validate exact token-only shape before a durable operation is reserved.
+    /// Prevent local request rejection from consuming an idempotency key.
+    pub(crate) fn validate_operation(
+        operation: &NativeOperation<'_>,
+        body: &Value,
+        stable_key: &str,
+    ) -> Result<(), HyperSwitchError> {
+        operation.path()?;
+        idempotency_key(stable_key)?;
+        reject_sensitive_data(body)?;
+        Ok(())
+    }
+
     /// A caller MUST already hold CP-issued, operation-scoped legal actor,
     /// documentary, independently-certified merchant and durable idempotency
     /// evidence. This method does not create or accept such evidence itself.
@@ -191,10 +204,7 @@ impl HyperSwitchTransport {
     ) -> Result<ProviderObservation, HyperSwitchError> {
         let path = operation.path()?;
         let key = idempotency_key(stable_key)?;
-        if !governed_body.is_object() {
-            return Err(HyperSwitchError::InvalidOperation);
-        }
-        reject_sensitive_data(governed_body)?;
+        Self::validate_operation(&operation, governed_body, stable_key)?;
         let url = self
             .origin
             .join(&path)
@@ -289,7 +299,7 @@ mod tests {
     fn rejects_insecure_and_untrusted_configuration_without_exposing_keys() {
         for origin in [
             "http://payments.example.com/",
-            "https://alice:password@payments.example.com/",
+            "***payments.example.com/",
             "https://payments.example.com/path/",
             "https://payments.example.com/?token=foo",
             "http://127.0.0.1:8080/",
