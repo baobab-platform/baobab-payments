@@ -6,9 +6,9 @@ This is *executable database functionality* and a PostgreSQL 17 security test, n
 
 ## Implemented native database controls
 
-- Durable immutable `payment_ops.native_execution` operation reservations indexed by tenant, operation type and idempotency key.
+- Durable immutable `payment_ops.native_execution` operation reservations indexed by tenant, legally responsible actor, operation type and idempotency key (ADR-PAY-0010).
 - A SECURITY INVOKER `reserve_native_execution` function enforces exact replay equivalence for body SHA-256, historical legal actor, organisation, mandate reference, certification/activation references, market/currency, amount and payment reference; mismatched replays refuse.
-- Append-only, provider-event-unique `provider_receipt` and tenant-scoped, immutable `transaction_outbox` tables bound by composite foreign keys to the originating operation.
+- Append-only, provider-event-unique (provider + EngineInstance + environment + event ID) `provider_receipt` and tenant-scoped, immutable `transaction_outbox` tables bound by composite foreign keys to the originating operation.
 - PostgreSQL FORCE ROW LEVEL SECURITY with fail-closed `baobab.tenant_id` session scope on all three tables. Unprivileged clients missing tenant scope see no records and cannot insert. Row rewrite/deletion triggers reject reassignment of historical actor or PSP receipt.
 - A real ephemeral PostgreSQL 17 integration workflow verifies replay, conflict, history immutability and cross-tenant isolation.
 
