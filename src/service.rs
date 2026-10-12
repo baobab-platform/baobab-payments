@@ -679,3 +679,60 @@ impl PaymentService {
             .await
     }
 }
+
+impl PaymentService {
+    /// Authenticated CP integration entry, distinct from all sandbox HTTP
+    /// routes. Both the IAM token and the CP-minted runtime Context belong
+    /// to the configured engine workload. Neither is a client assertion.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn create_current_cp_intent(
+        &self,
+        context: &crate::native_execution::NativePaymentContext,
+        cp: &crate::cp_authority::IamCpAuthority,
+        role: &str,
+        activity: &str,
+        binding: &crate::native_execution::ProviderBinding,
+        key: &str,
+        body: &serde_json::Value,
+        readiness: &dyn crate::legal_actor::PaymentProviderLegalReadiness,
+    ) -> Result<crate::native_execution::ExecutionResult, crate::native_execution::ExecutionError>
+    {
+        // Workload token and CP source are not supplied to HTTP handler input.
+        let minted = cp
+            .issue_current_context(
+                &context.tenant_id,
+                context.organisation_id,
+                &context.market,
+                &context.legal_entity_id,
+            )
+            .await
+            .map_err(|_| crate::native_execution::ExecutionError::GovernanceDenied)?;
+        let handle = minted.context_id.to_string();
+        let operation = crate::legal_actor::PaymentLegalOperation {
+            context_id: &handle,
+            expected_legal_entity_id: &context.legal_entity_id,
+            role,
+            activity,
+            market: &context.market,
+            capability: "payments.intent.create",
+            operation_reference: &context.payment_reference,
+        };
+        let native = self
+            .native_execution
+            .as_ref()
+            .ok_or(crate::native_execution::ExecutionError::GovernanceDenied)?;
+        native
+            .execute_with_live_cp(
+                context,
+                &minted,
+                cp,
+                &operation,
+                binding,
+                key,
+                crate::hyperswitch::NativeOperation::Create,
+                body,
+                readiness,
+            )
+            .await
+    }
+}

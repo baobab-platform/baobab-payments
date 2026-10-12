@@ -156,7 +156,7 @@ impl NativeTransactionService {
                         stable_idempotency_key,
                         native_operation,
                         body,
-                        || {
+                        || async {
                             // A DB connection/lock/commit may have consumed the
                             // original negative-only two-second documentary lease.
                             let checked = require_current_payment_actor(
@@ -189,6 +189,60 @@ impl NativeTransactionService {
         )
         .await
         .map_err(|_| ExecutionError::GovernanceDenied)?
+    }
+
+    /// Genuinely IAM-authenticated CP-backed authority. Both initial and
+    /// post-journal CP decisions are queried live via the same canonical
+    /// workload's client-credentials token; the CP itself enforces Context
+    /// ownership. No external caller gets to attach a positive CP decision.
+    ///
+    /// Provider certification/readiness remains an INDEPENDENT prerequisite.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn execute_with_live_cp(
+        &self,
+        context: &NativePaymentContext,
+        cp_context: &crate::cp_authority::CpRuntimeContext,
+        cp: &crate::cp_authority::IamCpAuthority,
+        operation: &PaymentLegalOperation<'_>,
+        binding: &ProviderBinding,
+        key: &str,
+        native_operation: NativeOperation<'_>,
+        body: &Value,
+        readiness: &dyn PaymentProviderLegalReadiness,
+    ) -> Result<ExecutionResult, ExecutionError> {
+        self.validate(context, operation, binding, key, &native_operation, body)?;
+        HyperSwitchTransport::validate_operation(&native_operation, body, key)
+            .map_err(|_| ExecutionError::InvalidScope)?;
+        if context.organisation_id != cp_context.primary_organisation_id
+            || context.legal_entity_id != cp_context.expected_legal_entity_id
+        {
+            return Err(ExecutionError::GovernanceDenied);
+        }
+        let mandate = cp
+            .verify_all(cp_context, operation, readiness)
+            .await
+            .map_err(|_| ExecutionError::GovernanceDenied)?;
+        self.execute_after_authority(
+            context,
+            binding,
+            &mandate,
+            key,
+            native_operation,
+            body,
+            || async {
+                // Re-issue an IAM workload token and fetch CURRENT CP authority
+                // after PG commit/advisory wait; document holds have a <=2s lease.
+                let at_send = cp
+                    .verify_all(cp_context, operation, readiness)
+                    .await
+                    .map_err(|_| ExecutionError::GovernanceDenied)?;
+                if at_send != mandate {
+                    return Err(ExecutionError::GovernanceDenied);
+                }
+                Ok(())
+            },
+        )
+        .await
     }
 
     fn validate(
@@ -241,7 +295,7 @@ impl NativeTransactionService {
     }
 
     #[allow(clippy::too_many_arguments)]
-    async fn execute_after_authority<F>(
+    async fn execute_after_authority<F, Fut>(
         &self,
         scope: &NativePaymentContext,
         binding: &ProviderBinding,
@@ -252,7 +306,8 @@ impl NativeTransactionService {
         mut verify_again_at_send: F,
     ) -> Result<ExecutionResult, ExecutionError>
     where
-        F: FnMut() -> Result<(), ExecutionError>,
+        F: FnMut() -> Fut,
+        Fut: std::future::Future<Output = Result<(), ExecutionError>>,
     {
         let mandate = Uuid::parse_str(mandate_id).map_err(|_| ExecutionError::GovernanceDenied)?;
         let (mut client, connection) = tokio_postgres::connect(&self.database_url, NoTls)
@@ -351,7 +406,7 @@ impl NativeTransactionService {
         // No PSP instruction can cross the durable DB commit boundary without
         // a fresh second CP+documentary+provider readiness decision.
         // A denial leaves the reservation held, never silently replays money.
-        verify_again_at_send()?;
+        verify_again_at_send().await?;
         // The irreversible send happens only AFTER durable commit. A timeout
         // can mean remote success; do not silently resend on retry.
         let observed = self.transport.execute(operation, body, key).await;
@@ -612,7 +667,7 @@ mod tests {
                 &key,
                 NativeOperation::Create,
                 &body(),
-                || Ok(()),
+                || async { Ok(()) },
             )
             .await
             .unwrap();
@@ -625,7 +680,7 @@ mod tests {
                 &key,
                 NativeOperation::Create,
                 &body(),
-                || Ok(()),
+                || async { Ok(()) },
             )
             .await;
         assert_eq!(

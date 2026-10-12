@@ -5,6 +5,7 @@
 pub mod auth;
 pub mod config;
 pub mod contracts;
+pub mod cp_authority;
 pub mod domain;
 pub mod http;
 pub mod hyperswitch;
