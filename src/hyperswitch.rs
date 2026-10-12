@@ -119,9 +119,17 @@ fn reject_sensitive_data(value: &Value) -> Result<(), HyperSwitchError> {
 }
 
 impl HyperSwitchTransport {
-    /// Loopback HTTP exists strictly to test the actual HTTP wire protocol.
-    /// HTTPS is mandatory for any configured non-loopback HyperSwitch host.
-    pub fn new(origin: &str, api_key: String, test_loopback_http: bool) -> Result<Self, HyperSwitchError> {
+    /// Public construction never permits plaintext provider traffic.
+    pub fn new(origin: &str, api_key: String) -> Result<Self, HyperSwitchError> {
+        Self::with_policy(origin, api_key, false)
+    }
+
+    #[cfg(test)]
+    fn loopback_test_client(origin: &str) -> Result<Self, HyperSwitchError> {
+        Self::with_policy(origin, "synthetic-only-secret".into(), true)
+    }
+
+    fn with_policy(origin: &str, api_key: String, test_loopback_http: bool) -> Result<Self, HyperSwitchError> {
         let url = Url::parse(origin).map_err(|_| HyperSwitchError::Configuration)?;
         let loopback = matches!(url.host_str(), Some("localhost" | "127.0.0.1" | "[::1]"));
         if !((url.scheme() == "https") || (test_loopback_http && loopback && url.scheme() == "http"))
@@ -164,7 +172,7 @@ impl HyperSwitchTransport {
         reject_sensitive_data(governed_body)?;
         let url = self.origin.join(&path).map_err(|_| HyperSwitchError::Configuration)?;
         let response = self.client.request(Method::POST, url)
-            .header("api-key", &self.api_key)
+            .header("api-key", self.api_key.as_str())
             .header("idempotency-key", key)
             .header("accept", "application/json")
             .json(governed_body)
