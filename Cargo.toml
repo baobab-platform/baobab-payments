@@ -9,6 +9,7 @@ repository = "https://github.com/baobab-platform/baobab-payments"
 publish = false
 
 [dependencies]
+aws-lc-rs = "1.18.1"
 axum = "0.8.9"
 hex = "0.4.3"
 jsonschema = { version = "0.58.2", default-features = false, features = ["idna"] }
@@ -25,7 +26,6 @@ tracing-subscriber = { version = "0.3.23", features = ["json", "env-filter"] }
 uuid = { version = "1.26.1", features = ["v7", "serde"] }
 
 [dev-dependencies]
-aws-lc-rs = "1.18.1"
 http-body-util = "0.1.5"
 tower = { version = "0.5.3", features = ["util"] }
 

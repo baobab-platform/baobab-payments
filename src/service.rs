@@ -736,3 +736,19 @@ impl PaymentService {
             .await
     }
 }
+
+/// Signed provider callback is an independent PSP fact, never a payment
+/// capture or bank settlement without a reconciliation certificate.
+impl PaymentService {
+    pub async fn ingest_native_verified_webhook(
+        &self,
+        adapter: &crate::webhook_reconciliation::NativeWebhookReconciler,
+        raw_body: &[u8],
+        signature_header: &str,
+    ) -> Result<
+        crate::webhook_reconciliation::WebhookResult,
+        crate::webhook_reconciliation::WebhookError,
+    > {
+        adapter.receive_signed(raw_body, signature_header).await
+    }
+}
