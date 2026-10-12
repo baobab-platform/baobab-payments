@@ -659,12 +659,23 @@ impl PaymentService {
         D: FnMut() -> Result<serde_json::Value, crate::legal_actor::LegalActorGateError>,
         N: Fn() -> time::OffsetDateTime,
     {
-        let native = self.native_execution.as_ref()
+        let native = self
+            .native_execution
+            .as_ref()
             .ok_or(crate::native_execution::ExecutionError::GovernanceDenied)?;
-        native.execute(
-            context, operation, binding, key,
-            crate::hyperswitch::NativeOperation::Create, body,
-            current_actor, current_documentary, readiness, now,
-        ).await
+        native
+            .execute(
+                context,
+                operation,
+                binding,
+                key,
+                crate::hyperswitch::NativeOperation::Create,
+                body,
+                current_actor,
+                current_documentary,
+                readiness,
+                now,
+            )
+            .await
     }
 }
