@@ -1,12 +1,13 @@
 //! baobab-payments: the Baobab Payment API (ADR-PAY-0001) with the
-//! non-production sandbox provider. The HyperSwitch adapter is not
-//! implemented yet.
+//! non-production sandbox provider. The HyperSwitch transport exists but is not
+//! enabled for payment execution until durable and governance acceptance.
 
 pub mod auth;
 pub mod config;
 pub mod contracts;
 pub mod domain;
 pub mod http;
+pub mod hyperswitch;
 pub mod provider;
 pub mod service;
 
