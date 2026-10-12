@@ -271,7 +271,7 @@ impl NativeTransactionService {
         trx.execute("SELECT set_config('baobab.responsible_legal_entity_id',$1,true)", &[&scope.legal_entity_id])
             .await.map_err(|_| ExecutionError::JournalUnavailable)?;
         let (kind, evidence) = match observed {
-            Ok(ref state) => (
+            Ok(state) => (
                 "payments.provider-response.observed.v1",
                 json!({"provider_reference":state.native_reference, "provider_status":state.provider_status}),
             ),
