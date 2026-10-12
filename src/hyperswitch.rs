@@ -177,6 +177,17 @@ impl HyperSwitchTransport {
         })
     }
 
+    /// Validate exact token-only shape before a durable operation is reserved.
+    /// Prevent local request rejection from consuming an idempotency key.
+    pub(crate) fn validate_operation(
+        operation: &NativeOperation<'_>, body: &Value, stable_key: &str,
+    ) -> Result<(), HyperSwitchError> {
+        operation.path()?;
+        idempotency_key(stable_key)?;
+        reject_sensitive_data(body)?;
+        Ok(())
+    }
+
     /// A caller MUST already hold CP-issued, operation-scoped legal actor,
     /// documentary, independently-certified merchant and durable idempotency
     /// evidence. This method does not create or accept such evidence itself.
@@ -191,10 +202,7 @@ impl HyperSwitchTransport {
     ) -> Result<ProviderObservation, HyperSwitchError> {
         let path = operation.path()?;
         let key = idempotency_key(stable_key)?;
-        if !governed_body.is_object() {
-            return Err(HyperSwitchError::InvalidOperation);
-        }
-        reject_sensitive_data(governed_body)?;
+        Self::validate_operation(&operation, governed_body, stable_key)?;
         let url = self
             .origin
             .join(&path)
