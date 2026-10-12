@@ -255,9 +255,12 @@ impl NativeTransactionService {
         native: &NativeOperation<'_>,
         body: &Value,
     ) -> Result<(), ExecutionError> {
-        if binding.merchant_id.len() < 3 || binding.merchant_id.len() > 160
-            || !binding.merchant_id.bytes().all(|x|
-                x.is_ascii_alphanumeric() || b"._:-".contains(&x))
+        if binding.merchant_id.len() < 3
+            || binding.merchant_id.len() > 160
+            || !binding
+                .merchant_id
+                .bytes()
+                .all(|x| x.is_ascii_alphanumeric() || b"._:-".contains(&x))
             || !context.tenant_id.starts_with("tn_")
             || context.tenant_id.len() > 63
             || context.tenant_id[3..].is_empty()
