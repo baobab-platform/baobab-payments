@@ -44,9 +44,9 @@ CREATE TABLE payment_ops.settlement_match (
     tenant_id text NOT NULL,
     responsible_legal_entity_id text NOT NULL,
     execution_id uuid NOT NULL,
-    psp_evidence_id uuid NOT NULL UNIQUE
+    psp_evidence_id uuid NOT NULL
         REFERENCES payment_ops.settlement_evidence(evidence_id),
-    bank_evidence_id uuid NOT NULL UNIQUE
+    bank_evidence_id uuid NOT NULL
         REFERENCES payment_ops.settlement_evidence(evidence_id),
     state text NOT NULL CHECK (state IN ('MATCHED','EXCEPTION')),
     reason_code text NOT NULL CHECK (reason_code IN (
@@ -56,7 +56,8 @@ CREATE TABLE payment_ops.settlement_match (
     recorded_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
     FOREIGN KEY (tenant_id, responsible_legal_entity_id, execution_id)
       REFERENCES payment_ops.native_execution(tenant_id,responsible_legal_entity_id,execution_id),
-    CHECK ((state='MATCHED') = (reason_code='THREE_WAY_MATCH'))
+    CHECK ((state='MATCHED') = (reason_code='THREE_WAY_MATCH')),
+    UNIQUE (tenant_id, responsible_legal_entity_id, execution_id, psp_evidence_id, bank_evidence_id)
 );
 
 ALTER TABLE payment_ops.settlement_evidence ENABLE ROW LEVEL SECURITY;
@@ -85,6 +86,13 @@ CREATE TRIGGER immutable_settlement_match BEFORE UPDATE OR DELETE
 CREATE INDEX settlement_evidence_reference_idx
  ON payment_ops.settlement_evidence
  (tenant_id,responsible_legal_entity_id,payment_reference,source_kind,recorded_at);
+-- One genuinely matched PSP/BANK pair per execution. A failed match is
+-- append-only evidence, not an irreversible lockout against a later
+-- independently verified corrected bank statement.
+CREATE UNIQUE INDEX settlement_one_matched_execution
+ ON payment_ops.settlement_match(tenant_id,responsible_legal_entity_id,execution_id)
+ WHERE state='MATCHED';
+
 CREATE INDEX settlement_match_execution_idx
  ON payment_ops.settlement_match
  (tenant_id,responsible_legal_entity_id,execution_id,recorded_at);
