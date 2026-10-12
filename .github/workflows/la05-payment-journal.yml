@@ -1,0 +1,48 @@
+name: LA-05E4 PostgreSQL payment journal
+
+on:
+  pull_request:
+    paths:
+      - "db/**"
+      - ".github/workflows/la05-payment-journal.yml"
+  push:
+    branches: [main]
+    paths:
+      - "db/**"
+      - ".github/workflows/la05-payment-journal.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  durable-journal:
+    runs-on: ubuntu-26.04
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: baobab_payments_test
+          POSTGRES_USER: baobab
+          POSTGRES_PASSWORD: synthetic_only_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U baobab -d baobab_payments_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Apply PostgreSQL 17 migrations and run RLS/security integration tests
+        run: |
+          docker run --rm --network host \
+            --volume "${GITHUB_WORKSPACE}/db:/db:ro" \
+            --env PGPASSWORD=synthetic_only_password \
+            postgres:17-alpine sh -euc '
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test \
+                -f /db/migrations/0001_native_payment_journal.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test \
+                -f /db/tests/0001_native_payment_journal.sql
+            '
