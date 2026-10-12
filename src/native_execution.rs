@@ -293,3 +293,142 @@ impl NativeTransactionService {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::{Router, Json, routing::post};
+    use serde_json::json;
+    use std::sync::{Arc, atomic::{AtomicUsize, Ordering}};
+
+    fn scope() -> NativePaymentContext {
+        NativePaymentContext {
+            tenant_id: "tn_syntheticza".into(),
+            legal_entity_id: "LE-SYNTHETIC-ZA".into(),
+            organisation_id: Uuid::parse_str("0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c").unwrap(),
+            payment_reference: "payment-local-synthetic-123".into(),
+            market: "ZA".into(),
+            currency: "ZAR".into(),
+            amount_minor: 1200,
+            correlation_id: Uuid::now_v7(),
+        }
+    }
+
+    fn operation<'a>() -> PaymentLegalOperation<'a> {
+        PaymentLegalOperation {
+            context_id: "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+            expected_legal_entity_id: "LE-SYNTHETIC-ZA",
+            role: "PAYMENT_BENEFICIARY",
+            activity: "B2B_RECEIPT",
+            market: "ZA",
+            capability: "payments.intent.create",
+            operation_reference: "payment-local-synthetic-123",
+        }
+    }
+
+    fn binding() -> ProviderBinding {
+        ProviderBinding {
+            certification_reference: "synthetic-certification-not-valid".into(),
+            merchant_activation_reference: "synthetic-merchant-not-valid".into(),
+            provider_engine_instance_id: "synthetic-hyperswitch".into(),
+            profile_id: "prof_synthetic_test".into(),
+        }
+    }
+
+    fn body() -> Value {
+        json!({"amount":1200,"currency":"ZAR","profile_id":"prof_synthetic_test",
+               "capture_method":"manual","confirm":false})
+    }
+
+    #[test]
+    fn protected_environment_and_unauthorized_native_body_are_rejected() {
+        let transport = HyperSwitchTransport::new("https://payments.example.com/", "synthetic".into()).unwrap();
+        assert!(matches!(
+            NativeTransactionService::local_integration(
+                "host=127.0.0.1 user=none".into(), transport.clone(), "production"),
+            Err(ExecutionError::GovernanceDenied)
+        ));
+        assert!(matches!(
+            NativeTransactionService::local_integration(
+                "host=payments-db.remote user=none".into(), transport.clone(), "test"),
+            Err(ExecutionError::InvalidScope)
+        ));
+        let service = NativeTransactionService::local_integration(
+            "host=127.0.0.1 user=none".into(), transport, "test").unwrap();
+        assert!(service.validate(&scope(), &operation(), &binding(),
+            "stable-synthetic-key-001", &NativeOperation::Create,
+            &json!({"amount":1,"currency":"UGX","confirm":true})).is_err());
+        assert!(service.validate(&scope(), &operation(), &binding(),
+            "stable-synthetic-key-001", &NativeOperation::Capture { payment_id:"pay_test" },
+            &body()).is_err());
+    }
+
+    #[tokio::test]
+    async fn never_reaches_journal_or_provider_on_cp_refusal() {
+        let transport = HyperSwitchTransport::new("https://payments.example.com/", "synthetic".into()).unwrap();
+        let service = NativeTransactionService::local_integration(
+            "host=127.0.0.1 user=none".into(), transport, "test").unwrap();
+        let result = service.execute(
+            &scope(), &operation(), &binding(), "stable-synthetic-key-001",
+            NativeOperation::Create, &body(),
+            || Err(LegalActorGateError::NotAuthorised),
+            || Err(LegalActorGateError::NotAuthorised),
+            &NeverReady, OffsetDateTime::now_utc,
+        ).await;
+        assert_eq!(result, Err(ExecutionError::GovernanceDenied));
+    }
+
+    struct NeverReady;
+    impl PaymentProviderLegalReadiness for NeverReady {
+        fn require_ready(&self, _: &PaymentLegalOperation<'_>, _: &str)
+            -> Result<(), LegalActorGateError> {
+            Err(LegalActorGateError::ProviderNotReady)
+        }
+    }
+
+    #[tokio::test]
+    async fn postgres17_commits_intent_before_exactly_one_synthetic_provider_send() {
+        let Ok(database_url) = std::env::var("LA05_NATIVE_PG_TEST_URL") else { return; };
+        let calls = Arc::new(AtomicUsize::new(0));
+        let observed = calls.clone();
+        let app = Router::new().route("/payments", post(move |Json(payload): Json<Value>| {
+            let observed = observed.clone();
+            async move {
+                assert_eq!(payload["confirm"], false);
+                observed.fetch_add(1, Ordering::SeqCst);
+                Json(json!({"payment_id":"pay_synthetic_001","status":"requires_payment_method"}))
+            }
+        }));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let task = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+        let transport = HyperSwitchTransport::loopback_test_client(&format!("http://{addr}/")).unwrap();
+        let service = NativeTransactionService::local_integration(database_url.clone(), transport, "test").unwrap();
+        let ctx = scope();
+        let key = format!("synthetic-{}", Uuid::now_v7()).replace("-", "");
+        let first = service.execute_after_authority(
+            &ctx, &binding(), "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+            &key, NativeOperation::Create, &body(),
+        ).await.unwrap();
+        assert!(matches!(first, ExecutionResult::ProviderObserved { .. }));
+        let again = service.execute_after_authority(
+            &ctx, &binding(), "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+            &key, NativeOperation::Create, &body(),
+        ).await;
+        assert_eq!(again, Err(ExecutionError::AlreadyReservedNeedsReconciliation));
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        // Validate both immutable journal facts commit durably, with actor RLS.
+        let (mut db, conn) = tokio_postgres::connect(&database_url, NoTls).await.unwrap();
+        tokio::spawn(async move { let _ = conn.await; });
+        let tx = db.transaction().await.unwrap();
+        tx.query_one("SELECT set_config('baobab.tenant_id',$1,true)", &[&ctx.tenant_id]).await.unwrap();
+        tx.query_one("SELECT set_config('baobab.responsible_legal_entity_id',$1,true)", &[&ctx.legal_entity_id]).await.unwrap();
+        let rows = tx.query(
+            "SELECT event_type FROM payment_ops.transaction_outbox
+             WHERE execution_id=(SELECT execution_id FROM payment_ops.native_execution
+             WHERE idempotency_key=$1 AND tenant_id=$2 AND responsible_legal_entity_id=$3)",
+            &[&key, &ctx.tenant_id, &ctx.legal_entity_id]).await.unwrap();
+        assert_eq!(rows.len(), 2);
+        task.abort();
+    }
+}
