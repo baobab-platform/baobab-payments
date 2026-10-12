@@ -218,21 +218,31 @@ impl NativeTransactionService {
         {
             return Err(ExecutionError::GovernanceDenied);
         }
-        let mandate = cp.verify_all(cp_context, operation, readiness).await
+        let mandate = cp
+            .verify_all(cp_context, operation, readiness)
+            .await
             .map_err(|_| ExecutionError::GovernanceDenied)?;
         self.execute_after_authority(
-            context, binding, &mandate, key, native_operation, body,
+            context,
+            binding,
+            &mandate,
+            key,
+            native_operation,
+            body,
             || async {
                 // Re-issue an IAM workload token and fetch CURRENT CP authority
                 // after PG commit/advisory wait; document holds have a <=2s lease.
-                let at_send = cp.verify_all(cp_context, operation, readiness).await
+                let at_send = cp
+                    .verify_all(cp_context, operation, readiness)
+                    .await
                     .map_err(|_| ExecutionError::GovernanceDenied)?;
                 if at_send != mandate {
                     return Err(ExecutionError::GovernanceDenied);
                 }
                 Ok(())
             },
-        ).await
+        )
+        .await
     }
 
     fn validate(
