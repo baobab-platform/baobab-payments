@@ -24,6 +24,7 @@ END;
 $$;
 
 SET baobab.tenant_id = 'tn_synthetica';
+SET baobab.responsible_legal_entity_id = 'LE-SYNTHETIC-A';
 DO $$
 DECLARE
     first_id uuid;
@@ -56,6 +57,7 @@ BEGIN
     IF NOT denied THEN RAISE EXCEPTION 'different request hash replay allowed'; END IF;
     -- ADR-PAY-0010: two legitimate actors sharing a tenant and idempotency
     -- key are independent financial operations, not conflicting replays.
+    PERFORM set_config('baobab.responsible_legal_entity_id', 'LE-SYNTHETIC-OTHER', true);
     other_actor_id := payment_ops.reserve_native_execution(
         'tn_synthetica','CAPTURE','synthetic-idemp-0001',repeat('a',64),
         'pay_synthetic_001','0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c',
@@ -70,31 +72,41 @@ BEGIN
         'LE-SYNTHETIC-OTHER','0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d',
         'synthetic/evidence','synthetic/cert','synthetic/activation','ZA','ZAR',1200
     ) THEN RAISE EXCEPTION 'same actor replay failed'; END IF;
+    PERFORM set_config('baobab.responsible_legal_entity_id', 'LE-SYNTHETIC-A', true);
+    IF (SELECT COUNT(*) FROM payment_ops.native_execution) <> 1 THEN
+        RAISE EXCEPTION 'one legal actor can read another actor within tenant';
+    END IF;
 
     INSERT INTO payment_ops.provider_receipt
-        (tenant_id, execution_id, provider_name, provider_engine_instance_id, provider_environment,
-         provider_event_id, observed_status, verified_payload_sha256)
-    VALUES ('tn_synthetica', first_id, 'hyperswitch-test', 'engine_instance_alpha', 'STAGING',
+        (tenant_id, execution_id, responsible_legal_entity_id, provider_name,
+         provider_engine_instance_id, provider_environment, provider_event_id,
+         observed_status, verified_payload_sha256)
+    VALUES ('tn_synthetica', first_id, 'LE-SYNTHETIC-A', 'hyperswitch-test', 'engine_instance_alpha', 'STAGING',
             'synthetic-psp-event-001', 'PENDING', repeat('c',64));
     -- The same opaque PSP event in a separate engine instance is distinct.
+    PERFORM set_config('baobab.responsible_legal_entity_id', 'LE-SYNTHETIC-OTHER', true);
     INSERT INTO payment_ops.provider_receipt
-        (tenant_id, execution_id, provider_name, provider_engine_instance_id, provider_environment,
-         provider_event_id, observed_status, verified_payload_sha256)
-    VALUES ('tn_synthetica', other_actor_id, 'hyperswitch-test', 'engine_instance_beta', 'STAGING',
+        (tenant_id, execution_id, responsible_legal_entity_id, provider_name,
+         provider_engine_instance_id, provider_environment, provider_event_id,
+         observed_status, verified_payload_sha256)
+    VALUES ('tn_synthetica', other_actor_id, 'LE-SYNTHETIC-OTHER', 'hyperswitch-test', 'engine_instance_beta', 'STAGING',
             'synthetic-psp-event-001', 'PENDING', repeat('c',64));
+    PERFORM set_config('baobab.responsible_legal_entity_id', 'LE-SYNTHETIC-A', true);
     denied := false;
     BEGIN
         INSERT INTO payment_ops.provider_receipt
-            (tenant_id, execution_id, provider_name, provider_engine_instance_id, provider_environment,
-             provider_event_id, observed_status, verified_payload_sha256)
-        VALUES ('tn_synthetica', first_id, 'hyperswitch-test', 'engine_instance_alpha', 'STAGING',
+            (tenant_id, execution_id, responsible_legal_entity_id, provider_name,
+             provider_engine_instance_id, provider_environment, provider_event_id,
+             observed_status, verified_payload_sha256)
+        VALUES ('tn_synthetica', first_id, 'LE-SYNTHETIC-A', 'hyperswitch-test', 'engine_instance_alpha', 'STAGING',
                 'synthetic-psp-event-001', 'PENDING', repeat('c',64));
     EXCEPTION WHEN unique_violation THEN denied := true;
     END;
     IF NOT denied THEN RAISE EXCEPTION 'same provider event was inserted twice'; END IF;
     INSERT INTO payment_ops.transaction_outbox
-        (tenant_id, execution_id, event_type, event_payload, correlation_id)
-    VALUES ('tn_synthetica', first_id, 'payments.native-operation.reserved.v1',
+        (tenant_id, execution_id, responsible_legal_entity_id, event_type, event_payload, correlation_id)
+    VALUES ('tn_synthetica', first_id, 'LE-SYNTHETIC-A',
+            'payments.native-operation.reserved.v1',
             jsonb_build_object('reference','pay_synthetic_001','simulated',true),
             '0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5000');
 
