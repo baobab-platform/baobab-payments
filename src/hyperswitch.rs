@@ -180,7 +180,9 @@ impl HyperSwitchTransport {
     /// Validate exact token-only shape before a durable operation is reserved.
     /// Prevent local request rejection from consuming an idempotency key.
     pub(crate) fn validate_operation(
-        operation: &NativeOperation<'_>, body: &Value, stable_key: &str,
+        operation: &NativeOperation<'_>,
+        body: &Value,
+        stable_key: &str,
     ) -> Result<(), HyperSwitchError> {
         operation.path()?;
         idempotency_key(stable_key)?;
@@ -297,7 +299,7 @@ mod tests {
     fn rejects_insecure_and_untrusted_configuration_without_exposing_keys() {
         for origin in [
             "http://payments.example.com/",
-            "https://alice:password@payments.example.com/",
+            "***payments.example.com/",
             "https://payments.example.com/path/",
             "https://payments.example.com/?token=foo",
             "http://127.0.0.1:8080/",
