@@ -131,6 +131,50 @@ impl IamCpAuthority {
         serde_json::from_slice(&bytes).map_err(|_| CpAuthorityError::Unavailable)
     }
 
+    /// Mint a bounded CP runtime Context in the identity of THIS workload;
+    /// CP validates the requested tenant, operating Organisation and market.
+    /// Never reuse a Context ID minted for a different workload.
+    pub async fn issue_current_context(
+        &self, tenant_id: &str, organisation_id: Uuid,
+        market: &str, expected_legal_entity_id: &str,
+    ) -> Result<CpRuntimeContext, CpAuthorityError> {
+        if !(tenant_id.starts_with("tn_") && tenant_id.len() <= 63)
+            || market.len() != 2 || !market.bytes().all(|b| b.is_ascii_uppercase())
+            || expected_legal_entity_id.trim().is_empty()
+        {
+            return Err(CpAuthorityError::NotAuthorised);
+        }
+        let response = self.post("/v1/platform-context/resolve", &json!({
+            "tenant_id": tenant_id,
+            "organisation_id": organisation_id.to_string(),
+            "country_code": market,
+        })).await?;
+        if response.get("tenant_id").and_then(Value::as_str) != Some(tenant_id)
+            || response.get("organisation_id").and_then(Value::as_str)
+                != Some(organisation_id.to_string().as_str())
+            || response.get("country_code").and_then(Value::as_str) != Some(market)
+        {
+            return Err(CpAuthorityError::NotAuthorised);
+        }
+        let context_id = response.get("context_id").and_then(Value::as_str)
+            .and_then(|s| Uuid::parse_str(s).ok())
+            .ok_or(CpAuthorityError::NotAuthorised)?;
+        let now = OffsetDateTime::now_utc();
+        let from = response.get("resolved_at").and_then(Value::as_str)
+            .and_then(|s| OffsetDateTime::parse(s, &time::format_description::well_known::Rfc3339).ok())
+            .ok_or(CpAuthorityError::NotAuthorised)?;
+        let until = response.get("expires_at").and_then(Value::as_str)
+            .and_then(|s| OffsetDateTime::parse(s, &time::format_description::well_known::Rfc3339).ok())
+            .ok_or(CpAuthorityError::NotAuthorised)?;
+        if from > now + time::Duration::seconds(1)
+            || from < now - time::Duration::seconds(5)
+            || until <= now || until > now + time::Duration::minutes(10) {
+            return Err(CpAuthorityError::NotAuthorised);
+        }
+        Ok(CpRuntimeContext { context_id, primary_organisation_id: organisation_id,
+            expected_legal_entity_id: expected_legal_entity_id.into() })
+    }
+
     pub async fn verified_mandate(&self, context: &CpRuntimeContext,
         operation: &PaymentLegalOperation<'_>, now: OffsetDateTime,
     ) -> Result<String, CpAuthorityError> {
