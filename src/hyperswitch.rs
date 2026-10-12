@@ -108,11 +108,22 @@ fn idempotency_key(value: &str) -> Result<&str, HyperSwitchError> {
 /// raw bank accounts and PCI card blocks) are deliberately denied.
 fn reject_sensitive_data(value: &Value) -> Result<(), HyperSwitchError> {
     const TOKEN_ONLY_FIELDS: &[&str] = &[
-        "amount", "amount_to_capture", "currency", "capture_method",
-        "confirm", "profile_id", "payment_id", "refund_id",
-        "payment_token", "payment_method", "payment_method_type", "reason",
+        "amount",
+        "amount_to_capture",
+        "currency",
+        "capture_method",
+        "confirm",
+        "profile_id",
+        "payment_id",
+        "refund_id",
+        "payment_token",
+        "payment_method",
+        "payment_method_type",
+        "reason",
     ];
-    let fields = value.as_object().ok_or(HyperSwitchError::InvalidOperation)?;
+    let fields = value
+        .as_object()
+        .ok_or(HyperSwitchError::InvalidOperation)?;
     for (key, value) in fields {
         if !TOKEN_ONLY_FIELDS.contains(&key.as_str())
             || !(value.is_string() || value.is_boolean() || value.is_number())
@@ -397,15 +408,25 @@ mod tests {
                 b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Type: application/json\r\n\r\n",
             ).await;
             for _ in 0..75 {
-                if socket.write_all(b"400\r\n").await.is_err() { break; }
-                if socket.write_all(&vec![b'x'; 1024]).await.is_err() { break; }
-                if socket.write_all(b"\r\n").await.is_err() { break; }
+                if socket.write_all(b"400\r\n").await.is_err() {
+                    break;
+                }
+                if socket.write_all(&vec![b'x'; 1024]).await.is_err() {
+                    break;
+                }
+                if socket.write_all(b"\r\n").await.is_err() {
+                    break;
+                }
             }
             let _ = socket.write_all(b"0\r\n\r\n").await;
         });
-        let client = HyperSwitchTransport::loopback_test_client(&format!("http://{addr}/")).unwrap();
+        let client =
+            HyperSwitchTransport::loopback_test_client(&format!("http://{addr}/")).unwrap();
         assert_eq!(
-            client.execute(NativeOperation::Create, &intent(), "stable-test-key-0001").await.unwrap_err(),
+            client
+                .execute(NativeOperation::Create, &intent(), "stable-test-key-0001")
+                .await
+                .unwrap_err(),
             HyperSwitchError::InvalidResponse
         );
         task.abort();
