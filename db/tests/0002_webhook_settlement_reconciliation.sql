@@ -76,7 +76,7 @@ BEGIN
   BEGIN
     UPDATE payment_ops.settlement_match SET state='MATCHED'
      WHERE psp_evidence_id=psp AND bank_evidence_id=bank_wrong;
-  EXCEPTION WHEN raise_exception THEN refused := true;
+  EXCEPTION WHEN raise_exception OR insufficient_privilege THEN refused := true;
   END;
   IF NOT refused THEN RAISE EXCEPTION 'settlement exception was mutable'; END IF;
 
