@@ -309,16 +309,13 @@ impl NativeWebhookReconciler {
     }
 }
 
-
 /// Explicit opt-in webhook HTTP ingress. This is NOT attached to the main
 /// PaymentService router and cannot be installed with production credentials
 /// through the local-only NativeWebhookReconciler constructor. In protected
 /// environments an ingress gateway additionally needs TLS, source routing,
 /// request limits, secret rotation and audit.
-pub fn synthetic_webhook_router(
-    source: std::sync::Arc<NativeWebhookReconciler>,
-) -> axum::Router {
-    use axum::{routing::post, extract::DefaultBodyLimit};
+pub fn synthetic_webhook_router(source: std::sync::Arc<NativeWebhookReconciler>) -> axum::Router {
+    use axum::{extract::DefaultBodyLimit, routing::post};
     axum::Router::new()
         .route("/internal/providers/hyperswitch/v1/webhooks", post(
             |axum::extract::State(handler): axum::extract::State<std::sync::Arc<NativeWebhookReconciler>>,
