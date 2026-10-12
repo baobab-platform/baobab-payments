@@ -207,3 +207,113 @@ impl HyperSwitchTransport {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::extract::Json;
+    use axum::http::{HeaderMap, StatusCode};
+    use axum::routing::post;
+    use axum::Router;
+    use serde_json::json;
+
+    fn intent() -> Value {
+        json!({
+            "amount": 1200, "currency": "ZAR", "capture_method": "manual",
+            "confirm": false, "profile_id": "prof_synthetic_not_certified"
+        })
+    }
+
+    #[test]
+    fn rejects_insecure_and_untrusted_configuration_without_exposing_keys() {
+        for origin in [
+            "http://payments.example.com/",
+            "https://alice:password@payments.example.com/",
+            "https://payments.example.com/path/",
+            "https://payments.example.com/?token=foo",
+            "http://127.0.0.1:8080/",
+        ] {
+            assert_eq!(
+                HyperSwitchTransport::new(origin, "synthetic".into()).unwrap_err(),
+                HyperSwitchError::Configuration
+            );
+        }
+        let client = HyperSwitchTransport::new("https://payments.example.com/", "synthetic-secret".into()).unwrap();
+        let debug = format!("{client:?}");
+        assert!(!debug.contains("synthetic-secret"));
+        assert!(debug.contains("<redacted>"));
+    }
+
+    #[tokio::test]
+    async fn sends_real_http_with_server_only_key_and_stable_idempotency_header() {
+        let app = Router::new().route(
+            "/payments",
+            post(|headers: HeaderMap, Json(body): Json<Value>| async move {
+                assert_eq!(headers["api-key"], "synthetic-only-secret");
+                assert_eq!(headers["idempotency-key"], "stable-test-key-0001");
+                assert_eq!(body["amount"], 1200);
+                assert_eq!(body["confirm"], false);
+                Json(json!({"payment_id":"pay_synthetic_001","status":"requires_payment_method"}))
+            }),
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let task = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+        let transport = HyperSwitchTransport::loopback_test_client(&format!("http://{addr}/")).unwrap();
+        let response = transport.execute(NativeOperation::Create, &intent(), "stable-test-key-0001").await.unwrap();
+        assert_eq!(response.native_reference, "pay_synthetic_001");
+        assert_eq!(response.provider_status, "requires_payment_method");
+        task.abort();
+    }
+
+    #[tokio::test]
+    async fn refuses_card_data_path_traversal_bad_key_and_unsafe_provider_response() {
+        let client = HyperSwitchTransport::new("https://payments.example.com/", "synthetic".into()).unwrap();
+        for bad in [
+            json!({"payment_method_data":{"card":{"card_number":"4242424242424242"}}}),
+            json!({"account_number":"12345"}),
+            json!({"card_cvc":"001"}),
+        ] {
+            assert_eq!(
+                client.execute(NativeOperation::Create, &bad, "stable-test-key-0001").await.unwrap_err(),
+                HyperSwitchError::InvalidOperation
+            );
+        }
+        assert_eq!(
+            client.execute(NativeOperation::Confirm {payment_id:"../other"}, &intent(), "stable-test-key-0001").await.unwrap_err(),
+            HyperSwitchError::InvalidOperation
+        );
+        assert_eq!(
+            client.execute(NativeOperation::Create, &intent(), "short").await.unwrap_err(),
+            HyperSwitchError::InvalidOperation
+        );
+        let app = Router::new().route("/payments", post(|| async {
+            Json(json!({"payment_id":"pay_synthetic_001", "status": "unknown;success"}))
+        }));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let task = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+        let client = HyperSwitchTransport::loopback_test_client(&format!("http://{addr}/")).unwrap();
+        assert_eq!(
+            client.execute(NativeOperation::Create, &intent(), "stable-test-key-0001").await.unwrap_err(),
+            HyperSwitchError::InvalidResponse
+        );
+        task.abort();
+    }
+
+    #[tokio::test]
+    async fn rejects_provider_error_without_automatic_money_retry() {
+        let app = Router::new().route("/payments", post(|| async {
+            (StatusCode::SERVICE_UNAVAILABLE, Json(json!({"error":"provider down"})))
+        }));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let task = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+        let client = HyperSwitchTransport::loopback_test_client(&format!("http://{addr}/")).unwrap();
+        assert_eq!(
+            client.execute(NativeOperation::Create, &intent(), "stable-test-key-0001").await.unwrap_err(),
+            HyperSwitchError::Unavailable
+        );
+        task.abort();
+    }
+}
