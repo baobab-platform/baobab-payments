@@ -154,7 +154,7 @@ impl IamCpAuthority {
             "market": operation.market,
             "operation_reference": operation.operation_reference,
         });
-        let result = self.post("/internal/documentary-restrictions/v1/assess", &body).await?;
+        let result = self.post("/internal/documentary/v1/restrictions/assess", &body).await?;
         require_current_documentary_clearance(
             operation, &context.primary_organisation_id.to_string(), &result, now,
         ).map_err(|_| CpAuthorityError::NotAuthorised)
