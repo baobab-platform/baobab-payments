@@ -100,6 +100,7 @@ CREATE FUNCTION payment_ops.reconcile_verified_settlement(
 DECLARE
   p payment_ops.settlement_evidence%ROWTYPE;
   b payment_ops.settlement_evidence%ROWTYPE;
+  n payment_ops.native_execution%ROWTYPE;
   v_match text;
   v_reason text;
 BEGIN
@@ -119,7 +120,16 @@ BEGIN
   IF p.evidence_id IS NULL OR b.evidence_id IS NULL THEN
       RAISE EXCEPTION 'two independently verified evidence entries required' USING ERRCODE='23514';
   END IF;
+  SELECT * INTO n FROM payment_ops.native_execution
+   WHERE execution_id=p_execution AND tenant_id=p_tenant
+     AND responsible_legal_entity_id=p_actor FOR KEY SHARE;
+  IF n.execution_id IS NULL THEN
+     RAISE EXCEPTION 'native payment intent not present' USING ERRCODE='23514';
+  END IF;
   v_reason = CASE
+    WHEN p.gross_minor<>n.amount_minor OR p.currency_code<>n.currency_code
+      OR p.payment_reference<>n.canonical_payment_reference
+        THEN 'PROVIDER_SCOPE_MISMATCH'
     WHEN p.independent_source=b.independent_source THEN 'PROVIDER_SCOPE_MISMATCH'
     WHEN p.provider_engine_instance_id<>b.provider_engine_instance_id
       OR p.provider_environment<>b.provider_environment
