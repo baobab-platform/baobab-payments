@@ -10,6 +10,7 @@ pub mod http;
 pub mod hyperswitch;
 pub mod native_execution;
 pub mod webhook_reconciliation;
+pub mod settlement_reconciliation;
 pub mod provider;
 pub mod service;
 
