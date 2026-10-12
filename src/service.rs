@@ -688,8 +688,10 @@ impl PaymentService {
         adapter: &crate::webhook_reconciliation::NativeWebhookReconciler,
         raw_body: &[u8],
         signature_header: &str,
-    ) -> Result<crate::webhook_reconciliation::WebhookResult,
-             crate::webhook_reconciliation::WebhookError> {
+    ) -> Result<
+        crate::webhook_reconciliation::WebhookResult,
+        crate::webhook_reconciliation::WebhookError,
+    > {
         adapter.receive_signed(raw_body, signature_header).await
     }
 }
