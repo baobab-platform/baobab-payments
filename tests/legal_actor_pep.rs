@@ -179,7 +179,8 @@ fn malformed_closed_responses_never_reach_readiness_or_execution() {
         let provider = merchant(true);
         let executed = Cell::new(false);
         assert_eq!(
-            execute_with_current_payment_actor(&op(), Ok(&body), &provider, now(), || executed.set(true)),
+            execute_with_current_payment_actor(&op(), Ok(&body), &provider, now(), || executed
+                .set(true)),
             Err(LegalActorGateError::NotAuthorised)
         );
         assert_eq!(provider.calls.get(), 0);
@@ -191,13 +192,31 @@ fn malformed_closed_responses_never_reach_readiness_or_execution() {
 fn invalid_operation_is_rejected_before_any_policy_or_provider_use() {
     let long = "x".repeat(257);
     for operation in [
-        PaymentLegalOperation { context_id: "legacy-opaque-handle", ..op() },
-        PaymentLegalOperation { activity: "x", ..op() },
-        PaymentLegalOperation { activity: &long, ..op() },
-        PaymentLegalOperation { operation_reference: &long, ..op() },
-        PaymentLegalOperation { capability: &long, ..op() },
+        PaymentLegalOperation {
+            context_id: "legacy-opaque-handle",
+            ..op()
+        },
+        PaymentLegalOperation {
+            activity: "x",
+            ..op()
+        },
+        PaymentLegalOperation {
+            activity: &long,
+            ..op()
+        },
+        PaymentLegalOperation {
+            operation_reference: &long,
+            ..op()
+        },
+        PaymentLegalOperation {
+            capability: &long,
+            ..op()
+        },
     ] {
-        assert_eq!(operation.request(), Err(LegalActorGateError::MissingContext));
+        assert_eq!(
+            operation.request(),
+            Err(LegalActorGateError::MissingContext)
+        );
     }
 }
 
@@ -208,11 +227,15 @@ fn canonical_negative_assessment_is_valid_wire_and_still_denies_execution() {
         "outcome": "NO_APPLICABLE_MANDATE", "policy_reference": "ADR-BCP-027/LA-04",
         "evaluated_at": now().format(&Rfc3339).unwrap()
     });
-    assert!(baobab_payments::contracts::entry_is_valid("legal_response", &denied));
+    assert!(baobab_payments::contracts::entry_is_valid(
+        "legal_response",
+        &denied
+    ));
     let provider = merchant(true);
     let executed = Cell::new(false);
     assert_eq!(
-        execute_with_current_payment_actor(&op(), Ok(&denied), &provider, now(), || executed.set(true)),
+        execute_with_current_payment_actor(&op(), Ok(&denied), &provider, now(), || executed
+            .set(true)),
         Err(LegalActorGateError::NotAuthorised)
     );
     assert_eq!(provider.calls.get(), 0);

@@ -49,7 +49,8 @@ async fn main() -> ExitCode {
             return ExitCode::SUCCESS;
         }
         Some("contract-conformance") => {
-            let result = std::env::args().nth(2)
+            let result = std::env::args()
+                .nth(2)
                 .and_then(|path| std::fs::read_to_string(path).ok())
                 .and_then(|cases| baobab_payments::contracts::check_conformance(&cases).ok());
             return if let Some(count) = result {

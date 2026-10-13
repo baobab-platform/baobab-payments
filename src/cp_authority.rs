@@ -24,11 +24,18 @@ async fn bounded_object(
     mut response: reqwest::Response,
     limit: usize,
 ) -> Result<Value, CpAuthorityError> {
-    if response.content_length().is_some_and(|length| length > limit as u64) {
+    if response
+        .content_length()
+        .is_some_and(|length| length > limit as u64)
+    {
         return Err(CpAuthorityError::Unavailable);
     }
     let mut bytes = Vec::new();
-    while let Some(chunk) = response.chunk().await.map_err(|_| CpAuthorityError::Unavailable)? {
+    while let Some(chunk) = response
+        .chunk()
+        .await
+        .map_err(|_| CpAuthorityError::Unavailable)?
+    {
         if chunk.len() > limit - bytes.len() {
             return Err(CpAuthorityError::Unavailable);
         }
@@ -381,9 +388,12 @@ mod tests {
         let addr = listener.local_addr().unwrap();
         let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
         let authority = IamCpAuthority::loopback(
-            &format!("http://{addr}/"), &format!("http://{addr}/token"),
-            "workload".into(), "synthetic".into(),
-        ).unwrap();
+            &format!("http://{addr}/"),
+            &format!("http://{addr}/token"),
+            "workload".into(),
+            "synthetic".into(),
+        )
+        .unwrap();
         (authority, server)
     }
 
@@ -392,11 +402,16 @@ mod tests {
         // No listener exists: returning NotAuthorised instead of Unavailable
         // proves local grammar is checked before any network attempt.
         let authority = IamCpAuthority::loopback(
-            "http://127.0.0.1:1/", "http://127.0.0.1:1/token",
-            "workload".into(), "synthetic".into(),
-        ).unwrap();
+            "http://127.0.0.1:1/",
+            "http://127.0.0.1:1/token",
+            "workload".into(),
+            "synthetic".into(),
+        )
+        .unwrap();
         assert!(matches!(
-            authority.issue_current_context("tn_bad!", Uuid::now_v7(), "ZA", "LE-SYNTHETIC-ZA").await,
+            authority
+                .issue_current_context("tn_bad!", Uuid::now_v7(), "ZA", "LE-SYNTHETIC-ZA")
+                .await,
             Err(CpAuthorityError::NotAuthorised)
         ));
     }
@@ -405,7 +420,13 @@ mod tests {
     async fn context_schema_validity_does_not_replace_binding_and_expiry_checks() {
         use axum::{Json, Router, routing::post};
         let organisation = Uuid::now_v7();
-        for variant in ["valid", "wrong-market", "expired", "unknown-property", "missing-market-dependencies"] {
+        for variant in [
+            "valid",
+            "wrong-market",
+            "expired",
+            "unknown-property",
+            "missing-market-dependencies",
+        ] {
             let now = OffsetDateTime::now_utc();
             let mut response = json!({
                 "context_id": Uuid::now_v7(), "tenant_id": "tn_synthetic123",
@@ -416,16 +437,37 @@ mod tests {
             });
             match variant {
                 "wrong-market" => response["country_code"] = json!("UG"),
-                "expired" => response["expires_at"] = json!((now - time::Duration::seconds(1)).format(&time::format_description::well_known::Rfc3339).unwrap()),
+                "expired" => {
+                    response["expires_at"] = json!(
+                        (now - time::Duration::seconds(1))
+                            .format(&time::format_description::well_known::Rfc3339)
+                            .unwrap()
+                    )
+                }
                 "unknown-property" => response["authority_granted"] = json!(true),
-                "missing-market-dependencies" => { response.as_object_mut().unwrap().remove("currency_code"); },
+                "missing-market-dependencies" => {
+                    response.as_object_mut().unwrap().remove("currency_code");
+                }
                 _ => {}
             }
             let app = Router::new()
-                .route("/token", post(|| async { Json(json!({"access_token":"synthetic-workload-token-only"})) }))
-                .route("/v1/platform-context/resolve", post(move || { let response = response.clone(); async move { Json(response) } }));
+                .route(
+                    "/token",
+                    post(|| async {
+                        Json(json!({"access_token":"synthetic-workload-token-only"}))
+                    }),
+                )
+                .route(
+                    "/v1/platform-context/resolve",
+                    post(move || {
+                        let response = response.clone();
+                        async move { Json(response) }
+                    }),
+                );
             let (authority, server) = serve(app).await;
-            let result = authority.issue_current_context("tn_synthetic123", organisation, "ZA", "LE-SYNTHETIC-ZA").await;
+            let result = authority
+                .issue_current_context("tn_synthetic123", organisation, "ZA", "LE-SYNTHETIC-ZA")
+                .await;
             assert_eq!(result.is_ok(), variant == "valid", "{variant}");
             server.abort();
         }
@@ -435,22 +477,54 @@ mod tests {
     async fn duplicate_oversized_and_redirected_authority_are_refused() {
         use axum::{Json, Router, body::Body, http::Response, routing::post};
         for (status, raw, expected) in [
-            (200, r#"{"context_id":"one","context_id":"two"}"#.to_owned(), CpAuthorityError::Unavailable),
+            (
+                200,
+                r#"{"context_id":"one","context_id":"two"}"#.to_owned(),
+                CpAuthorityError::Unavailable,
+            ),
             (200, "x".repeat(16_385), CpAuthorityError::Unavailable),
             (302, "{}".to_owned(), CpAuthorityError::NotAuthorised),
-            (200, r#"{"outcome":"AUTHORIZED"}"#.to_owned(), CpAuthorityError::NotAuthorised),
+            (
+                200,
+                r#"{"outcome":"AUTHORIZED"}"#.to_owned(),
+                CpAuthorityError::NotAuthorised,
+            ),
         ] {
             let app = Router::new()
-                .route("/token", post(|| async { Json(json!({"access_token":"synthetic-workload-token-only"})) }))
-                .route("/internal/legal-actor/v1/assess", post(move || {
-                    let raw = raw.clone();
-                    async move { Response::builder().status(status).header("Location", "/must-never-follow").body(Body::from(raw)).unwrap() }
-                }));
+                .route(
+                    "/token",
+                    post(|| async {
+                        Json(json!({"access_token":"synthetic-workload-token-only"}))
+                    }),
+                )
+                .route(
+                    "/internal/legal-actor/v1/assess",
+                    post(move || {
+                        let raw = raw.clone();
+                        async move {
+                            Response::builder()
+                                .status(status)
+                                .header("Location", "/must-never-follow")
+                                .body(Body::from(raw))
+                                .unwrap()
+                        }
+                    }),
+                );
             let (authority, server) = serve(app).await;
             let request = json!({"context_id":"0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
                 "role":"PAYMENT_BENEFICIARY", "activity":"B2B_RECEIPT", "market":"ZA",
                 "operation_reference":"synthetic/payment/123"});
-            assert_eq!(authority.post("/internal/legal-actor/v1/assess", &request, "legal_request", "legal_response").await, Err(expected));
+            assert_eq!(
+                authority
+                    .post(
+                        "/internal/legal-actor/v1/assess",
+                        &request,
+                        "legal_request",
+                        "legal_response"
+                    )
+                    .await,
+                Err(expected)
+            );
             server.abort();
         }
     }
@@ -463,7 +537,9 @@ mod tests {
             let addr = listener.local_addr().unwrap();
             let server = std::thread::spawn(move || {
                 let (mut stream, _) = listener.accept().unwrap();
-                stream.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+                stream
+                    .set_read_timeout(Some(Duration::from_secs(2)))
+                    .unwrap();
                 let mut request = [0u8; 4096];
                 let _ = stream.read(&mut request).unwrap();
                 stream.write_all(b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n").unwrap();
@@ -471,13 +547,23 @@ mod tests {
                     // Headers arrive promptly; body exceeds the TOTAL deadline.
                     std::thread::sleep(Duration::from_millis(750));
                 }
-                let raw = if slow { "{}".to_owned() } else { "x".repeat(16_385) };
+                let raw = if slow {
+                    "{}".to_owned()
+                } else {
+                    "x".repeat(16_385)
+                };
                 // The peer may cancel immediately after exceeding its bound.
                 let _ = write!(stream, "{:X}\r\n{raw}\r\n0\r\n\r\n", raw.len());
             });
-            let client = Client::builder().timeout(Duration::from_millis(500)).build().unwrap();
+            let client = Client::builder()
+                .timeout(Duration::from_millis(500))
+                .build()
+                .unwrap();
             let response = client.get(format!("http://{addr}/")).send().await.unwrap();
-            assert_eq!(bounded_object(response, 16_384).await, Err(CpAuthorityError::Unavailable));
+            assert_eq!(
+                bounded_object(response, 16_384).await,
+                Err(CpAuthorityError::Unavailable)
+            );
             server.join().unwrap();
         }
     }

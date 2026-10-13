@@ -106,12 +106,18 @@ pub fn self_test() {
     for (_, reference) in ENTRIES {
         let _ = validator(reference);
     }
-    assert!(entry_is_valid("context_uuid", &json!("0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b")));
+    assert!(entry_is_valid(
+        "context_uuid",
+        &json!("0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b")
+    ));
     assert!(!entry_is_valid("context_uuid", &json!("not-a-uuid")));
-    assert!(!entry_is_valid("context_response", &json!({
-        "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
-        "tenant_id": "tn_synthetic123", "resolved_at": "2026-02-30T00:00:00Z"
-    })));
+    assert!(!entry_is_valid(
+        "context_response",
+        &json!({
+            "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+            "tenant_id": "tn_synthetic123", "resolved_at": "2026-02-30T00:00:00Z"
+        })
+    ));
 }
 
 #[derive(Deserialize)]
@@ -125,7 +131,8 @@ struct WireCase {
 
 /// Synthetic golden vectors only; reports a fixed error rather than instances.
 pub fn check_conformance(cases: &str) -> Result<usize, &'static str> {
-    let cases: Vec<WireCase> = serde_json::from_str(cases).map_err(|_| "invalid conformance vectors")?;
+    let cases: Vec<WireCase> =
+        serde_json::from_str(cases).map_err(|_| "invalid conformance vectors")?;
     if cases.is_empty() {
         return Err("empty conformance vectors");
     }
