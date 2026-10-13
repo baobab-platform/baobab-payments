@@ -119,3 +119,14 @@ async fn readiness_request_must_match_the_shared_contract_strictly() {
         assert_problem(&res, 400, "INVALID_MERCHANT_READINESS_REQUEST");
     }
 }
+
+#[tokio::test]
+async fn duplicate_readiness_fields_cannot_be_normalised_into_an_authorised_request() {
+    let h = harness();
+    let authorized = trade_token("merchant-readiness:assess");
+    let body = serde_json::to_string(&request()).unwrap();
+    let duplicate = body.replacen('{', "{\"market\":\"UG\",", 1);
+    let res = send_raw(&h.app, "POST", PATH, Some(&authorized), None, Some(duplicate.into_bytes()), &[]).await;
+    assert_problem(&res, 400, "INVALID_MERCHANT_READINESS_REQUEST");
+    assert!(h.service.events(TENANT).is_empty());
+}

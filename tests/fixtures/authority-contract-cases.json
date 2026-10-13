@@ -1,0 +1,1963 @@
+[
+  {
+    "name": "legal_request/valid",
+    "contract": "legal_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "role": "PAYMENT_BENEFICIARY",
+      "activity": "B2B_RECEIPT",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": true
+  },
+  {
+    "name": "legal_request/missing/context_id",
+    "contract": "legal_request",
+    "instance": {
+      "role": "PAYMENT_BENEFICIARY",
+      "activity": "B2B_RECEIPT",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_request/missing/role",
+    "contract": "legal_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "activity": "B2B_RECEIPT",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_request/missing/activity",
+    "contract": "legal_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "role": "PAYMENT_BENEFICIARY",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_request/missing/market",
+    "contract": "legal_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "role": "PAYMENT_BENEFICIARY",
+      "activity": "B2B_RECEIPT",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_request/missing/operation_reference",
+    "contract": "legal_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "role": "PAYMENT_BENEFICIARY",
+      "activity": "B2B_RECEIPT",
+      "market": "ZA",
+      "capability": "payments.intent.create"
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_request/type/context_id",
+    "contract": "legal_request",
+    "instance": {
+      "context_id": [],
+      "role": "PAYMENT_BENEFICIARY",
+      "activity": "B2B_RECEIPT",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_request/type/role",
+    "contract": "legal_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "role": [],
+      "activity": "B2B_RECEIPT",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_request/type/activity",
+    "contract": "legal_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "role": "PAYMENT_BENEFICIARY",
+      "activity": [],
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_request/type/market",
+    "contract": "legal_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "role": "PAYMENT_BENEFICIARY",
+      "activity": "B2B_RECEIPT",
+      "market": [],
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_request/type/capability",
+    "contract": "legal_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "role": "PAYMENT_BENEFICIARY",
+      "activity": "B2B_RECEIPT",
+      "market": "ZA",
+      "capability": [],
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_request/type/operation_reference",
+    "contract": "legal_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "role": "PAYMENT_BENEFICIARY",
+      "activity": "B2B_RECEIPT",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": []
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_request/invented-grant",
+    "contract": "legal_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "role": "PAYMENT_BENEFICIARY",
+      "activity": "B2B_RECEIPT",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "grant_override": true
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/valid",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "outcome": "AUTHORIZED",
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+        "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+        "evidence_references": [
+          "synthetic/independent-evidence"
+        ],
+        "valid_until": "2026-10-13T04:00:20Z"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "legal_response/missing/context_id",
+    "contract": "legal_response",
+    "instance": {
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "outcome": "AUTHORIZED",
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+        "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+        "evidence_references": [
+          "synthetic/independent-evidence"
+        ],
+        "valid_until": "2026-10-13T04:00:20Z"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/missing/operation_reference",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "outcome": "AUTHORIZED",
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+        "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+        "evidence_references": [
+          "synthetic/independent-evidence"
+        ],
+        "valid_until": "2026-10-13T04:00:20Z"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/missing/provider_permissions_granted",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "legal_actor_resolution": {
+        "outcome": "AUTHORIZED",
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+        "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+        "evidence_references": [
+          "synthetic/independent-evidence"
+        ],
+        "valid_until": "2026-10-13T04:00:20Z"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/missing/legal_actor_resolution",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/type/context_id",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": [],
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "outcome": "AUTHORIZED",
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+        "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+        "evidence_references": [
+          "synthetic/independent-evidence"
+        ],
+        "valid_until": "2026-10-13T04:00:20Z"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/type/operation_reference",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": [],
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "outcome": "AUTHORIZED",
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+        "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+        "evidence_references": [
+          "synthetic/independent-evidence"
+        ],
+        "valid_until": "2026-10-13T04:00:20Z"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/type/provider_permissions_granted",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": [],
+      "legal_actor_resolution": {
+        "outcome": "AUTHORIZED",
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+        "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+        "evidence_references": [
+          "synthetic/independent-evidence"
+        ],
+        "valid_until": "2026-10-13T04:00:20Z"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/type/legal_actor_resolution",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": []
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/invented-grant",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "outcome": "AUTHORIZED",
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+        "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+        "evidence_references": [
+          "synthetic/independent-evidence"
+        ],
+        "valid_until": "2026-10-13T04:00:20Z"
+      },
+      "grant_override": true
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_request/valid",
+    "contract": "documentary_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": true
+  },
+  {
+    "name": "documentary_request/missing/context_id",
+    "contract": "documentary_request",
+    "instance": {
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_request/missing/capability",
+    "contract": "documentary_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_request/missing/market",
+    "contract": "documentary_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_request/missing/operation_reference",
+    "contract": "documentary_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_request/type/context_id",
+    "contract": "documentary_request",
+    "instance": {
+      "context_id": [],
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_request/type/market",
+    "contract": "documentary_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": [],
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_request/type/capability",
+    "contract": "documentary_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": [],
+      "operation_reference": "synthetic/payment/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_request/type/operation_reference",
+    "contract": "documentary_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": []
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_request/invented-grant",
+    "contract": "documentary_request",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "grant_override": true
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/valid",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": true
+  },
+  {
+    "name": "documentary_response/missing/context_id",
+    "contract": "documentary_response",
+    "instance": {
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/missing/operation_reference",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/missing/organisation_id",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/missing/capability",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/missing/market",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/missing/blocked",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/missing/authority_granted",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/missing/policy_reference",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/missing/evaluated_at",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/missing/expires_at",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/type/context_id",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": [],
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/type/market",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": [],
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/type/capability",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": [],
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/type/operation_reference",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": [],
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/type/organisation_id",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": [],
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/type/blocked",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": [],
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/type/authority_granted",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": [],
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/type/policy_reference",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": [],
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/type/evaluated_at",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": [],
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/type/expires_at",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": []
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/invented-grant",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z",
+      "grant_override": true
+    },
+    "valid": false
+  },
+  {
+    "name": "context_request/valid",
+    "contract": "context_request",
+    "instance": {
+      "tenant_id": "tn_synthetic",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "country_code": "ZA"
+    },
+    "valid": true
+  },
+  {
+    "name": "context_request/type/tenant_id",
+    "contract": "context_request",
+    "instance": {
+      "tenant_id": [],
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "country_code": "ZA"
+    },
+    "valid": false
+  },
+  {
+    "name": "context_request/type/organisation_id",
+    "contract": "context_request",
+    "instance": {
+      "tenant_id": "tn_synthetic",
+      "organisation_id": [],
+      "country_code": "ZA"
+    },
+    "valid": false
+  },
+  {
+    "name": "context_request/type/country_code",
+    "contract": "context_request",
+    "instance": {
+      "tenant_id": "tn_synthetic",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "country_code": []
+    },
+    "valid": false
+  },
+  {
+    "name": "context_request/invented-grant",
+    "contract": "context_request",
+    "instance": {
+      "tenant_id": "tn_synthetic",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "country_code": "ZA",
+      "grant_override": true
+    },
+    "valid": false
+  },
+  {
+    "name": "context_response/valid",
+    "contract": "context_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "tenant_id": "tn_synthetic",
+      "resolved_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:01:00Z",
+      "country_code": "ZA",
+      "market_id": "mkt_za",
+      "currency_code": "ZAR",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "organisation_type": "ORGANISATION"
+    },
+    "valid": true
+  },
+  {
+    "name": "context_response/missing/context_id",
+    "contract": "context_response",
+    "instance": {
+      "tenant_id": "tn_synthetic",
+      "resolved_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:01:00Z",
+      "country_code": "ZA",
+      "market_id": "mkt_za",
+      "currency_code": "ZAR",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "organisation_type": "ORGANISATION"
+    },
+    "valid": false
+  },
+  {
+    "name": "context_response/missing/tenant_id",
+    "contract": "context_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "resolved_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:01:00Z",
+      "country_code": "ZA",
+      "market_id": "mkt_za",
+      "currency_code": "ZAR",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "organisation_type": "ORGANISATION"
+    },
+    "valid": false
+  },
+  {
+    "name": "context_response/missing/resolved_at",
+    "contract": "context_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "tenant_id": "tn_synthetic",
+      "expires_at": "2026-10-13T04:01:00Z",
+      "country_code": "ZA",
+      "market_id": "mkt_za",
+      "currency_code": "ZAR",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "organisation_type": "ORGANISATION"
+    },
+    "valid": false
+  },
+  {
+    "name": "context_response/type/context_id",
+    "contract": "context_response",
+    "instance": {
+      "context_id": [],
+      "tenant_id": "tn_synthetic",
+      "resolved_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:01:00Z",
+      "country_code": "ZA",
+      "market_id": "mkt_za",
+      "currency_code": "ZAR",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "organisation_type": "ORGANISATION"
+    },
+    "valid": false
+  },
+  {
+    "name": "context_response/type/tenant_id",
+    "contract": "context_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "tenant_id": [],
+      "resolved_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:01:00Z",
+      "country_code": "ZA",
+      "market_id": "mkt_za",
+      "currency_code": "ZAR",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "organisation_type": "ORGANISATION"
+    },
+    "valid": false
+  },
+  {
+    "name": "context_response/type/resolved_at",
+    "contract": "context_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "tenant_id": "tn_synthetic",
+      "resolved_at": [],
+      "expires_at": "2026-10-13T04:01:00Z",
+      "country_code": "ZA",
+      "market_id": "mkt_za",
+      "currency_code": "ZAR",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "organisation_type": "ORGANISATION"
+    },
+    "valid": false
+  },
+  {
+    "name": "context_response/type/expires_at",
+    "contract": "context_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "tenant_id": "tn_synthetic",
+      "resolved_at": "2026-10-13T04:00:00Z",
+      "expires_at": [],
+      "country_code": "ZA",
+      "market_id": "mkt_za",
+      "currency_code": "ZAR",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "organisation_type": "ORGANISATION"
+    },
+    "valid": false
+  },
+  {
+    "name": "context_response/type/country_code",
+    "contract": "context_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "tenant_id": "tn_synthetic",
+      "resolved_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:01:00Z",
+      "country_code": [],
+      "market_id": "mkt_za",
+      "currency_code": "ZAR",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "organisation_type": "ORGANISATION"
+    },
+    "valid": false
+  },
+  {
+    "name": "context_response/type/market_id",
+    "contract": "context_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "tenant_id": "tn_synthetic",
+      "resolved_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:01:00Z",
+      "country_code": "ZA",
+      "market_id": [],
+      "currency_code": "ZAR",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "organisation_type": "ORGANISATION"
+    },
+    "valid": false
+  },
+  {
+    "name": "context_response/type/currency_code",
+    "contract": "context_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "tenant_id": "tn_synthetic",
+      "resolved_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:01:00Z",
+      "country_code": "ZA",
+      "market_id": "mkt_za",
+      "currency_code": [],
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "organisation_type": "ORGANISATION"
+    },
+    "valid": false
+  },
+  {
+    "name": "context_response/type/organisation_id",
+    "contract": "context_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "tenant_id": "tn_synthetic",
+      "resolved_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:01:00Z",
+      "country_code": "ZA",
+      "market_id": "mkt_za",
+      "currency_code": "ZAR",
+      "organisation_id": [],
+      "organisation_type": "ORGANISATION"
+    },
+    "valid": false
+  },
+  {
+    "name": "context_response/type/organisation_type",
+    "contract": "context_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "tenant_id": "tn_synthetic",
+      "resolved_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:01:00Z",
+      "country_code": "ZA",
+      "market_id": "mkt_za",
+      "currency_code": "ZAR",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "organisation_type": []
+    },
+    "valid": false
+  },
+  {
+    "name": "context_response/invented-grant",
+    "contract": "context_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "tenant_id": "tn_synthetic",
+      "resolved_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:01:00Z",
+      "country_code": "ZA",
+      "market_id": "mkt_za",
+      "currency_code": "ZAR",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "organisation_type": "ORGANISATION",
+      "grant_override": true
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/invalid/mandate_id",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "outcome": "AUTHORIZED",
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "mandate_id": "1-1-1-1-1",
+        "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+        "evidence_references": [
+          "synthetic/independent-evidence"
+        ],
+        "valid_until": "2026-10-13T04:00:20Z"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/invalid/responsible_legal_entity_id",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "outcome": "AUTHORIZED",
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+        "responsible_legal_entity_id": "lowercase-local",
+        "evidence_references": [
+          "synthetic/independent-evidence"
+        ],
+        "valid_until": "2026-10-13T04:00:20Z"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/invalid/evaluated_at",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "outcome": "AUTHORIZED",
+        "evaluated_at": "2026-02-30T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+        "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+        "evidence_references": [
+          "synthetic/independent-evidence"
+        ],
+        "valid_until": "2026-10-13T04:00:20Z"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/invalid/valid_until",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "outcome": "AUTHORIZED",
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+        "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+        "evidence_references": [
+          "synthetic/independent-evidence"
+        ],
+        "valid_until": "2026-10-13"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/invalid/outcome",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "outcome": "TRUST_ME",
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+        "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+        "evidence_references": [
+          "synthetic/independent-evidence"
+        ],
+        "valid_until": "2026-10-13T04:00:20Z"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/invalid/policy_reference",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "outcome": "AUTHORIZED",
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+        "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+        "evidence_references": [
+          "synthetic/independent-evidence"
+        ],
+        "valid_until": "2026-10-13T04:00:20Z"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/invalid/evidence_references",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "outcome": "AUTHORIZED",
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+        "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+        "evidence_references": [
+          "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        ],
+        "valid_until": "2026-10-13T04:00:20Z"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/invalid/provider_grant",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "outcome": "AUTHORIZED",
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+        "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+        "evidence_references": [
+          "synthetic/independent-evidence"
+        ],
+        "valid_until": "2026-10-13T04:00:20Z",
+        "provider_grant": true
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/denial/NO_APPLICABLE_MANDATE",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "outcome": "NO_APPLICABLE_MANDATE"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "legal_response/denied-mandate/NO_APPLICABLE_MANDATE",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "outcome": "NO_APPLICABLE_MANDATE",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/denial/AMBIGUOUS",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "outcome": "AMBIGUOUS"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "legal_response/denied-mandate/AMBIGUOUS",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "outcome": "AMBIGUOUS",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/denial/REVOKED_OR_EXPIRED",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "outcome": "REVOKED_OR_EXPIRED"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "legal_response/denied-mandate/REVOKED_OR_EXPIRED",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "outcome": "REVOKED_OR_EXPIRED",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/denial/ACTOR_NOT_VERIFIED",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "outcome": "ACTOR_NOT_VERIFIED"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "legal_response/denied-mandate/ACTOR_NOT_VERIFIED",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "outcome": "ACTOR_NOT_VERIFIED",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "legal_response/denial/PROVIDER_RESTRICTED",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "outcome": "PROVIDER_RESTRICTED"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "legal_response/denied-mandate/PROVIDER_RESTRICTED",
+    "contract": "legal_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "operation_reference": "synthetic/payment/123",
+      "provider_permissions_granted": false,
+      "legal_actor_resolution": {
+        "evaluated_at": "2026-10-13T04:00:00Z",
+        "policy_reference": "synthetic/independent-policy",
+        "outcome": "PROVIDER_RESTRICTED",
+        "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/invalid/organisation_id",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "1-1-1-1-1",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/invalid/evaluated_at",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-02-30T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/invalid/expires_at",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/invalid/authority_granted",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": true,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/invalid/policy_reference",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": false,
+      "authority_granted": false,
+      "policy_reference": "synthetic/grant",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": false
+  },
+  {
+    "name": "documentary_response/blocked",
+    "contract": "documentary_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "market": "ZA",
+      "capability": "payments.intent.create",
+      "operation_reference": "synthetic/payment/123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "blocked": true,
+      "authority_granted": false,
+      "policy_reference": "ADR-BCP-026/PEO-02T:negative-only",
+      "evaluated_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:00:01Z"
+    },
+    "valid": true
+  },
+  {
+    "name": "context_response/incomplete-market",
+    "contract": "context_response",
+    "instance": {
+      "context_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+      "tenant_id": "tn_synthetic",
+      "resolved_at": "2026-10-13T04:00:00Z",
+      "expires_at": "2026-10-13T04:01:00Z",
+      "country_code": "ZA",
+      "market_id": "mkt_za",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c",
+      "organisation_type": "ORGANISATION"
+    },
+    "valid": false
+  },
+  {
+    "name": "context_uuid/valid",
+    "contract": "context_uuid",
+    "instance": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6b",
+    "valid": true
+  },
+  {
+    "name": "context_uuid/abbreviated",
+    "contract": "context_uuid",
+    "instance": "1-1-1-1-1",
+    "valid": false
+  },
+  {
+    "name": "context_uuid/noncanonical",
+    "contract": "context_uuid",
+    "instance": "ctx-local-fiction",
+    "valid": false
+  },
+  {
+    "name": "context_uuid/wrong-type",
+    "contract": "context_uuid",
+    "instance": [],
+    "valid": false
+  },
+  {
+    "name": "readiness_request/valid",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": true
+  },
+  {
+    "name": "readiness_request/missing/tenant_id",
+    "contract": "readiness_request",
+    "instance": {
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/wrong-type/tenant_id",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": 17,
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/missing/organisation_id",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/wrong-type/organisation_id",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": 17,
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/missing/responsible_legal_entity_id",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/wrong-type/responsible_legal_entity_id",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": 17,
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/missing/market",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/wrong-type/market",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": 17,
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/missing/currency_code",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/wrong-type/currency_code",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": 17,
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/missing/capability",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/wrong-type/capability",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": 17,
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/missing/operation_reference",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/wrong-type/operation_reference",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": 17,
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/missing/mandate_id",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/wrong-type/mandate_id",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": 17
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/invalid/market120",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "za",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/invalid/currency_code121",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "zar",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/invalid/tenant_id122",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_ab",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/invalid/tenant_id123",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "TN_synthetic",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/invalid/mandate_id124",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "not-a-uuid"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/invalid/operation_reference125",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/invalid/capability126",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "ab",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/invalid/organisation_id127",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/invalid/outcome128",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+      "outcome": "READY"
+    },
+    "valid": false
+  },
+  {
+    "name": "readiness_request/invalid/provider129",
+    "contract": "readiness_request",
+    "instance": {
+      "tenant_id": "tn_synthetic123",
+      "organisation_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6a",
+      "responsible_legal_entity_id": "LE-SYNTHETIC-ZA",
+      "market": "ZA",
+      "currency_code": "ZAR",
+      "capability": "commerce.order.create",
+      "operation_reference": "synthetic/cart/123",
+      "mandate_id": "0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6d",
+      "provider": "user-selected"
+    },
+    "valid": false
+  }
+]

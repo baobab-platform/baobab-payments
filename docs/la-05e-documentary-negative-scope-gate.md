@@ -39,3 +39,11 @@ false positive readiness source. Before live PSP integration:
 
 The synthetic unit test callback is **not** evidence that a live payment,
 merchant account, CIPC incorporation or PSP legal permission exists.
+
+## P0-04A contract follow-up — 13 October 2026
+
+Actual request/response contracts and their complete reference closure are now
+pinned and embedded at Shared `a9c53087`. Runtime format/closed-shape validation
+runs before existing consequential binding, expiry and provider checks, including
+injected policy ports. This closes contract drift; it does not activate an IAM
+workload or certify native money movement. See the [maintenance/audit plan](plans/P0-04A-payments-contract-convergence.md).

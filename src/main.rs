@@ -42,6 +42,26 @@ async fn main() -> ExitCode {
     if std::env::args().nth(1).as_deref() == Some("healthcheck") {
         return healthcheck();
     }
+    // Offline packaging/CI probes run without constructing a payment runtime.
+    match std::env::args().nth(1).as_deref() {
+        Some("contract-self-test") => {
+            baobab_payments::contracts::self_test();
+            return ExitCode::SUCCESS;
+        }
+        Some("contract-conformance") => {
+            let result = std::env::args().nth(2)
+                .and_then(|path| std::fs::read_to_string(path).ok())
+                .and_then(|cases| baobab_payments::contracts::check_conformance(&cases).ok());
+            return if let Some(count) = result {
+                println!("Pinned Shared conformance: {count} synthetic cases");
+                ExitCode::SUCCESS
+            } else {
+                eprintln!("Pinned Shared conformance failed");
+                ExitCode::FAILURE
+            };
+        }
+        _ => {}
+    }
     tracing_subscriber::fmt()
         .json()
         .flatten_event(true)

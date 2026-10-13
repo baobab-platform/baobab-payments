@@ -17,3 +17,4 @@ pub mod webhook_reconciliation;
 
 pub mod documentary_restriction;
 pub mod legal_actor;
+pub mod wire_json;

@@ -11,8 +11,11 @@ RUN mkdir src && echo 'fn main() {}' > src/main.rs && touch src/lib.rs \
  && rm -rf src
 COPY contracts ./contracts
 COPY src ./src
+COPY tests/fixtures/authority-contract-cases.json /authority-contract-cases.json
 RUN touch src/main.rs src/lib.rs \
  && cargo build --release --locked \
+ && target/release/baobab-payments contract-self-test \
+ && target/release/baobab-payments contract-conformance /authority-contract-cases.json \
  && cp target/release/baobab-payments /baobab-payments
 
 # CVE-2026-75804 and CVE-2026-84782 (HIGH): the pinned distroless base (and

@@ -30,7 +30,17 @@ jobs:
         env:
           EXPECTED_SHARED_COMMIT: ${{ steps.pin.outputs.commit }}
         run: test "$(git -C .shared-contracts rev-parse HEAD)" = "$EXPECTED_SHARED_COMMIT"
+      - name: Install independent owner-validator tooling
+        run: python -m pip install 'PyYAML==6.0.3' 'jsonschema[format-nongpl]==4.26.0'
+      - name: Verify exact bundle inventory and independent owner golden vectors
+        run: |
+          python scripts/sync_contracts.py --shared-checkout .shared-contracts --check
+          python scripts/verify_contract_owner.py --shared-checkout .shared-contracts
       - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # v1
         with:
           toolchain: stable
       - run: cargo test --workspace --all-features --locked
+      - name: Probe the actual standalone release executable
+        run: |
+          cargo build --release --locked
+          python scripts/verify_contract_owner.py --shared-checkout .shared-contracts --binary target/release/baobab-payments

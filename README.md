@@ -1,6 +1,6 @@
 # baobab-payments
 
-> **Status:** the Baobab Payment API runs with a **non-production sandbox provider** ([ADR-PAY-0001](docs/adr/ADR-PAY-0001%20—%20Adopt%20HyperSwitch.md) §15.2). **The HyperSwitch integration is NOT YET IMPLEMENTED.** Every sandbox result and event is marked `simulated: true`, because no money moves. The sandbox is refused in production, and state is in-memory, so staging is refused too until durable persistence exists.
+> **Status:** the Baobab Payment API runs with a **non-production sandbox provider** ([ADR-PAY-0001](docs/adr/ADR-PAY-0001%20—%20Adopt%20HyperSwitch.md) §15.2). **The public HyperSwitch payment runtime is not activated.** A bounded local integration adapter, PostgreSQL journal and signed-webhook/settlement components exist; they are separate from the public sandbox and await protected acceptance. Every sandbox result and event is marked `simulated: true`, because no money moves. The sandbox is refused in production, and state is in-memory, so staging is refused too until durable persistence exists.
 
 The headless payment orchestration engine of the Baobab platform. It executes monetary obligations that other engines have authorised, such as commercial subscription payments from `baobab-subscriptions` and commerce payments from `baobab-trade`. It does so through a Baobab-owned API, with HyperSwitch as the foundational orchestration implementation behind it.
 
@@ -42,7 +42,7 @@ All cross-repository contracts are canonical in [`baobab-platform/shared`](https
 
 ## Runtime
 
-A Rust (axum, tokio) service. Requests and events are validated against the Shared `payments/v1` contracts vendored under `contracts/shared`, which `contracts.lock.yaml` pins.
+A Rust (axum, tokio) service. Requests and events are validated against the Shared `payments/v1` contracts vendored under `contracts/shared`, which `contracts.lock.yaml` pins at Shared `a9c53087d63caa356edf54ec8037ba1713c4827f`. P0-04A also embeds the actual CP context, legal-actor, documentary and merchant-readiness schema closure, with byte/hash/inventory checks and offline runtime validation. Wire validity is followed by independent scope, actor, freshness and provider checks.
 
 | Route | Scope | Purpose |
 |---|---|---|
@@ -87,20 +87,25 @@ A Rust (axum, tokio) service. Requests and events are validated against the Shar
 
 ```sh
 cargo test --workspace --all-features --locked
+python scripts/sync_contracts.py --shared-checkout ../shared --check
+python scripts/verify_contract_owner.py --shared-checkout ../shared
 SHARED_CONTRACTS_DIR=../shared cargo test --workspace --all-features --locked   # plus the vendored-contract drift check
 cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 docker build -t baobab-payments .
 ```
 
+Maintainer scripts require `PyYAML` and `jsonschema[format-nongpl]`; Rust runtime dependencies are unchanged. The Shared checkout must be at the exact lock pin. [P0-04A maintenance and audit notes](docs/plans/P0-04A-payments-contract-convergence.md) explain regeneration, provenance and synthetic acceptance limits. CI compares 130 golden wires with immutable owner schemas and the standalone release executable. The Docker builder runs the same offline binary probes.
+
 The image is distroless (`cc-debian13`, pinned by digest). It runs as a non-root user, carries OCI labels, and its `HEALTHCHECK` runs `baobab-payments healthcheck`. It needs no shell.
 
 ### Not built yet
 
-- the HyperSwitch adapter (with Superposition, PostgreSQL and Redis);
-- durable persistence;
-- the outbox relay;
-- webhook ingestion;
-- metrics.
+- the protected HyperSwitch payment runtime (with certified merchant/beneficiary/provider mappings, Superposition, PostgreSQL TLS and Redis);
+- replacing public in-memory sandbox state with accepted durable execution;
+- the outbox relay and deployed webhook ingestion;
+- full financial lifecycle, protected acceptance and metrics.
+
+The existing local journal/transport and signed-receipt/settlement components are documented in [LA-05E5](docs/LA-05E5-payment-native-transaction-composition.md), [LA-05E6](docs/LA-05E6-iam-cp-native-authority.md) and [LA-05E7](docs/LA-05E7-webhook-bank-reconciliation.md). Contract convergence neither activates the PROVISIONED staging workload nor supplies real legal/provider evidence.
 
 ## Documentation
 
