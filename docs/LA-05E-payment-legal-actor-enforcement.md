@@ -15,3 +15,11 @@ The request explicitly does not include tenant, Organisation, provider/legal act
 No Nabhold or subsidiary legal beneficiary is inferred or enrolled. PEO-02/03 and LA-06 remain independent onboarding work.
 
 **Status of this seam:** an execution guard only. Provider publication must stay unsupported and staging/production money movement disabled. Completion also requires routing every real `create/confirm/capture/refund` HTTP handler through `execute_with_current_payment_actor`, a workload-authenticated CP client using the principal-owned RUNTIME context, and end-to-end revocation tests. No company account or beneficiary is provisioned or inferred.
+
+## P0-04A contract follow-up — 13 October 2026
+
+Actual request/response contracts and their complete reference closure are now
+pinned and embedded at Shared `a9c53087`. Runtime format/closed-shape validation
+runs before existing consequential binding, expiry and provider checks, including
+injected policy ports. This closes contract drift; it does not activate an IAM
+workload or certify native money movement. See the [maintenance/audit plan](plans/P0-04A-payments-contract-convergence.md).

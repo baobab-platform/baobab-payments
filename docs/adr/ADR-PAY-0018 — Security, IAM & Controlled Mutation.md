@@ -3086,3 +3086,24 @@ HyperSwitch and providers execute only the resulting authorised operation.
 Audit preserves who did what, where, when, under which authority and with what outcome.**
 
 **No authenticated identity is inherently trusted with money movement. No platform administrator is inherently a financial approver. No corporate relationship silently grants authority over another Legal Entity. No provider console, database credential, deployment permission, role name, resource identifier, emergency condition or availability objective may substitute for explicit, contextual, attributable and auditable financial authority.**
+
+## Implementation follow-up — 13 October 2026 (P0-04A)
+
+The engine consumes exact Shared `a9c53087` context, legal-actor, documentary and
+merchant-readiness schemas with full embedded closure and provenance. The
+consequential guards and authenticated HTTP client assert closed wire shapes and
+formats before their existing binding/freshness/provider rules; schema validity
+never grants authority. The private merchant-readiness route no longer duplicates
+the owner's grammar. It retains the independent-certification refusal.
+
+Runtime schema retrieval is disabled. CP/IAM authority JSON rejects duplicate
+members at every depth, and response retention is bounded during body reads under
+the complete request deadline. Contract errors identify schema paths without
+reflecting tokens, sensitive payment/evidence values or untrusted property names.
+The standalone release binary and container builder run offline conformance
+probes against synthetic vectors independently checked against immutable owner
+Git blobs. See [P0-04A audit/maintenance notes](../plans/P0-04A-payments-contract-convergence.md).
+
+This implementation record changes no Accepted decision. PROVISIONED workload
+admission, protected TLS/provider/merchant acceptance, real legal/control/mandate
+facts and full money lifecycle remain independent P0-03/P0-04B gates.

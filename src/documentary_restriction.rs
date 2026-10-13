@@ -9,6 +9,8 @@ use serde_json::Value;
 use time::format_description::well_known::Rfc3339;
 use time::{Duration, OffsetDateTime};
 
+use crate::contracts::entry_is_valid;
+
 use crate::legal_actor::{
     LegalActorGateError, PaymentLegalOperation, PaymentProviderLegalReadiness,
     require_current_payment_actor,
@@ -24,12 +26,16 @@ pub fn documentary_request(
     operation: &PaymentLegalOperation<'_>,
 ) -> Result<Value, LegalActorGateError> {
     operation.request()?;
-    Ok(serde_json::json!({
+    let request = serde_json::json!({
         "context_id": operation.context_id,
         "capability": operation.capability,
         "market": operation.market,
         "operation_reference": operation.operation_reference,
-    }))
+    });
+    if !entry_is_valid("documentary_request", &request) {
+        return Err(LegalActorGateError::MissingContext);
+    }
+    Ok(request)
 }
 
 /// Checks the exact operation, server-trusted Organisation, negative-only
@@ -41,7 +47,8 @@ pub fn require_current_documentary_clearance(
     now: OffsetDateTime,
 ) -> Result<(), LegalActorGateError> {
     documentary_request(operation)?;
-    if uuid::Uuid::try_parse(organisation_id).is_err()
+    if !entry_is_valid("documentary_response", response)
+        || uuid::Uuid::try_parse(organisation_id).is_err()
         || response["context_id"].as_str() != Some(operation.context_id)
         || response["organisation_id"].as_str() != Some(organisation_id)
         || response["market"].as_str() != Some(operation.market)
@@ -224,6 +231,9 @@ mod tests {
         );
         let mut altered = Vec::new();
         for (field, value) in [
+            ("provider_override", json!(true)),
+            ("operation_reference", json!("x".repeat(257))),
+            ("organisation_id", json!(null)),
             ("context_id", json!("other-context")),
             (
                 "organisation_id",

@@ -7,3 +7,11 @@ CP legal mandate and documentary clearance are independently refreshed twice bef
 The new `PaymentService::create_current_cp_intent` is an internal opt-in adapter, not installed by public HTTP routes or production `main.rs`; `NativeTransactionService::local_integration` still requires loopback PostgreSQL NoTls and local/test/integration. No real legal registration evidence, issuer scope, merchant certification, bank settlement proof, PostgreSQL TLS, production CP route nor AWS account details are created by this PR.
 
 Protected acceptance requires real IAM/CP workloads, merchant certification and settling bank account, PostgreSQL mTLS and PSP retry/webhook reconciliation, operational observability and independently signed staging evidence.
+
+## P0-04A contract follow-up — 13 October 2026
+
+Actual request/response contracts and their complete reference closure are now
+pinned and embedded at Shared `a9c53087`. Runtime format/closed-shape validation
+runs before existing consequential binding, expiry and provider checks, including
+injected policy ports. This closes contract drift; it does not activate an IAM
+workload or certify native money movement. See the [maintenance/audit plan](plans/P0-04A-payments-contract-convergence.md).

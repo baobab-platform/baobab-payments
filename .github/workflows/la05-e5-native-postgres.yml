@@ -2,6 +2,11 @@ name: LA-05E5 Native Journal to HyperSwitch Integration
 on:
   pull_request:
     paths:
+      - "src/cp_authority.rs"
+      - "src/legal_actor.rs"
+      - "src/documentary_restriction.rs"
+      - "src/contracts*.rs"
+      - "contracts/**"
       - "src/native_execution.rs"
       - "src/hyperswitch.rs"
       - "Cargo.*"
@@ -9,6 +14,11 @@ on:
   push:
     branches: [main]
     paths:
+      - "src/cp_authority.rs"
+      - "src/legal_actor.rs"
+      - "src/documentary_restriction.rs"
+      - "src/contracts*.rs"
+      - "contracts/**"
       - "src/native_execution.rs"
       - "src/hyperswitch.rs"
       - "Cargo.*"

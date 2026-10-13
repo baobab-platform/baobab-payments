@@ -8,6 +8,8 @@ use serde_json::{Value, json};
 use time::format_description::well_known::Rfc3339;
 use time::{Duration, OffsetDateTime};
 
+use crate::contracts::entry_is_valid;
+
 const MAX_DECISION_AGE: Duration = Duration::seconds(30);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -46,14 +48,22 @@ impl PaymentLegalOperation<'_> {
         }
         // Tenant, Organisation, legal actor, mandate, approval evidence and
         // effective time cannot be selected by a caller. CP resolves them.
-        Ok(json!({
+        let request = json!({
             "context_id":self.context_id,
             "role":self.role,
             "activity":self.activity,
             "market":self.market,
             "capability":self.capability,
             "operation_reference":self.operation_reference,
-        }))
+        });
+        // Assessment v1 permits legacy opaque handles, but this execution
+        // seam consumes a stored RUNTIME Context with the owner's UUID grammar.
+        if !entry_is_valid("context_uuid", &json!(self.context_id))
+            || !entry_is_valid("legal_request", &request)
+        {
+            return Err(LegalActorGateError::MissingContext);
+        }
+        Ok(request)
     }
 }
 
@@ -65,7 +75,10 @@ pub fn require_current_payment_actor(
     now: OffsetDateTime,
 ) -> Result<String, LegalActorGateError> {
     operation.request()?;
-    if response.get("context_id").and_then(Value::as_str) != Some(operation.context_id)
+    // Also check injected policy ports: a transport validator alone would let
+    // another adapter bypass the closed canonical response at point of use.
+    if !entry_is_valid("legal_response", response)
+        || response.get("context_id").and_then(Value::as_str) != Some(operation.context_id)
         || response.get("operation_reference").and_then(Value::as_str)
             != Some(operation.operation_reference)
         || response.get("provider_permissions_granted") != Some(&Value::Bool(false))

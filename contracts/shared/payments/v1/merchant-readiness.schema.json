@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.baobab-platform.com/payments/v1/merchant-readiness.schema.json",
+  "title": "LA-05C3 Payments merchant activation and provider certification readiness",
+  "description": "A workload authenticated, operation-bound independent Payments decision. This contract confers no payment execution authority. No READY response may be produced without real Payments certification/activation evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {},
+  "$defs": {
+    "ReadinessRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organisation_id",
+        "responsible_legal_entity_id",
+        "market",
+        "currency_code",
+        "capability",
+        "operation_reference",
+        "mandate_id"
+      ],
+      "properties": {
+        "tenant_id": {
+          "type": "string",
+          "pattern": "^tn_[a-z0-9]{3,60}$"
+        },
+        "organisation_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "responsible_legal_entity_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "market": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        },
+        "currency_code": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "capability": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 160
+        },
+        "operation_reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "mandate_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "ReadyDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organisation_id",
+        "responsible_legal_entity_id",
+        "market",
+        "currency_code",
+        "capability",
+        "operation_reference",
+        "mandate_id",
+        "outcome",
+        "provider_certification_reference",
+        "merchant_activation_reference",
+        "policy_reference",
+        "evaluated_at",
+        "valid_until"
+      ],
+      "properties": {
+        "tenant_id": {
+          "type": "string",
+          "pattern": "^tn_[a-z0-9]{3,60}$"
+        },
+        "organisation_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "responsible_legal_entity_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "market": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        },
+        "currency_code": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "capability": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 160
+        },
+        "operation_reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "mandate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "outcome": {
+          "const": "READY"
+        },
+        "provider_certification_reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "merchant_activation_reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "policy_reference": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "evaluated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_until": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "READY may only be returned after a fresh server-side check against durable Payments authority; clients must check request echo, bounded lease, certification, activation and independent provider. CP legal-actor facts are necessary but not sufficient."
+    }
+  }
+}
