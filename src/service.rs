@@ -150,7 +150,7 @@ pub struct Call<'a> {
     pub correlation_id: &'a str,
 }
 
-fn parse_body(body: &[u8]) -> Result<Value, Refusal> {
+pub(crate) fn parse_body(body: &[u8]) -> Result<Value, Refusal> {
     match serde_json::from_slice::<Value>(body) {
         Ok(v) if v.is_object() => Ok(v),
         _ => Err(Refusal::invalid(vec![
@@ -159,7 +159,7 @@ fn parse_body(body: &[u8]) -> Result<Value, Refusal> {
     }
 }
 
-fn decode<T: DeserializeOwned>(value: &Value, definition: &str) -> Result<T, Refusal> {
+pub(crate) fn decode<T: DeserializeOwned>(value: &Value, definition: &str) -> Result<T, Refusal> {
     let problems = contracts::problems(&contracts::def(contracts::PAYMENT, definition), value);
     if !problems.is_empty() {
         return Err(Refusal::invalid(problems));
@@ -167,12 +167,12 @@ fn decode<T: DeserializeOwned>(value: &Value, definition: &str) -> Result<T, Ref
     serde_json::from_value(value.clone()).map_err(|e| Refusal::invalid(vec![format!("$: {e}")]))
 }
 
-fn hash(value: &Value) -> String {
+pub(crate) fn hash(value: &Value) -> String {
     // serde_json orders object keys, so equal requests hash equally.
     hex::encode(Sha256::digest(value.to_string().as_bytes()))
 }
 
-fn timestamp(t: OffsetDateTime) -> String {
+pub(crate) fn timestamp(t: OffsetDateTime) -> String {
     t.format(&Rfc3339).expect("a UTC time formats as RFC 3339")
 }
 
@@ -694,7 +694,7 @@ impl PaymentService {
         binding: &crate::native_execution::ProviderBinding,
         key: &str,
         body: &serde_json::Value,
-        readiness: &dyn crate::legal_actor::PaymentProviderLegalReadiness,
+        readiness: &(dyn crate::legal_actor::PaymentProviderLegalReadiness + Sync),
     ) -> Result<crate::native_execution::ExecutionResult, crate::native_execution::ExecutionError>
     {
         // Workload token and CP source are not supplied to HTTP handler input.

@@ -15,8 +15,11 @@ pub mod service;
 pub mod settlement_reconciliation;
 pub mod webhook_reconciliation;
 
+pub mod activation;
 pub mod documentary_restriction;
 pub mod legal_actor;
+pub mod merchant_binding;
 pub mod money_movement;
 pub mod money_movement_execution;
+pub mod native_api;
 pub mod wire_json;

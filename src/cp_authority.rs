@@ -400,7 +400,7 @@ impl IamCpAuthority {
         &self,
         context: &CpRuntimeContext,
         operation: &PaymentLegalOperation<'_>,
-        readiness: &dyn PaymentProviderLegalReadiness,
+        readiness: &(dyn PaymentProviderLegalReadiness + Sync),
     ) -> Result<String, CpAuthorityError> {
         // This composition guards intent creation only; every money movement
         // goes through resolve_money_movement and its own catalogued class.

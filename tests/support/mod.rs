@@ -91,6 +91,7 @@ pub fn harness_for_environment(environment: &'static str) -> Harness {
         service: service.clone(),
         auth,
         environment,
+        native: None,
     });
     Harness { app, service }
 }

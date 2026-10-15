@@ -209,7 +209,7 @@ impl NativeTransactionService {
         key: &str,
         native_operation: NativeOperation<'_>,
         body: &Value,
-        readiness: &dyn PaymentProviderLegalReadiness,
+        readiness: &(dyn PaymentProviderLegalReadiness + Sync),
     ) -> Result<ExecutionResult, ExecutionError> {
         self.validate(context, operation, binding, key, &native_operation, body)?;
         HyperSwitchTransport::validate_operation(&native_operation, body, key)

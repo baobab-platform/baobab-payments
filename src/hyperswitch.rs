@@ -117,6 +117,9 @@ fn reject_sensitive_data(value: &Value) -> Result<(), HyperSwitchError> {
         "capture_method",
         "confirm",
         "profile_id",
+        // The provider customer that holds the payer's saved payment methods:
+        // an opaque provider reference, never card or bank data.
+        "customer_id",
         "payment_id",
         "refund_id",
         "payment_token",

@@ -48,7 +48,28 @@ pub struct Config {
     /// Each allowed workload client and the engine it acts for: the engine
     /// whose obligations its payments must name as `source_engine`.
     pub allowed_clients: BTreeMap<String, String>,
+    /// P0-04B Gate D1: the native backend, accepted only in development and
+    /// integration. Protected environments refuse it at startup, and the
+    /// activation policy refuses them every financial mutation regardless.
+    pub native: Option<NativeBackendConfig>,
 }
+
+/// Where the native backend's dependencies are. Secrets are files, never
+/// environment values, and are read once at startup.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NativeBackendConfig {
+    pub database_url_file: String,
+    pub hyperswitch_origin: String,
+    pub hyperswitch_api_key_file: String,
+    pub cp_origin: String,
+    pub iam_token_endpoint: String,
+    pub workload_client_id: String,
+    pub workload_secret_file: String,
+    pub engine_instance_id: String,
+    pub merchant_bindings_file: String,
+}
+
+pub const NATIVE_BACKEND: &str = "postgres+hyperswitch";
 
 impl std::fmt::Debug for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -59,6 +80,7 @@ impl std::fmt::Debug for Config {
             .field("workload_issuer", &self.workload_issuer)
             .field("workload_audience", &self.workload_audience)
             .field("allowed_clients", &self.allowed_clients)
+            .field("native", &self.native)
             .finish()
     }
 }
@@ -162,6 +184,7 @@ impl Config {
         if allowed_clients.is_empty() {
             problems.push("WORKLOAD_ALLOWED_CLIENTS must name at least one client".into());
         }
+        let native = native_backend(&get, environment, &mut problems);
         if !problems.is_empty() {
             return Err(format!("invalid configuration: {}", problems.join("; ")));
         }
@@ -174,8 +197,69 @@ impl Config {
             workload_jwks_uri: jwks.expect("checked above"),
             workload_audience: audience,
             allowed_clients,
+            native,
         })
     }
+}
+
+fn native_backend(
+    get: &impl Fn(&str) -> Option<String>,
+    environment: Option<Environment>,
+    problems: &mut Vec<String>,
+) -> Option<NativeBackendConfig> {
+    let backend = get("PAYMENTS_NATIVE_BACKEND")
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty())?;
+    if backend != NATIVE_BACKEND {
+        problems.push(format!("PAYMENTS_NATIVE_BACKEND must be {NATIVE_BACKEND}"));
+        return None;
+    }
+    if !matches!(
+        environment,
+        Some(Environment::Development | Environment::Integration)
+    ) {
+        problems.push(
+            "PAYMENTS_NATIVE_BACKEND is accepted only in development and integration: protected activation is a separate approved change"
+                .into(),
+        );
+        return None;
+    }
+    let mut value = |name: &str| match get(name)
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty())
+    {
+        Some(v) => v,
+        None => {
+            problems.push(format!("{name} is required with PAYMENTS_NATIVE_BACKEND"));
+            String::new()
+        }
+    };
+    let config = NativeBackendConfig {
+        database_url_file: value("PAYMENTS_DATABASE_URL_FILE"),
+        hyperswitch_origin: value("HYPERSWITCH_ORIGIN"),
+        hyperswitch_api_key_file: value("HYPERSWITCH_API_KEY_FILE"),
+        cp_origin: value("CP_ORIGIN"),
+        iam_token_endpoint: value("IAM_TOKEN_ENDPOINT"),
+        workload_client_id: value("PAYMENTS_WORKLOAD_CLIENT_ID"),
+        workload_secret_file: value("PAYMENTS_WORKLOAD_SECRET_FILE"),
+        engine_instance_id: value("PAYMENTS_ENGINE_INSTANCE_ID"),
+        merchant_bindings_file: value("MERCHANT_BINDINGS_FILE"),
+    };
+    // Every remote hop is TLS: the backend has no plaintext mode.
+    for (name, url) in [
+        ("HYPERSWITCH_ORIGIN", &config.hyperswitch_origin),
+        ("CP_ORIGIN", &config.cp_origin),
+        ("IAM_TOKEN_ENDPOINT", &config.iam_token_endpoint),
+    ] {
+        if !url.is_empty() && !url.starts_with("https://") {
+            problems.push(format!("{name} must use https"));
+        }
+    }
+    if !config.engine_instance_id.is_empty() && !config.engine_instance_id.starts_with("ei_") {
+        problems
+            .push("PAYMENTS_ENGINE_INSTANCE_ID must be a CP engine instance key (ei_...)".into());
+    }
+    Some(config)
 }
 
 /// The registered workload identity of baobab-subscriptions (Shared
