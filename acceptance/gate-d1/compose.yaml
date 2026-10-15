@@ -1,0 +1,144 @@
+# P0-04B Gate D1: the real Payments service, the real CP binary, real signed
+# workload tokens, PostgreSQL 17 and a deployed HyperSwitch router whose own,
+# unmodified Stripe connector points at the deterministic test processor.
+# Integration only: run-gate-d1.sh refuses any other environment. Every hop
+# Payments makes (CP, IAM, HyperSwitch) is TLS through the `edge` service.
+name: baobab-gate-d1
+
+x-pg: &pg
+  image: mirror.gcr.io/library/postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+    interval: 2s
+    retries: 30
+
+networks:
+  d1: {}
+
+services:
+  # --- Payments: its journal and the service, sharing one network namespace
+  # so the journal is reached on loopback (the only composition the native
+  # constructors accept).
+  paydb:
+    <<: *pg
+    environment:
+      POSTGRES_DB: baobab_payments
+      POSTGRES_USER: baobab
+      POSTGRES_PASSWORD: ${PAYDB_PASSWORD}
+    networks: [d1]
+    ports: ["127.0.0.1:18081:8080", "127.0.0.1:15433:5432"]
+
+  payments:
+    image: ${PAYMENTS_IMAGE}
+    network_mode: "service:paydb"
+    depends_on: [paydb]
+    restart: "no"
+    environment:
+      BAOBAB_ENVIRONMENT: integration
+      HTTP_PORT: "8080"
+      WORKLOAD_ISSUER: https://iam.d1.test/realms/baobab
+      WORKLOAD_JWKS_URI: https://iam.d1.test/realms/baobab/certs
+      WORKLOAD_AUDIENCE: baobab-payments
+      WORKLOAD_ALLOWED_CLIENTS: baobab-trade-workload=baobab-trade
+      PAYMENTS_NATIVE_BACKEND: postgres+hyperswitch
+      PAYMENTS_DATABASE_URL_FILE: /run/d1/payments-database-url
+      HYPERSWITCH_ORIGIN: https://hyperswitch.d1.test/
+      HYPERSWITCH_API_KEY_FILE: /run/d1/hyperswitch-api-key
+      CP_ORIGIN: https://cp.d1.test/
+      IAM_TOKEN_ENDPOINT: https://iam.d1.test/realms/baobab/token
+      PAYMENTS_WORKLOAD_CLIENT_ID: baobab-payments-legal-actor-assessor-staging
+      PAYMENTS_WORKLOAD_SECRET_FILE: /run/d1/payments-workload-secret
+      PAYMENTS_ENGINE_INSTANCE_ID: ${PAYMENTS_ENGINE_INSTANCE_ID}
+      MERCHANT_BINDINGS_FILE: /run/d1/merchant-bindings.json
+      SSL_CERT_FILE: /run/d1/ca.pem
+    volumes: ["${D1_RUN}/payments:/run/d1:ro"]
+
+  # --- CP: its own database and the release binary.
+  cpdb:
+    <<: *pg
+    environment:
+      POSTGRES_DB: controlplane
+      POSTGRES_USER: controlplane
+      POSTGRES_PASSWORD: ${CPDB_PASSWORD}
+    networks: [d1]
+    ports: ["127.0.0.1:15434:5432"]
+
+  cp:
+    image: ${CP_IMAGE}
+    depends_on: [cpdb, edge]
+    environment:
+      DATABASE_URL: postgres://controlplane:${CPDB_PASSWORD}@cpdb:5432/controlplane?sslmode=disable
+      BAOBAB_ENVIRONMENT: integration
+      HTTP_ADDRESS: ":8080"
+      WORKLOAD_OIDC_ISSUER: https://iam.d1.test/realms/baobab
+      WORKLOAD_OIDC_AUDIENCE: baobab-control-plane
+      ADMIN_OIDC_ISSUER: https://iam.d1.test/realms/baobab
+      ADMIN_OIDC_AUDIENCE: baobab-control-plane-admin
+      ADMIN_OIDC_CLIENT_ID: baobab-control-plane-admin
+      WORKLOAD_REGISTRY_FILE: /run/d1/workload-registry.yaml
+      TENANT_BOOTSTRAP_REGISTRATION: enabled
+      LEGAL_ACTOR_MANDATE_COMMANDS_ENABLED: "true"
+      LEGAL_ACTOR_MANDATE_LIFECYCLE_ENABLED: "true"
+      LEGAL_ACTOR_ASSESSMENT_ENABLED: "true"
+      PEO_DOCUMENTARY_SCOPE_PDP_ENABLED: "true"
+      PEO_DOCUMENTARY_SCOPE_CONSUMERS: baobab-payments-legal-actor-assessor-staging
+      PAYMENTS_MONEY_MOVEMENT_AUTHORITY_ENABLED: "true"
+      PAYMENTS_MONEY_MOVEMENT_AUTHORITY_CLIENT_IDS: baobab-payments-legal-actor-assessor-staging
+      SSL_CERT_FILE: /run/d1/ca.pem
+    volumes: ["${D1_RUN}/cp:/run/d1:ro"]
+    networks: [d1]
+    ports: ["127.0.0.1:18082:8080"]
+
+  # --- Test IAM, the TLS edge and the deterministic processor.
+  issuer:
+    image: ${PYTHON_IMAGE}
+    command: ["python", "-u", "/app/issuer.py"]
+    environment:
+      BAOBAB_ENVIRONMENT: integration
+      ISSUER: https://iam.d1.test/realms/baobab
+      CLIENTS_FILE: /run/d1/clients.json
+    volumes: ["${D1_RUN}/issuer:/run/d1:ro"]
+    networks: [d1]
+    ports: ["127.0.0.1:18000:8000"]
+
+  edge:
+    image: mirror.gcr.io/library/nginx:1.27-alpine
+    depends_on: [issuer]
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${D1_RUN}/edge:/etc/nginx/tls:ro
+    networks:
+      d1:
+        aliases: [cp.d1.test, iam.d1.test, hyperswitch.d1.test]
+
+  processor:
+    image: ${PYTHON_IMAGE}
+    command: ["python", "-u", "/app/processor.py"]
+    environment:
+      BAOBAB_ENVIRONMENT: integration
+      PORT: "9000"
+    networks: [d1]
+    ports: ["127.0.0.1:19000:9000"]
+
+  # --- HyperSwitch: the router release image, its PostgreSQL and Redis.
+  pg:
+    <<: *pg
+    environment:
+      POSTGRES_DB: hyperswitch_db
+      POSTGRES_USER: db_user
+      POSTGRES_PASSWORD: db_pass
+    networks: [d1]
+
+  redis-standalone:
+    image: mirror.gcr.io/library/redis:7@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85
+    networks: [d1]
+
+  hyperswitch:
+    image: mirror.gcr.io/juspaydotin/hyperswitch-router@sha256:c229947f813a31cab0b07b61a4153c6f76c5c901d0c233fcca5f0aa1ab4a646a
+    command: ["/local/bin/router", "-f", "/local/config/docker_compose.toml"]
+    depends_on: [pg, redis-standalone, processor]
+    volumes:
+      - ${D1_RUN}/hyperswitch-config:/local/config:ro
+      - ${D1_RUN}/hyperswitch-config:/local/bin/config:ro
+    networks: [d1]
+    ports: ["127.0.0.1:18080:8080"]
