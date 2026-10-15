@@ -56,6 +56,8 @@ def wait_for(url: str, seconds: int = 120) -> None:
             if call("GET", url, timeout=5).status < 500:
                 return
         except OSError:
+            # Not listening yet: expected while the service starts; retried
+            # until the deadline.
             pass
         time.sleep(1)
     raise RuntimeError(f"{url} did not come up")
