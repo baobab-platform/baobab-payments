@@ -1,6 +1,6 @@
 {
   "repository": "baobab-platform/shared",
-  "commit": "a9c53087d63caa356edf54ec8037ba1713c4827f",
+  "commit": "2dc9a320e3b504d29ffb373ca74cd92e71c33250",
   "entries": {
     "context_uuid": "control-plane/v1/domain.schema.json#/$defs/uuid",
     "legal_request": "organisation/v2/legal-actor-enforcement.schema.json#/$defs/AssessLegalActorRequest",
@@ -9,18 +9,20 @@
     "documentary_response": "admission/v2/documentary-restriction.schema.json#/$defs/DocumentaryRestrictionAssessmentResponse",
     "context_request": "control-plane/v1/platform-context.schema.json#/$defs/PlatformContextResolveRequest",
     "context_response": "control-plane/v1/platform-context.schema.json#/$defs/PlatformContext",
-    "readiness_request": "payments/v1/merchant-readiness.schema.json#/$defs/ReadinessRequest"
+    "readiness_request": "payments/v1/merchant-readiness.schema.json#/$defs/ReadinessRequest",
+    "money_movement_request": "payments/v2/money-movement-authority.schema.json#/$defs/MoneyMovementAuthorityRequest",
+    "money_movement_decision": "payments/v2/money-movement-authority.schema.json#/$defs/MoneyMovementAuthorityDecision"
   },
   "files": {
     "admission/v2/documentary-restriction.schema.json": "1d12d8ed0581e152444a36b31c9f42f971c58215fdae9648bd4cfbc66eb29937",
-    "authorization/v1/scope-registry.yaml": "62bb4d2a97183d38da67899cddff94bb0657b6df9db96119cff1252702d86066",
+    "authorization/v1/scope-registry.yaml": "d9858cac80c5653a4d1ef38a648098910832332cf565224b4e2549658b146b0a",
     "capability/v1/domain.schema.json": "45bd91c915bff16c010b4123a8dc814ceded7d2806a6755b13dc3fcdd508d4fc",
     "control-plane/v1/domain.schema.json": "d310ea065ba9445a27a83d50875a2616514608782345e7bb4413d9d1d69416ee",
     "control-plane/v1/market.schema.json": "acbdc4c1e8c716f1dcd9b855b79f5206ebcb69fd911f5a14b515bbcb78cca2f9",
     "control-plane/v1/platform-context.schema.json": "92a3584f1db3c192fa0315820b6054607d377a52028f43a6fe48deda14c7ed2f",
     "errors/v1/problem-details.schema.json": "639f97cc1a9a167e2a3dfa1a0d41d619e5b839d88752029395f7f91610a8e423",
     "events/v1/envelope.schema.json": "1e7065b903c2732df23e095a4ac5cc3c18c1f553f21c56595669ded08fd6a69f",
-    "identity/v1/workload-registry.yaml": "e20fd4309cd5e955541ee0ccaa14d23388b995fb3506d439c72dfc130136141d",
+    "identity/v1/workload-registry.yaml": "a8f653077d5ee8bf81a033dd21f7470506ff36ad254f736de8f01bfe3b15b130",
     "organisation/v1/domain.schema.json": "8409e3d9f1741421ee08818540ddeae60e1990dd9b117826f032d3733f3c5801",
     "organisation/v1/iam.schema.json": "ecd5668c8fed74869f76651b9f722d78ef9061c186b878b75c97f8f721a14bdd",
     "organisation/v2/domain.schema.json": "749191c7b1831586cd68c8b0e1722bcb82353cd81a92d39b3de447adcad8ba08",
@@ -30,6 +32,9 @@
     "payments/v1/domain.schema.json": "92f8fb57d98f9f8203b2dfde6bae02f5adea5892cf203fdf9462d7acf5664120",
     "payments/v1/events.schema.json": "0752363c8cee135f88898d4bdeee1661633c89c9596c7b4ef6a6022c420a2ccd",
     "payments/v1/merchant-readiness.schema.json": "c7131cdc3c726dfda60cfa1b0b9b03bbcfe015fb699a0fa78ceb8c402896fa1e",
-    "payments/v1/payment.schema.json": "2903338aa2755eb6e8dce8e68acaf5783c2a193c73461264bc6b4041ae5dfd73"
+    "payments/v1/payment.schema.json": "2903338aa2755eb6e8dce8e68acaf5783c2a193c73461264bc6b4041ae5dfd73",
+    "payments/v2/examples/fingerprint-vectors.json": "a30e69f77141dd16550db95540581e4cfcf48cee9fe253a654e2019ade831598",
+    "payments/v2/money-movement-authority.schema.json": "53ef580eb0bcf8ea323c5d2339e46597dcf0c9bbbc3069af05ab87d9e9ee8619",
+    "payments/v2/money-movement-operations.yaml": "55a03231c03c7d4d439450d5bdfea1207d4ed7cdf4909dcaf4a22b4cf2e23e0b"
   }
 }

@@ -534,7 +534,7 @@ mod tests {
             role: "PAYMENT_BENEFICIARY",
             activity: "B2B_RECEIPT",
             market: "ZA",
-            capability: "payments.intent.create",
+            capability: "payment.intent.create",
             operation_reference: "payment-local-synthetic-123",
         }
     }

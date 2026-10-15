@@ -25,6 +25,9 @@ pub enum HyperSwitchError {
     Unavailable,
     Rejected,
     InvalidResponse,
+    /// The provider has no such record: proof, for reconciliation, that an
+    /// instruction never landed.
+    NotFound,
 }
 
 #[derive(Clone)]
@@ -275,6 +278,102 @@ impl HyperSwitchTransport {
         Ok(ProviderObservation {
             native_reference: native_reference.into(),
             provider_status: provider_status.into(),
+        })
+    }
+}
+
+/// What a reconciliation can read back about one provider record.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderRecord {
+    pub reference: String,
+    pub status: String,
+    pub amount_captured: Option<i64>,
+}
+
+/// The provider record a reconciliation reads: a payment or a refund.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RecordKind {
+    Payment,
+    Refund,
+}
+
+impl HyperSwitchTransport {
+    /// Read a provider record back, never moving money. Used to settle an
+    /// UNKNOWN outcome before anything is ever re-sent.
+    pub async fn retrieve(
+        &self,
+        kind: RecordKind,
+        reference: &str,
+    ) -> Result<ProviderRecord, HyperSwitchError> {
+        let id = record_id(reference)?;
+        let path = match kind {
+            RecordKind::Payment => format!("payments/{id}"),
+            RecordKind::Refund => format!("refunds/{id}"),
+        };
+        let url = self
+            .origin
+            .join(&path)
+            .map_err(|_| HyperSwitchError::Configuration)?;
+        let mut response = self
+            .client
+            .request(Method::GET, url)
+            .header("api-key", self.api_key.as_str())
+            .header("accept", "application/json")
+            .send()
+            .await
+            .map_err(|_| HyperSwitchError::Unavailable)?;
+        let status = response.status();
+        if status.as_u16() == 404 {
+            return Err(HyperSwitchError::NotFound);
+        }
+        if !status.is_success() {
+            return Err(if status.is_server_error() || status.as_u16() == 429 {
+                HyperSwitchError::Unavailable
+            } else {
+                HyperSwitchError::Rejected
+            });
+        }
+        let mut body = Vec::new();
+        while let Some(chunk) = response
+            .chunk()
+            .await
+            .map_err(|_| HyperSwitchError::Unavailable)?
+        {
+            if chunk.len() > MAX_PROVIDER_RESPONSE_BYTES.saturating_sub(body.len()) {
+                return Err(HyperSwitchError::InvalidResponse);
+            }
+            body.extend_from_slice(&chunk);
+        }
+        let value: Value =
+            serde_json::from_slice(&body).map_err(|_| HyperSwitchError::InvalidResponse)?;
+        let field = match kind {
+            RecordKind::Payment => "payment_id",
+            RecordKind::Refund => "refund_id",
+        };
+        let reference = value
+            .get(field)
+            .and_then(Value::as_str)
+            .filter(|s| *s == id)
+            .ok_or(HyperSwitchError::InvalidResponse)?;
+        let status = value
+            .get("status")
+            .and_then(Value::as_str)
+            .filter(|s| {
+                !s.is_empty()
+                    && s.len() <= 64
+                    && s.bytes().all(|b| b.is_ascii_lowercase() || b == b'_')
+            })
+            .ok_or(HyperSwitchError::InvalidResponse)?;
+        Ok(ProviderRecord {
+            reference: reference.into(),
+            status: status.into(),
+            // HyperSwitch reports the captured total as amount_received
+            // (observed against v1.127 with a manual-capture connector);
+            // amount_captured stays null. Either one, never both summed.
+            amount_captured: value
+                .get("amount_received")
+                .or_else(|| value.get("amount_captured"))
+                .and_then(Value::as_i64),
         })
     }
 }

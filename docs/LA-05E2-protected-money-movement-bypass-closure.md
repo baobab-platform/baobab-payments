@@ -19,3 +19,11 @@ The engine implements an in-memory, simulated sandbox payment lifecycle. Its exi
 Implement an independently certified persistent PSP adapter and dedicated workload-authenticated CP policy client, then atomically gate each irreversible native provider operation and retry on **fresh operation-scoped CP legal actor + documentary decision, correct historical billing/settlement responsibility, and separate PSP readiness**. Only after authenticated staging, provider certification and explicitly approved support claims may a reviewed policy replace the protected refusal. Disabling a feature flag is not a legal override.
 
 **State:** executable fail-closed Package 4 bypass closure; **not** a real payments execution capability nor completion of cross-provider acceptance, which require Package 5/7/8 qualifications.
+
+## P0-04B update (ADR-SHARED-035)
+
+The gate above is now implemented for the engine core:
+- `src/money_movement_execution.rs` gates every money movement with two CP money-movement decisions (one at reservation, one at the execution point), the documentary veto and the journal's own readiness and financial fences;
+- payout is refused on every route.
+
+The blanket 503 is unchanged until the reviewed, operation-specific activation policy arrives with Gate D1. See [P0-04B plan](plans/P0-04B-payments-money-movement-authority.md).

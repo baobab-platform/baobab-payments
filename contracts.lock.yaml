@@ -6,7 +6,7 @@ schema: baobab-contract-consumer-lock
 version: "1.0"
 source:
   repository: baobab-platform/shared
-  commit: a9c53087d63caa356edf54ec8037ba1713c4827f
+  commit: 2dc9a320e3b504d29ffb373ca74cd92e71c33250
 contracts:
   # P0-04A: actual authority/readiness consumers and complete offline closure.
   - contracts/admission/v2/documentary-restriction.schema.json
@@ -28,6 +28,10 @@ contracts:
   - contracts/payments/v1/domain.schema.json
   - contracts/payments/v1/events.schema.json
   - contracts/payments/v1/payment.schema.json
+  # P0-04B Payments (ADR-SHARED-035): money-movement authority and its golden fingerprint vectors.
+  - contracts/payments/v2/money-movement-authority.schema.json
+  - contracts/payments/v2/money-movement-operations.yaml
+  - contracts/payments/v2/examples/fingerprint-vectors.json
 policy:
   updates: explicit_pull_request
   compatibility: validate_before_merge

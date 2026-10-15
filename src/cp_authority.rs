@@ -111,7 +111,7 @@ impl IamCpAuthority {
     }
 
     #[cfg(test)]
-    fn loopback(
+    pub(crate) fn loopback(
         cp_origin: &str,
         iam_token_endpoint: &str,
         workload_client_id: String,
@@ -172,7 +172,9 @@ impl IamCpAuthority {
             "grant_type=client_credentials&client_id={}&client_secret={}&scope={}",
             form_encode(&self.workload_client_id),
             form_encode(&self.workload_secret),
-            form_encode("context:resolve legal-actor:assess documentary:restriction-assess"),
+            form_encode(
+                "context:resolve legal-actor:assess documentary:restriction-assess payments-money-movement-authority:resolve",
+            ),
         );
         let response = self
             .http
@@ -356,13 +358,53 @@ impl IamCpAuthority {
         .map_err(|_| CpAuthorityError::NotAuthorised)
     }
 
+    /// P0-04B Payments (ADR-SHARED-035): CP legal authority for ONE money
+    /// movement, bound to its instruction fingerprint and attempt. The answer
+    /// is returned unjudged; `money_movement::require_authorized` decides
+    /// whether it is usable. A CP outage is Unavailable, never a denial that
+    /// could be mistaken for a legal answer, and never a permission.
+    pub async fn resolve_money_movement(&self, request: &Value) -> Result<Value, CpAuthorityError> {
+        if !entry_is_valid("money_movement_request", request) {
+            return Err(CpAuthorityError::NotAuthorised);
+        }
+        let token = self.token().await?;
+        let url = self
+            .cp_origin
+            .join("/internal/payments/v1/money-movement-authority/resolve")
+            .map_err(|_| CpAuthorityError::Configuration)?;
+        let response = self
+            .http
+            .post(url)
+            .bearer_auth(token)
+            .header("Cache-Control", "no-store")
+            .header("Accept", "application/json")
+            .json(request)
+            .send()
+            .await
+            .map_err(|_| CpAuthorityError::Unavailable)?;
+        let status = response.status();
+        if status.is_server_error() || status.as_u16() == 429 {
+            return Err(CpAuthorityError::Unavailable);
+        }
+        if !status.is_success() {
+            return Err(CpAuthorityError::NotAuthorised);
+        }
+        let body = bounded_object(response, 16_384).await?;
+        if !entry_is_valid("money_movement_decision", &body) {
+            return Err(CpAuthorityError::NotAuthorised);
+        }
+        Ok(body)
+    }
+
     pub async fn verify_all(
         &self,
         context: &CpRuntimeContext,
         operation: &PaymentLegalOperation<'_>,
         readiness: &dyn PaymentProviderLegalReadiness,
     ) -> Result<String, CpAuthorityError> {
-        if operation.capability != "payments.intent.create" {
+        // This composition guards intent creation only; every money movement
+        // goes through resolve_money_movement and its own catalogued class.
+        if operation.capability != "payment.intent.create" {
             return Err(CpAuthorityError::NotAuthorised);
         }
         let first = self.verified_mandate(context, operation).await?;
@@ -621,7 +663,7 @@ mod tests {
             role: "PAYMENT_BENEFICIARY",
             activity: "B2B_RECEIPT",
             market: "ZA",
-            capability: "payments.intent.create",
+            capability: "payment.intent.create",
             operation_reference: "transaction-synthetic-1",
         };
         let context = CpRuntimeContext {
