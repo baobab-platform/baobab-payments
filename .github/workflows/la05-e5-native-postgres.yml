@@ -69,6 +69,7 @@ jobs:
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0003_money_movement_authority.sql
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/tests/0003_money_movement_authority.sql
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0004_native_payment_api.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -c "GRANT SELECT, INSERT ON payment_ops.native_api_request, payment_ops.native_intent, payment_ops.native_intent_cancellation TO payment_ci"
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -c "ALTER ROLE payment_ci LOGIN PASSWORD '\''synthetic_runtime_only'\''"
             '
       - name: Exercise Rust journal reservation + local synthetic HTTP provider + replay denial

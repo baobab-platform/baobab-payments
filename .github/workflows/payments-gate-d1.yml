@@ -45,10 +45,10 @@ jobs:
           git fetch -q --depth 1 origin "$HYPERSWITCH_COMMIT"
           git checkout -q FETCH_HEAD
           test "$(git rev-parse HEAD)" = "$HYPERSWITCH_COMMIT"
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: .gate-d1/cp/go.mod
-          cache: false
+      - name: Go toolchain for the CP build
+        # The runner's Go fetches the exact toolchain CP's go.mod names
+        # (GOTOOLCHAIN=auto), verified against the Go checksum database.
+        run: cd .gate-d1/cp && GOTOOLCHAIN=auto go version
       - name: Build the Payments release image
         run: docker build -t baobab-payments:gate-d1 .
       - name: Gate D1 scenarios
