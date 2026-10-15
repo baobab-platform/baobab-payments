@@ -45,4 +45,15 @@ jobs:
                 -f /db/migrations/0001_native_payment_journal.sql
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test \
                 -f /db/tests/0001_native_payment_journal.sql
+              # Each migration is followed by its own tests: 0003 deliberately
+              # refuses the legacy money-moving reservations 0001 tests exercise.
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test \
+                -f /db/migrations/0002_webhook_settlement_reconciliation.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test \
+                -f /db/tests/0002_webhook_settlement_reconciliation.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test \
+                -f /db/migrations/0003_money_movement_authority.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test \
+                -f /db/tests/0003_money_movement_authority.sql | tee /tmp/0003.out
+              grep -q "money-movement fences passed" /tmp/0003.out
             '

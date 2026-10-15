@@ -1959,5 +1959,977 @@
       "provider": "user-selected"
     },
     "valid": false
+  },
+  {
+    "name": "money_movement_request/valid",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589"
+    },
+    "valid": true
+  },
+  {
+    "name": "money_movement_request/missing/context_id",
+    "contract": "money_movement_request",
+    "instance": {
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/missing/engine_instance_id",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/missing/operation_class",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/missing/operation_reference",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/missing/attempt",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/missing/instruction",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/missing/instruction_fingerprint",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/forged/mandate_id",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "mandate_id": "forged"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/forged/legal_actor_role",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "legal_actor_role": "forged"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/forged/activity",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "activity": "forged"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/forged/capability_key",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "capability_key": "forged"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/forged/responsible_legal_entity_id",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "responsible_legal_entity_id": "forged"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/forged/provider_permissions_granted",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "provider_permissions_granted": "forged"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/uuid/context",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "not-a-uuid",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/attempt/zero",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 0,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/fingerprint/upper",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/instruction/amount-zero",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 0,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/instruction/forged-le",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null,
+        "responsible_legal_entity_id": "LE-X"
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_request/capture/destination",
+    "contract": "money_movement_request",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": "bnf_x"
+      },
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_decision/authorized",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "a3e9c7d1-5b2f-4e6a-8c1d-9f0b7e3a2c55",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "outcome": "AUTHORIZED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "legal_actor_role": "PAYMENT_BENEFICIARY",
+      "activity": "PAYMENT_COLLECTION",
+      "capability_key": "payment.payment.capture",
+      "mandate_id": "7d2b9e4f-6a1c-4f3e-b8d5-0c9a8e7f6d22",
+      "responsible_legal_entity_id": "SYNTHETIC-LE-01",
+      "evidence_references": [
+        "synthetic:mandate-evidence/02"
+      ],
+      "mandate_effective_from": "2026-10-01T00:00:00Z",
+      "mandate_effective_to": "2026-12-31T23:59:59Z",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "expires_at": "2026-10-14T18:00:30Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false
+    },
+    "valid": true
+  },
+  {
+    "name": "money_movement_decision/denied",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "c4f0d8e2-6c3a-4f7b-9d2e-0a1c8f4b3d66",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "outcome": "REVOKED_OR_EXPIRED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "legal_actor_role": "PAYMENT_BENEFICIARY",
+      "activity": "PAYMENT_COLLECTION",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false
+    },
+    "valid": true
+  },
+  {
+    "name": "money_movement_decision/payout-not-activated",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "d5a1e9f3-7d4b-4a8c-8e3f-1b2d9a5c4e77",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.payout.execute",
+      "operation_reference": "payments/payout/payout_01J9ZA00/key-77aa",
+      "attempt": 1,
+      "instruction_fingerprint": "cadb0fdf18b8a682af614a9c1aacd8f4c81fdbbf2dc040037c775579b8976f38",
+      "outcome": "OPERATION_NOT_ACTIVATED",
+      "activity": "BENEFICIARY_DISBURSEMENT",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false
+    },
+    "valid": true
+  },
+  {
+    "name": "money_movement_decision/authorized/missing/capability_key",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "a3e9c7d1-5b2f-4e6a-8c1d-9f0b7e3a2c55",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "outcome": "AUTHORIZED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "legal_actor_role": "PAYMENT_BENEFICIARY",
+      "activity": "PAYMENT_COLLECTION",
+      "mandate_id": "7d2b9e4f-6a1c-4f3e-b8d5-0c9a8e7f6d22",
+      "responsible_legal_entity_id": "SYNTHETIC-LE-01",
+      "evidence_references": [
+        "synthetic:mandate-evidence/02"
+      ],
+      "mandate_effective_from": "2026-10-01T00:00:00Z",
+      "mandate_effective_to": "2026-12-31T23:59:59Z",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "expires_at": "2026-10-14T18:00:30Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_decision/authorized/missing/mandate_id",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "a3e9c7d1-5b2f-4e6a-8c1d-9f0b7e3a2c55",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "outcome": "AUTHORIZED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "legal_actor_role": "PAYMENT_BENEFICIARY",
+      "activity": "PAYMENT_COLLECTION",
+      "capability_key": "payment.payment.capture",
+      "responsible_legal_entity_id": "SYNTHETIC-LE-01",
+      "evidence_references": [
+        "synthetic:mandate-evidence/02"
+      ],
+      "mandate_effective_from": "2026-10-01T00:00:00Z",
+      "mandate_effective_to": "2026-12-31T23:59:59Z",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "expires_at": "2026-10-14T18:00:30Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_decision/authorized/missing/expires_at",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "a3e9c7d1-5b2f-4e6a-8c1d-9f0b7e3a2c55",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "outcome": "AUTHORIZED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "legal_actor_role": "PAYMENT_BENEFICIARY",
+      "activity": "PAYMENT_COLLECTION",
+      "capability_key": "payment.payment.capture",
+      "mandate_id": "7d2b9e4f-6a1c-4f3e-b8d5-0c9a8e7f6d22",
+      "responsible_legal_entity_id": "SYNTHETIC-LE-01",
+      "evidence_references": [
+        "synthetic:mandate-evidence/02"
+      ],
+      "mandate_effective_from": "2026-10-01T00:00:00Z",
+      "mandate_effective_to": "2026-12-31T23:59:59Z",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_decision/authorized/missing/responsible_legal_entity_id",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "a3e9c7d1-5b2f-4e6a-8c1d-9f0b7e3a2c55",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "outcome": "AUTHORIZED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "legal_actor_role": "PAYMENT_BENEFICIARY",
+      "activity": "PAYMENT_COLLECTION",
+      "capability_key": "payment.payment.capture",
+      "mandate_id": "7d2b9e4f-6a1c-4f3e-b8d5-0c9a8e7f6d22",
+      "evidence_references": [
+        "synthetic:mandate-evidence/02"
+      ],
+      "mandate_effective_from": "2026-10-01T00:00:00Z",
+      "mandate_effective_to": "2026-12-31T23:59:59Z",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "expires_at": "2026-10-14T18:00:30Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_decision/authorized/missing/evidence_references",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "a3e9c7d1-5b2f-4e6a-8c1d-9f0b7e3a2c55",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "outcome": "AUTHORIZED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "legal_actor_role": "PAYMENT_BENEFICIARY",
+      "activity": "PAYMENT_COLLECTION",
+      "capability_key": "payment.payment.capture",
+      "mandate_id": "7d2b9e4f-6a1c-4f3e-b8d5-0c9a8e7f6d22",
+      "responsible_legal_entity_id": "SYNTHETIC-LE-01",
+      "mandate_effective_from": "2026-10-01T00:00:00Z",
+      "mandate_effective_to": "2026-12-31T23:59:59Z",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "expires_at": "2026-10-14T18:00:30Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_decision/authorized/missing/instruction_fingerprint",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "a3e9c7d1-5b2f-4e6a-8c1d-9f0b7e3a2c55",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "outcome": "AUTHORIZED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "legal_actor_role": "PAYMENT_BENEFICIARY",
+      "activity": "PAYMENT_COLLECTION",
+      "capability_key": "payment.payment.capture",
+      "mandate_id": "7d2b9e4f-6a1c-4f3e-b8d5-0c9a8e7f6d22",
+      "responsible_legal_entity_id": "SYNTHETIC-LE-01",
+      "evidence_references": [
+        "synthetic:mandate-evidence/02"
+      ],
+      "mandate_effective_from": "2026-10-01T00:00:00Z",
+      "mandate_effective_to": "2026-12-31T23:59:59Z",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "expires_at": "2026-10-14T18:00:30Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_decision/authorized/missing/attempt",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "a3e9c7d1-5b2f-4e6a-8c1d-9f0b7e3a2c55",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "outcome": "AUTHORIZED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "legal_actor_role": "PAYMENT_BENEFICIARY",
+      "activity": "PAYMENT_COLLECTION",
+      "capability_key": "payment.payment.capture",
+      "mandate_id": "7d2b9e4f-6a1c-4f3e-b8d5-0c9a8e7f6d22",
+      "responsible_legal_entity_id": "SYNTHETIC-LE-01",
+      "evidence_references": [
+        "synthetic:mandate-evidence/02"
+      ],
+      "mandate_effective_from": "2026-10-01T00:00:00Z",
+      "mandate_effective_to": "2026-12-31T23:59:59Z",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "expires_at": "2026-10-14T18:00:30Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_decision/authorized/missing/decision_id",
+    "contract": "money_movement_decision",
+    "instance": {
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "outcome": "AUTHORIZED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "legal_actor_role": "PAYMENT_BENEFICIARY",
+      "activity": "PAYMENT_COLLECTION",
+      "capability_key": "payment.payment.capture",
+      "mandate_id": "7d2b9e4f-6a1c-4f3e-b8d5-0c9a8e7f6d22",
+      "responsible_legal_entity_id": "SYNTHETIC-LE-01",
+      "evidence_references": [
+        "synthetic:mandate-evidence/02"
+      ],
+      "mandate_effective_from": "2026-10-01T00:00:00Z",
+      "mandate_effective_to": "2026-12-31T23:59:59Z",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "expires_at": "2026-10-14T18:00:30Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_decision/provider-permission",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "a3e9c7d1-5b2f-4e6a-8c1d-9f0b7e3a2c55",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "outcome": "AUTHORIZED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "legal_actor_role": "PAYMENT_BENEFICIARY",
+      "activity": "PAYMENT_COLLECTION",
+      "capability_key": "payment.payment.capture",
+      "mandate_id": "7d2b9e4f-6a1c-4f3e-b8d5-0c9a8e7f6d22",
+      "responsible_legal_entity_id": "SYNTHETIC-LE-01",
+      "evidence_references": [
+        "synthetic:mandate-evidence/02"
+      ],
+      "mandate_effective_from": "2026-10-01T00:00:00Z",
+      "mandate_effective_to": "2026-12-31T23:59:59Z",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "expires_at": "2026-10-14T18:00:30Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": true
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_decision/denied-leaks-mandate",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "c4f0d8e2-6c3a-4f7b-9d2e-0a1c8f4b3d66",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "outcome": "REVOKED_OR_EXPIRED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "legal_actor_role": "PAYMENT_BENEFICIARY",
+      "activity": "PAYMENT_COLLECTION",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false,
+      "mandate_id": "7d2b9e4f-6a1c-4f3e-b8d5-0c9a8e7f6d22"
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_decision/wrong-activity",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "a3e9c7d1-5b2f-4e6a-8c1d-9f0b7e3a2c55",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "outcome": "AUTHORIZED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "legal_actor_role": "PAYMENT_BENEFICIARY",
+      "activity": "PAYMENT_REFUND",
+      "capability_key": "payment.payment.capture",
+      "mandate_id": "7d2b9e4f-6a1c-4f3e-b8d5-0c9a8e7f6d22",
+      "responsible_legal_entity_id": "SYNTHETIC-LE-01",
+      "evidence_references": [
+        "synthetic:mandate-evidence/02"
+      ],
+      "mandate_effective_from": "2026-10-01T00:00:00Z",
+      "mandate_effective_to": "2026-12-31T23:59:59Z",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "expires_at": "2026-10-14T18:00:30Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_decision/wrong-capability",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "a3e9c7d1-5b2f-4e6a-8c1d-9f0b7e3a2c55",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "outcome": "AUTHORIZED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "legal_actor_role": "PAYMENT_BENEFICIARY",
+      "activity": "PAYMENT_COLLECTION",
+      "capability_key": "payment.refund.create",
+      "mandate_id": "7d2b9e4f-6a1c-4f3e-b8d5-0c9a8e7f6d22",
+      "responsible_legal_entity_id": "SYNTHETIC-LE-01",
+      "evidence_references": [
+        "synthetic:mandate-evidence/02"
+      ],
+      "mandate_effective_from": "2026-10-01T00:00:00Z",
+      "mandate_effective_to": "2026-12-31T23:59:59Z",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "expires_at": "2026-10-14T18:00:30Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_decision/payout-authorized",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "a3e9c7d1-5b2f-4e6a-8c1d-9f0b7e3a2c55",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.payout.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "outcome": "AUTHORIZED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "activity": "BENEFICIARY_DISBURSEMENT",
+      "mandate_id": "7d2b9e4f-6a1c-4f3e-b8d5-0c9a8e7f6d22",
+      "responsible_legal_entity_id": "SYNTHETIC-LE-01",
+      "evidence_references": [
+        "synthetic:mandate-evidence/02"
+      ],
+      "mandate_effective_from": "2026-10-01T00:00:00Z",
+      "mandate_effective_to": "2026-12-31T23:59:59Z",
+      "evaluated_at": "2026-10-14T18:00:00Z",
+      "expires_at": "2026-10-14T18:00:30Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false
+    },
+    "valid": false
+  },
+  {
+    "name": "money_movement_decision/date-time",
+    "contract": "money_movement_decision",
+    "instance": {
+      "decision_id": "a3e9c7d1-5b2f-4e6a-8c1d-9f0b7e3a2c55",
+      "context_id": "6f1c2a9e-4b7d-4c1e-9a3f-2d5e8b7c1a40",
+      "engine_instance_id": "ei_paystaging01",
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "attempt": 2,
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589",
+      "outcome": "AUTHORIZED",
+      "tenant_id": "tn_synthetic01",
+      "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+      "market": "UG",
+      "legal_actor_role": "PAYMENT_BENEFICIARY",
+      "activity": "PAYMENT_COLLECTION",
+      "capability_key": "payment.payment.capture",
+      "mandate_id": "7d2b9e4f-6a1c-4f3e-b8d5-0c9a8e7f6d22",
+      "responsible_legal_entity_id": "SYNTHETIC-LE-01",
+      "evidence_references": [
+        "synthetic:mandate-evidence/02"
+      ],
+      "mandate_effective_from": "2026-10-01T00:00:00Z",
+      "mandate_effective_to": "2026-12-31T23:59:59Z",
+      "evaluated_at": "2026-02-30T00:00:00Z",
+      "expires_at": "2026-10-14T18:00:30Z",
+      "policy_reference": "ADR-SHARED-035/payments-money-movement-authority:v1",
+      "provider_permissions_granted": false
+    },
+    "valid": false
   }
 ]

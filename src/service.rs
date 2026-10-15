@@ -714,7 +714,7 @@ impl PaymentService {
             role,
             activity,
             market: &context.market,
-            capability: "payments.intent.create",
+            capability: "payment.intent.create",
             operation_reference: &context.payment_reference,
         };
         let native = self

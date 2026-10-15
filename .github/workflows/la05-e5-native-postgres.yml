@@ -9,6 +9,9 @@ on:
       - "contracts/**"
       - "src/native_execution.rs"
       - "src/hyperswitch.rs"
+      - "src/money_movement*.rs"
+      - "src/money_movement_execution/**"
+      - "db/**"
       - "Cargo.*"
       - ".github/workflows/la05-e5-native-postgres.yml"
   push:
@@ -21,6 +24,9 @@ on:
       - "contracts/**"
       - "src/native_execution.rs"
       - "src/hyperswitch.rs"
+      - "src/money_movement*.rs"
+      - "src/money_movement_execution/**"
+      - "db/**"
       - "Cargo.*"
       - ".github/workflows/la05-e5-native-postgres.yml"
 permissions:
@@ -53,6 +59,9 @@ jobs:
             --env PGPASSWORD=synthetic_only_password postgres:17-alpine sh -euc '
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0001_native_payment_journal.sql
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/tests/0001_native_payment_journal.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0002_webhook_settlement_reconciliation.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0003_money_movement_authority.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/tests/0003_money_movement_authority.sql
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -c "ALTER ROLE payment_ci LOGIN PASSWORD '\''synthetic_runtime_only'\''"
             '
       - name: Exercise Rust journal reservation + local synthetic HTTP provider + replay denial
@@ -60,3 +69,14 @@ jobs:
           LA05_NATIVE_PG_TEST_URL: "host=127.0.0.1 port=5432 dbname=baobab_payments_test user=payment_ci password=synthetic_runtime_only"
         run: |
           cargo test --locked native_execution::tests::postgres17_commits_intent_before_exactly_one_synthetic_provider_send -- --nocapture
+      # P0-04B Payments (ADR-SHARED-035): the money-movement PEP against the real
+      # journal as the restricted runtime role, with a loopback CP and provider.
+      # LA05_REQUIRE_PG turns a missing database into a failure, never a skip.
+      - name: Money-movement PEP on PostgreSQL 17 (Gates A-C)
+        env:
+          LA05_NATIVE_PG_TEST_URL: "host=127.0.0.1 port=5432 dbname=baobab_payments_test user=payment_ci password=synthetic_runtime_only"
+          LA05_NATIVE_PG_ADMIN_URL: "host=127.0.0.1 port=5432 dbname=baobab_payments_test user=baobab password=synthetic_only_password"
+          LA05_REQUIRE_PG: "1"
+        run: |
+          cargo test --locked --lib money_movement -- --nocapture 2>&1 | tee /tmp/money-movement.out
+          grep -Eq "test result: ok\. 17 passed" /tmp/money-movement.out

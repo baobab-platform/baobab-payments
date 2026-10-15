@@ -1,0 +1,124 @@
+{
+  "description": "Golden vectors for the canonical instruction fingerprint (README.md). Control Plane and Payments must both reproduce every canonical string and fingerprint. Synthetic values only.",
+  "vectors": [
+    {
+      "operation_class": "payments.authorization.create",
+      "operation_reference": "payments/authorize/payint_01J9Z8K2/attempt-key-7f3a",
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "payint_01J9Z8K2",
+        "parent_reference": null,
+        "destination_reference": null
+      },
+      "canonical": "{\"amount_minor\":150000,\"currency\":\"UGX\",\"destination_reference\":null,\"market\":\"UG\",\"merchant_profile_reference\":\"mprof_synthetic01\",\"operating_organisation_id\":\"2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c\",\"operation_class\":\"payments.authorization.create\",\"operation_reference\":\"payments/authorize/payint_01J9Z8K2/attempt-key-7f3a\",\"parent_reference\":null,\"payment_reference\":\"payint_01J9Z8K2\",\"tenant_id\":\"tn_synthetic01\"}",
+      "instruction_fingerprint": "824687951c5c0c99830a8839e0a312ba0fc7b2f8b27b56fc317e26257a8b606a"
+    },
+    {
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bc",
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "canonical": "{\"amount_minor\":150000,\"currency\":\"UGX\",\"destination_reference\":null,\"market\":\"UG\",\"merchant_profile_reference\":\"mprof_synthetic01\",\"operating_organisation_id\":\"2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c\",\"operation_class\":\"payments.capture.execute\",\"operation_reference\":\"payments/capture/pay_01J9Z8M4/key-91bc\",\"parent_reference\":\"pay_01J9Z8M4\",\"payment_reference\":\"pay_01J9Z8M4\",\"tenant_id\":\"tn_synthetic01\"}",
+      "instruction_fingerprint": "9041f9bd88069299cf9d302e2bb4546efaf9bd57ecf483410c0739a543f90589"
+    },
+    {
+      "operation_class": "payments.capture.execute",
+      "operation_reference": "payments/capture/pay_01J9Z8M4/key-91bd",
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 100000,
+        "payment_reference": "pay_01J9Z8M4",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": null
+      },
+      "canonical": "{\"amount_minor\":100000,\"currency\":\"UGX\",\"destination_reference\":null,\"market\":\"UG\",\"merchant_profile_reference\":\"mprof_synthetic01\",\"operating_organisation_id\":\"2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c\",\"operation_class\":\"payments.capture.execute\",\"operation_reference\":\"payments/capture/pay_01J9Z8M4/key-91bd\",\"parent_reference\":\"pay_01J9Z8M4\",\"payment_reference\":\"pay_01J9Z8M4\",\"tenant_id\":\"tn_synthetic01\"}",
+      "instruction_fingerprint": "23c5a4fe1dd4bce64c7823aa340d6beae4d711d4093c96e85f48c5cf0dc22e11"
+    },
+    {
+      "operation_class": "payments.refund.execute",
+      "operation_reference": "payments/refund/refund_01J9Z9A1/key-0c2d",
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 50000,
+        "payment_reference": "refund_01J9Z9A1",
+        "parent_reference": "pay_01J9Z8M4",
+        "destination_reference": "ORIGINAL_PAYMENT_METHOD"
+      },
+      "canonical": "{\"amount_minor\":50000,\"currency\":\"UGX\",\"destination_reference\":\"ORIGINAL_PAYMENT_METHOD\",\"market\":\"UG\",\"merchant_profile_reference\":\"mprof_synthetic01\",\"operating_organisation_id\":\"2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c\",\"operation_class\":\"payments.refund.execute\",\"operation_reference\":\"payments/refund/refund_01J9Z9A1/key-0c2d\",\"parent_reference\":\"pay_01J9Z8M4\",\"payment_reference\":\"refund_01J9Z9A1\",\"tenant_id\":\"tn_synthetic01\"}",
+      "instruction_fingerprint": "ae2c70c3abb6755d241e7932947233f02d271246deaac47c57c6180663ac50e3"
+    },
+    {
+      "operation_class": "payments.authorization.void",
+      "operation_reference": "payments/void/pay_01J9Z8M5/key-5e6f",
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 150000,
+        "payment_reference": "pay_01J9Z8M5",
+        "parent_reference": "pay_01J9Z8M5",
+        "destination_reference": null
+      },
+      "canonical": "{\"amount_minor\":150000,\"currency\":\"UGX\",\"destination_reference\":null,\"market\":\"UG\",\"merchant_profile_reference\":\"mprof_synthetic01\",\"operating_organisation_id\":\"2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c\",\"operation_class\":\"payments.authorization.void\",\"operation_reference\":\"payments/void/pay_01J9Z8M5/key-5e6f\",\"parent_reference\":\"pay_01J9Z8M5\",\"payment_reference\":\"pay_01J9Z8M5\",\"tenant_id\":\"tn_synthetic01\"}",
+      "instruction_fingerprint": "02835b0800defac700a425bfd11d379127caa2e61adc91e715460f3cff1e8358"
+    },
+    {
+      "operation_class": "payments.payout.execute",
+      "operation_reference": "payments/payout/payout_01J9ZA00/key-77aa",
+      "instruction": {
+        "tenant_id": "tn_synthetic01",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "UG",
+        "currency": "UGX",
+        "merchant_profile_reference": "mprof_synthetic01",
+        "amount_minor": 75000,
+        "payment_reference": "payout_01J9ZA00",
+        "parent_reference": null,
+        "destination_reference": "bnf_synthetic01"
+      },
+      "canonical": "{\"amount_minor\":75000,\"currency\":\"UGX\",\"destination_reference\":\"bnf_synthetic01\",\"market\":\"UG\",\"merchant_profile_reference\":\"mprof_synthetic01\",\"operating_organisation_id\":\"2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c\",\"operation_class\":\"payments.payout.execute\",\"operation_reference\":\"payments/payout/payout_01J9ZA00/key-77aa\",\"parent_reference\":null,\"payment_reference\":\"payout_01J9ZA00\",\"tenant_id\":\"tn_synthetic01\"}",
+      "instruction_fingerprint": "cadb0fdf18b8a682af614a9c1aacd8f4c81fdbbf2dc040037c775579b8976f38"
+    },
+    {
+      "operation_class": "payments.refund.execute",
+      "operation_reference": "payments/refund/refund_01J9Z9A2/key-0c2e",
+      "instruction": {
+        "tenant_id": "tn_synthetic02",
+        "operating_organisation_id": "2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c",
+        "market": "KE",
+        "currency": "KES",
+        "merchant_profile_reference": "mprof_synthetic02",
+        "amount_minor": 1,
+        "payment_reference": "refund_01J9Z9A2",
+        "parent_reference": "pay_01J9Z8M6",
+        "destination_reference": "ORIGINAL_PAYMENT_METHOD"
+      },
+      "canonical": "{\"amount_minor\":1,\"currency\":\"KES\",\"destination_reference\":\"ORIGINAL_PAYMENT_METHOD\",\"market\":\"KE\",\"merchant_profile_reference\":\"mprof_synthetic02\",\"operating_organisation_id\":\"2c8e4f6a-1b3d-4e5f-8a7c-9d0e1f2a3b4c\",\"operation_class\":\"payments.refund.execute\",\"operation_reference\":\"payments/refund/refund_01J9Z9A2/key-0c2e\",\"parent_reference\":\"pay_01J9Z8M6\",\"payment_reference\":\"refund_01J9Z9A2\",\"tenant_id\":\"tn_synthetic02\"}",
+      "instruction_fingerprint": "6342f701c68fb16fd846d37b0c342601ebe9026f4445c9de2931b39c875ec90b"
+    }
+  ]
+}

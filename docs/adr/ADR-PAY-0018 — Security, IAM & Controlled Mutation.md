@@ -3107,3 +3107,13 @@ Git blobs. See [P0-04A audit/maintenance notes](../plans/P0-04A-payments-contrac
 This implementation record changes no Accepted decision. PROVISIONED workload
 admission, protected TLS/provider/merchant acceptance, real legal/control/mandate
 facts and full money lifecycle remain independent P0-03/P0-04B gates.
+
+## Implementation follow-up — 15 October 2026 (P0-04B, ADR-SHARED-035)
+
+Each consequential money movement now requires:
+- a current, operation-specific CP decision for its exact instruction fingerprint, recorded with the reservation and again at the execution point;
+- Payments' own financial approval, enforced by PostgreSQL fences that the runtime role cannot bypass.
+
+Provider readiness is an operator-recorded activation that the runtime cannot grant itself. Payouts remain unactivated. An unknown provider outcome is reconciled and never re-sent.
+
+This record changes no Accepted decision. Real-runtime Gate D1, protected staging, IAM activation and production enablement remain open. See [P0-04B plan](../plans/P0-04B-payments-money-movement-authority.md).

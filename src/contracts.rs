@@ -99,6 +99,16 @@ fn verify_provenance() {
     }
 }
 
+/// A pinned, embedded Shared file that is not a JSON Schema (a catalogue or
+/// golden vectors), by its path under `contracts/`.
+pub fn embedded(path: &str) -> Option<&'static str> {
+    verify_provenance();
+    EMBEDDED
+        .iter()
+        .find(|(p, _)| *p == path)
+        .map(|(_, text)| *text)
+}
+
 /// Build every declared validator and assert UUID/date-time behaviour in the
 /// standalone binary, without issuer credentials, Shared checkout or services.
 pub fn self_test() {

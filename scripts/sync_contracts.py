@@ -31,6 +31,8 @@ ENTRIES = {
     "context_request": ("control-plane/v1/platform-context.schema.json", "PlatformContextResolveRequest"),
     "context_response": ("control-plane/v1/platform-context.schema.json", "PlatformContext"),
     "readiness_request": ("payments/v1/merchant-readiness.schema.json", "ReadinessRequest"),
+    "money_movement_request": ("payments/v2/money-movement-authority.schema.json", "MoneyMovementAuthorityRequest"),
+    "money_movement_decision": ("payments/v2/money-movement-authority.schema.json", "MoneyMovementAuthorityDecision"),
 }
 
 
