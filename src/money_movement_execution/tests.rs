@@ -102,6 +102,8 @@ struct PspState {
     lose_next_response: AtomicBool,
     /// Lose the request entirely (it never landed).
     drop_next_request: AtomicBool,
+    /// Capture one minor unit less than asked, yet still answer success.
+    short_capture: AtomicBool,
 }
 
 fn psp_fault(s: &PspState) -> Option<StatusCode> {
@@ -140,7 +142,8 @@ fn provider(state: Arc<PspState>) -> Router {
         }))
         .route("/payments/{id}/capture", post(|State(s): State<Arc<PspState>>, Path(id): Path<String>, Json(b): Json<Value>| async move {
             if let Some(code) = psp_fault(&s) { return (code, Json(json!({}))); }
-            s.captured.fetch_add(b["amount_to_capture"].as_i64().unwrap(), Ordering::SeqCst);
+            let short = i64::from(s.short_capture.swap(false, Ordering::SeqCst));
+            s.captured.fetch_add(b["amount_to_capture"].as_i64().unwrap() - short, Ordering::SeqCst);
             psp_reply(&s, json!({"payment_id": id, "status": "partially_captured"}))
         }))
         .route("/payments/{id}/cancel", post(|State(s): State<Arc<PspState>>, Path(id): Path<String>| async move {
@@ -271,13 +274,17 @@ impl Harness {
     }
 
     async fn activate(&self, profile: &str) {
+        self.activate_in(profile, "SANDBOX").await;
+    }
+
+    async fn activate_in(&self, profile: &str, environment: &str) {
         self.admin().await.execute(
             "INSERT INTO payment_ops.provider_activation (tenant_id, responsible_legal_entity_id,
                 merchant_profile_reference, market_code, currency_code, operation_kinds, provider_environment,
                 provider_certification_reference, merchant_activation_reference, valid_from, valid_until)
-             VALUES ($1,$2,$3,'UG','UGX',ARRAY['AUTHORIZE','CAPTURE','CANCEL','REFUND'],'SANDBOX',
+             VALUES ($1,$2,$3,'UG','UGX',ARRAY['AUTHORIZE','CAPTURE','CANCEL','REFUND'],$4,
                      'synthetic/cert','synthetic/activation',now()-interval '1 hour',now()+interval '1 hour')",
-            &[&self.tenant, &LE, &profile],
+            &[&self.tenant, &LE, &profile, &environment],
         ).await.unwrap();
     }
 
@@ -878,4 +885,83 @@ async fn postgres17_void_only_before_capture() {
         Some(&voided),
     );
     assert_eq!(h.run(&after).await, Err(MoneyMovementError::StateConflict));
+}
+
+#[tokio::test]
+async fn postgres17_a_replay_can_never_substitute_another_payment_token() {
+    let Some(h) = harness().await else { return };
+    let payment = unique("pay");
+    let mut authorize = h.command(OperationClass::Authorize, "auth-token", &payment, 500, None);
+    h.psp.drop_next_request.store(true, Ordering::SeqCst);
+    assert!(matches!(
+        h.run(&authorize).await,
+        Err(MoneyMovementError::OutcomeUnknown { .. })
+    ));
+    let posts = h.posts();
+    authorize.payment_token = Some("tok_someone_elses_card".into());
+    assert_eq!(
+        h.run(&authorize).await,
+        Err(MoneyMovementError::IdempotencyConflict)
+    );
+    assert_eq!(h.posts(), posts, "the substituted token was never sent");
+    authorize.payment_token = Some("tok_synthetic_visa".into());
+    assert!(matches!(
+        h.run(&authorize).await,
+        Ok(MoneyMovementOutcome::Executed { .. })
+    ));
+}
+
+#[tokio::test]
+async fn postgres17_a_short_capture_is_never_confirmed() {
+    let Some(h) = harness().await else { return };
+    let payment = unique("pay");
+    h.authorize(&payment, 600).await;
+    h.psp.short_capture.store(true, Ordering::SeqCst);
+    let capture = h.command(
+        OperationClass::Capture,
+        "capture-short",
+        &payment,
+        600,
+        Some(&payment),
+    );
+    let out = h.run(&capture).await;
+    assert!(
+        matches!(out, Err(MoneyMovementError::OutcomeUnknown { .. })),
+        "{out:?}"
+    );
+    assert_eq!(h.psp.captured.load(Ordering::SeqCst), 599);
+    // Funds that were never captured can never be refunded.
+    let refund = h.command(
+        OperationClass::Refund,
+        "refund-short",
+        &unique("refund"),
+        600,
+        Some(&payment),
+    );
+    assert_eq!(
+        h.run(&refund).await,
+        Err(MoneyMovementError::FinancialLimit)
+    );
+    assert_eq!(h.count("SELECT count(*) FROM payment_ops.provider_observation o JOIN payment_ops.native_execution e USING (execution_id) WHERE e.operation_kind='CAPTURE' AND o.outcome='CONFIRMED'").await, 0);
+}
+
+#[tokio::test]
+async fn postgres17_an_activation_for_another_environment_never_counts() {
+    let Some(h) = harness().await else { return };
+    h.activate_in("mprof_staging_only", "STAGING").await;
+    let payment = unique("pay");
+    let mut authorize = h.command(
+        OperationClass::Authorize,
+        "auth-staging",
+        &payment,
+        500,
+        None,
+    );
+    authorize.instruction.merchant_profile_reference = "mprof_staging_only".into();
+    let posts = h.posts();
+    assert_eq!(
+        h.run(&authorize).await,
+        Err(MoneyMovementError::ProviderNotReady)
+    );
+    assert_eq!(h.posts(), posts);
 }

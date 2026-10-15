@@ -26,6 +26,9 @@ INSERT INTO payment_ops.provider_activation (activation_id, tenant_id, responsib
 VALUES ('0199a1b2-0000-7000-8000-00000000a001', 'tn_moneytest', 'LE-SYNTHETIC-PAY', 'mprof_synthetic',
         'UG', 'UGX', ARRAY['AUTHORIZE','CAPTURE','CANCEL','REFUND'], 'SANDBOX',
         'synthetic/cert', 'synthetic/activation', now() - interval '1 day', now() + interval '1 day'),
+       ('0199a1b2-0000-7000-8000-00000000a003', 'tn_moneytest', 'LE-SYNTHETIC-PAY', 'mprof_staging_only',
+        'UG', 'UGX', ARRAY['AUTHORIZE','CAPTURE','CANCEL','REFUND'], 'STAGING',
+        'synthetic/cert', 'synthetic/activation', now() - interval '1 day', now() + interval '1 day'),
        ('0199a1b2-0000-7000-8000-00000000a002', 'tn_moneytest', 'LE-SYNTHETIC-PAY', 'mprof_revoked',
         'UG', 'UGX', ARRAY['AUTHORIZE','CAPTURE','CANCEL','REFUND'], 'SANDBOX',
         'synthetic/cert', 'synthetic/activation', now() - interval '1 day', now() + interval '1 day');
@@ -46,12 +49,13 @@ $$;
 CREATE FUNCTION pt.reserve(p_kind text, p_class text, p_key text, p_payment text, p_amount bigint,
                            p_fp text, p_parent text DEFAULT NULL, p_profile text DEFAULT 'mprof_synthetic',
                            p_destination text DEFAULT NULL, p_currency text DEFAULT 'UGX',
-                           p_mandate uuid DEFAULT '0199a1b2-0000-7000-8000-0000000000dd') RETURNS uuid
+                           p_mandate uuid DEFAULT '0199a1b2-0000-7000-8000-0000000000dd',
+                           p_environment text DEFAULT 'SANDBOX') RETURNS uuid
 LANGUAGE sql AS $$
     SELECT payment_ops.reserve_money_movement(current_setting('baobab.tenant_id'), p_kind, 'idem-' || p_key, repeat('c', 64),
         p_payment, '0199a1b2-c3d4-7e8f-9a0b-1c2d3e4f5a6c', current_setting('baobab.responsible_legal_entity_id'),
         p_mandate, 'cp/decision/synthetic', 'synthetic/cert', 'synthetic/activation', 'UG', p_currency,
-        p_amount, p_class, 'op/' || p_key, p_fp, p_parent, p_profile, p_destination)
+        p_amount, p_class, 'op/' || p_key, p_fp, p_parent, p_profile, p_destination, p_environment)
 $$;
 -- Reserve, dispatch on a fresh attempt-2 decision, and record an outcome.
 CREATE FUNCTION pt.move(p_kind text, p_class text, p_key text, p_payment text, p_amount bigint,
@@ -160,6 +164,13 @@ DO $$ BEGIN
     PERFORM pt.decide('payments.authorization.create', 'op/auth-nocurrency', 1, repeat('a', 64));
     PERFORM pt.refused($q$SELECT pt.reserve('AUTHORIZE','payments.authorization.create','auth-nocurrency','pay_kes',1000,repeat('a',64),
         NULL,'mprof_synthetic',NULL,'KES')$q$, 'BPR01', 'no activation for currency');
+    -- An activation for another provider environment never counts.
+    PERFORM pt.decide('payments.authorization.create', 'op/auth-wrongenv-1', 1, repeat('a', 64));
+    PERFORM pt.refused($q$SELECT pt.reserve('AUTHORIZE','payments.authorization.create','auth-wrongenv-1','pay_wrongenv',1000,repeat('a',64),
+        NULL,'mprof_staging_only')$q$, 'BPR01', 'activation for another environment');
+    PERFORM pt.decide('payments.authorization.create', 'op/auth-noenv-001', 1, repeat('a', 64));
+    PERFORM pt.refused($q$SELECT pt.reserve('AUTHORIZE','payments.authorization.create','auth-noenv-001','pay_noenv',1000,repeat('a',64),
+        NULL,'mprof_staging_only',NULL,'UGX','0199a1b2-0000-7000-8000-0000000000dd',NULL)$q$, 'BPR01', 'no environment');
     PERFORM pt.decide('payments.authorization.create', 'op/auth-revoked-01', 1, repeat('a', 64));
     PERFORM pt.refused($q$SELECT pt.reserve('AUTHORIZE','payments.authorization.create','auth-revoked-01','pay_revoked',1000,repeat('a',64),
         NULL,'mprof_revoked')$q$, 'BPR01', 'revoked activation');
@@ -245,6 +256,10 @@ BEGIN
         execution_id, decision_id, activation_id) VALUES ('tn_moneytest','LE-SYNTHETIC-PAY', %L,
         pt.decide('payments.authorization.create','op/auth-dispatch-01',5,%L), '0199a1b2-0000-7000-8000-00000000a001')$q$,
         v_execution, v_fp), 'BPS02', 'second dispatch of an unknown outcome');
+    PERFORM pt.refused(format($q$INSERT INTO payment_ops.provider_observation (tenant_id, responsible_legal_entity_id,
+        execution_id, dispatch_id, outcome, source, provider_environment)
+        VALUES ('tn_moneytest','LE-SYNTHETIC-PAY',%L,%L,'ABSENT','RECONCILIATION','PRODUCTION')$q$, v_execution, v_dispatch),
+        'BPS01', 'observation for another environment');
     INSERT INTO payment_ops.provider_observation (tenant_id, responsible_legal_entity_id, execution_id, dispatch_id,
         outcome, source, provider_environment)
     VALUES ('tn_moneytest', 'LE-SYNTHETIC-PAY', v_execution, v_dispatch, 'ABSENT', 'RECONCILIATION', 'SANDBOX');

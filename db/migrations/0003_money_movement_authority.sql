@@ -25,6 +25,10 @@ ALTER TABLE payment_ops.native_execution
         CHECK (merchant_profile_reference IS NULL OR length(btrim(merchant_profile_reference)) BETWEEN 3 AND 160),
     ADD COLUMN destination_reference text
         CHECK (destination_reference IS NULL OR length(btrim(destination_reference)) BETWEEN 3 AND 160),
+    -- The provider environment the movement is executed in; its activation,
+    -- dispatch and observations must all be for this same environment.
+    ADD COLUMN provider_environment text
+        CHECK (provider_environment IS NULL OR provider_environment IN ('SANDBOX', 'STAGING', 'PRODUCTION')),
     ADD COLUMN recording_txid bigint NOT NULL DEFAULT txid_current();
 
 ALTER TABLE payment_ops.transaction_outbox
@@ -163,12 +167,15 @@ LANGUAGE sql STABLE SECURITY INVOKER AS $$
      ORDER BY o.observed_at DESC, o.observation_id DESC LIMIT 1
 $$;
 
--- The current activation for one operation kind, or NULL.
+-- The current activation for one operation kind in one provider
+-- environment, or NULL. An activation for another environment never counts.
 CREATE FUNCTION payment_ops.current_activation(
-    p_tenant text, p_legal_actor text, p_profile text, p_market text, p_currency text, p_kind text
+    p_tenant text, p_legal_actor text, p_profile text, p_market text, p_currency text, p_kind text,
+    p_environment text
 ) RETURNS uuid LANGUAGE sql STABLE SECURITY INVOKER AS $$
     SELECT a.activation_id FROM payment_ops.provider_activation a
      WHERE a.tenant_id = p_tenant AND a.responsible_legal_entity_id = p_legal_actor
+       AND a.provider_environment = p_environment
        AND a.merchant_profile_reference = p_profile AND a.market_code = p_market
        AND a.currency_code = p_currency AND p_kind = ANY (a.operation_kinds)
        AND a.valid_from <= clock_timestamp() AND a.valid_until > clock_timestamp()
@@ -247,8 +254,9 @@ BEGIN
        OR NOT payment_ops.decision_is_current(d) THEN
         RAISE EXCEPTION 'no current CP decision for this exact instruction' USING ERRCODE = 'BPA01';
     END IF;
-    IF payment_ops.current_activation(NEW.tenant_id, NEW.responsible_legal_entity_id,
-            NEW.merchant_profile_reference, NEW.market_code, NEW.currency_code, NEW.operation_kind) IS NULL THEN
+    IF NEW.provider_environment IS NULL OR payment_ops.current_activation(NEW.tenant_id, NEW.responsible_legal_entity_id,
+            NEW.merchant_profile_reference, NEW.market_code, NEW.currency_code, NEW.operation_kind,
+            NEW.provider_environment) IS NULL THEN
         RAISE EXCEPTION 'no current provider activation for this operation' USING ERRCODE = 'BPR01';
     END IF;
 
@@ -353,7 +361,8 @@ BEGIN
         RAISE EXCEPTION 'no current execution-point CP decision for this exact instruction' USING ERRCODE = 'BPA01';
     END IF;
     IF NEW.activation_id IS DISTINCT FROM payment_ops.current_activation(e.tenant_id, e.responsible_legal_entity_id,
-            e.merchant_profile_reference, e.market_code, e.currency_code, e.operation_kind) THEN
+            e.merchant_profile_reference, e.market_code, e.currency_code, e.operation_kind,
+            e.provider_environment) THEN
         RAISE EXCEPTION 'no current provider activation for this dispatch' USING ERRCODE = 'BPR01';
     END IF;
     PERFORM pg_advisory_xact_lock(hashtextextended('dispatch|' || NEW.execution_id::text, 0));
@@ -376,6 +385,11 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM payment_ops.dispatch_attempt p
                     WHERE p.dispatch_id = NEW.dispatch_id AND p.execution_id = NEW.execution_id) THEN
         RAISE EXCEPTION 'an observation must name its own dispatch' USING ERRCODE = 'BPS01';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM payment_ops.native_execution e
+                    WHERE e.execution_id = NEW.execution_id
+                      AND e.provider_environment IS NOT DISTINCT FROM NEW.provider_environment) THEN
+        RAISE EXCEPTION 'an observation must be for its movement''s provider environment' USING ERRCODE = 'BPS01';
     END IF;
     RETURN NEW;
 END;
@@ -417,13 +431,15 @@ CREATE CONSTRAINT TRIGGER dispatch_commit_fence AFTER INSERT ON payment_ops.disp
 
 -- The only reservation entry point for money movements. Replays of an
 -- identical instruction return the original reservation; anything else under
--- the same key is a conflict.
+-- the same key is a conflict. p_hash binds everything the provider will be
+-- sent beyond the instruction (the payment token's hash), so a replay can
+-- never substitute another payment source.
 CREATE FUNCTION payment_ops.reserve_money_movement(
     p_tenant text, p_kind text, p_key text, p_hash text, p_payment_ref text,
     p_organisation uuid, p_legal_actor text, p_mandate uuid, p_actor_evidence text,
     p_certification text, p_merchant_activation text, p_market text, p_currency text,
     p_amount bigint, p_class text, p_operation_ref text, p_fingerprint text,
-    p_parent text, p_profile text, p_destination text
+    p_parent text, p_profile text, p_destination text, p_environment text
 ) RETURNS uuid LANGUAGE plpgsql SECURITY INVOKER AS $$
 DECLARE
     v_execution uuid;
@@ -438,7 +454,8 @@ BEGIN
        AND operation_kind = p_kind AND idempotency_key = p_key;
     IF FOUND THEN
         IF v_prior.instruction_fingerprint IS DISTINCT FROM p_fingerprint
-           OR v_prior.request_sha256 <> p_hash OR v_prior.operation_reference IS DISTINCT FROM p_operation_ref THEN
+           OR v_prior.request_sha256 <> p_hash OR v_prior.operation_reference IS DISTINCT FROM p_operation_ref
+           OR v_prior.provider_environment IS DISTINCT FROM p_environment THEN
             RAISE EXCEPTION 'payment idempotency conflict' USING ERRCODE = '23505';
         END IF;
         RETURN v_prior.execution_id;
@@ -449,11 +466,12 @@ BEGIN
         responsible_legal_entity_id, cp_mandate_id, legal_actor_evidence_reference,
         provider_certification_reference, merchant_activation_reference,
         market_code, currency_code, amount_minor, operation_class, operation_reference,
-        instruction_fingerprint, parent_reference, merchant_profile_reference, destination_reference
+        instruction_fingerprint, parent_reference, merchant_profile_reference, destination_reference,
+        provider_environment
     ) VALUES (
         p_tenant, p_kind, p_key, p_hash, p_payment_ref, p_organisation, p_legal_actor, p_mandate,
         p_actor_evidence, p_certification, p_merchant_activation, p_market, p_currency, p_amount,
-        p_class, p_operation_ref, p_fingerprint, p_parent, p_profile, p_destination
+        p_class, p_operation_ref, p_fingerprint, p_parent, p_profile, p_destination, p_environment
     ) RETURNING execution_id INTO v_execution;
     RETURN v_execution;
 END;

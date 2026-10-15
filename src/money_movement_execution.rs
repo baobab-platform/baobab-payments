@@ -200,6 +200,21 @@ fn classify_response(class: OperationClass, status: &str) -> Outcome {
 struct Existing {
     execution_id: Uuid,
     fingerprint: Option<String>,
+    request_hash: String,
+}
+
+/// Binds everything the provider will be sent beyond the instruction (the
+/// payment token) to the durable reservation, so a replay or a re-send after
+/// ABSENT can never charge another payment source under the same key.
+fn request_hash(fingerprint: &str, payment_token: Option<&str>) -> String {
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(fingerprint.as_bytes());
+    hasher.update(b"|payment_token|");
+    if let Some(token) = payment_token {
+        hasher.update(Sha256::digest(token.as_bytes()));
+    }
+    hex::encode(hasher.finalize())
 }
 
 pub struct MoneyMovementExecutor {
@@ -398,7 +413,7 @@ impl MoneyMovementExecutor {
         let trx = Self::begin(client, c).await?;
         let row = trx
             .query_opt(
-                "SELECT execution_id, instruction_fingerprint FROM payment_ops.native_execution
+                "SELECT execution_id, instruction_fingerprint, request_sha256 FROM payment_ops.native_execution
                   WHERE tenant_id=$1 AND responsible_legal_entity_id=$2
                     AND operation_kind=$3 AND idempotency_key=$4",
                 &[
@@ -416,6 +431,7 @@ impl MoneyMovementExecutor {
         Ok(row.map(|r| Existing {
             execution_id: r.get(0),
             fingerprint: r.get(1),
+            request_hash: r.get(2),
         }))
     }
 
@@ -525,12 +541,12 @@ impl MoneyMovementExecutor {
         let row = trx
             .query_one(
                 "SELECT payment_ops.reserve_money_movement($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,
-                     $15,$16,$17,$18,$19,$20)",
+                     $15,$16,$17,$18,$19,$20,$21)",
                 &[
                     &i.tenant_id,
                     &c.class.journal_kind(),
                     &c.idempotency_key,
-                    &fp,
+                    &request_hash(fp, c.payment_token.as_deref()),
                     &i.payment_reference,
                     &organisation,
                     &c.responsible_legal_entity_id,
@@ -549,6 +565,7 @@ impl MoneyMovementExecutor {
                     &i.parent_reference,
                     &i.merchant_profile_reference,
                     &i.destination_reference,
+                    &self.provider_environment,
                 ],
             )
             .await
@@ -659,7 +676,7 @@ impl MoneyMovementExecutor {
         let i = &c.instruction;
         let activation: Option<Uuid> = trx
             .query_one(
-                "SELECT payment_ops.current_activation($1,$2,$3,$4,$5,$6)",
+                "SELECT payment_ops.current_activation($1,$2,$3,$4,$5,$6,$7)",
                 &[
                     &i.tenant_id,
                     &c.responsible_legal_entity_id,
@@ -667,6 +684,7 @@ impl MoneyMovementExecutor {
                     &i.market,
                     &i.currency,
                     &c.class.journal_kind(),
+                    &self.provider_environment,
                 ],
             )
             .await
@@ -733,6 +751,26 @@ impl MoneyMovementExecutor {
             (Outcome::Confirmed, _, _) => (Outcome::Unknown, None, None),
             other => other,
         };
+        // A capture status alone does not say how much moved. Refunds are
+        // approved against confirmed captures, so a capture is confirmed only
+        // when the provider's own captured total covers it; otherwise it stays
+        // UNKNOWN and is settled by reconciliation.
+        let (outcome, reference, status) =
+            if c.class == OperationClass::Capture && outcome == Outcome::Confirmed {
+                let prior = self
+                    .prior_confirmed_captures(client, c, execution_id)
+                    .await?;
+                match self.reconcile(c, prior).await {
+                    (Outcome::Confirmed, Some(record)) => (
+                        Outcome::Confirmed,
+                        Some(record.reference),
+                        Some(record.status),
+                    ),
+                    _ => (Outcome::Unknown, None, None),
+                }
+            } else {
+                (outcome, reference, status)
+            };
         self.observe(
             client,
             c,
@@ -755,6 +793,30 @@ impl MoneyMovementExecutor {
                 Err(MoneyMovementError::OutcomeUnknown { execution_id })
             }
         }
+    }
+
+    /// The amount this payment's other confirmed captures already account for.
+    async fn prior_confirmed_captures(
+        &self,
+        client: &mut Client,
+        c: &MoneyMovementCommand,
+        execution_id: Uuid,
+    ) -> Result<i64, MoneyMovementError> {
+        let trx = Self::begin(client, c).await?;
+        let prior: i64 = trx
+            .query_one(
+                "SELECT coalesce(sum(e.amount_minor), 0)::bigint FROM payment_ops.native_execution e
+                  WHERE e.parent_reference=$1 AND e.operation_kind='CAPTURE' AND e.execution_id<>$2
+                    AND payment_ops.execution_outcome(e.execution_id)='CONFIRMED'",
+                &[&c.instruction.parent_reference, &execution_id],
+            )
+            .await
+            .map_err(|_| MoneyMovementError::JournalUnavailable)?
+            .get(0);
+        trx.commit()
+            .await
+            .map_err(|_| MoneyMovementError::JournalUnavailable)?;
+        Ok(prior)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -830,7 +892,9 @@ impl MoneyMovementExecutor {
         existing: Existing,
         client: &mut Client,
     ) -> Result<MoneyMovementOutcome, MoneyMovementError> {
-        if existing.fingerprint.as_deref() != Some(fp) {
+        if existing.fingerprint.as_deref() != Some(fp)
+            || existing.request_hash != request_hash(fp, c.payment_token.as_deref())
+        {
             return Err(MoneyMovementError::IdempotencyConflict);
         }
         let execution_id = existing.execution_id;
