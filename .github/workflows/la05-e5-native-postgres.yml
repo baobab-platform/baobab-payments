@@ -87,4 +87,4 @@ jobs:
           LA05_REQUIRE_PG: "1"
         run: |
           cargo test --locked --lib money_movement -- --nocapture 2>&1 | tee /tmp/money-movement.out
-          grep -Eq "test result: ok\. 20 passed" /tmp/money-movement.out
+          grep -Eq "test result: ok\. 21 passed" /tmp/money-movement.out
