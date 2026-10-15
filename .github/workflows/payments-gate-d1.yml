@@ -1,0 +1,72 @@
+name: payments-gate-d1
+# P0-04B Gate D1 (ADR-SHARED-035): the release Payments image through its HTTP
+# handlers, the real CP binary at a pinned merged commit, real signed workload
+# tokens, PostgreSQL 17 and a deployed HyperSwitch router whose own Stripe
+# connector points at the deterministic test processor. Never skipped: the job
+# fails unless the report ends with "Gate D1 failures: 0".
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+env:
+  # baobab-cp main after P0-04B-06 (baobab-platform/baobab-cp#400).
+  CP_COMMIT: 8c129a16912cb7a2d90b0ccfbaab420aafcdb47b
+  # The commit of the pinned hyperswitch-router image (router v1.127.0).
+  HYPERSWITCH_COMMIT: 25b7a9b04ea2f511956e74294d0d2465392d6057
+jobs:
+  production-exclusion:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: The test processor and issuer never reach a deployable artifact
+        run: python3 scripts/verify_no_test_processor.py
+
+  gate-d1:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out CP at the pinned merged commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: baobab-platform/baobab-cp
+          ref: ${{ env.CP_COMMIT }}
+          path: .gate-d1/cp
+          persist-credentials: false
+      - name: Check out HyperSwitch configuration and migrations at the router's commit
+        run: |
+          set -eu
+          git init -q .gate-d1/hyperswitch
+          cd .gate-d1/hyperswitch
+          git remote add origin https://github.com/juspay/hyperswitch
+          git sparse-checkout set config migrations
+          git fetch -q --depth 1 origin "$HYPERSWITCH_COMMIT"
+          git checkout -q FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "$HYPERSWITCH_COMMIT"
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: .gate-d1/cp/go.mod
+          cache: false
+      - name: Build the Payments release image
+        run: docker build -t baobab-payments:gate-d1 .
+      - name: Gate D1 scenarios
+        env:
+          BAOBAB_ENVIRONMENT: integration
+          PAYMENTS_IMAGE: baobab-payments:gate-d1
+          CP_SRC: ${{ github.workspace }}/.gate-d1/cp
+          HS_SRC: ${{ github.workspace }}/.gate-d1/hyperswitch
+        run: acceptance/gate-d1/run-gate-d1.sh "$RUNNER_TEMP/gate-d1"
+      - name: Gate D1 report
+        if: always()
+        run: |
+          cat "$RUNNER_TEMP/gate-d1/gate-d1-report.txt" || true
+          grep -qx 'Gate D1 failures: 0' "$RUNNER_TEMP/gate-d1/gate-d1-report.txt"
+      - name: Gate D1 evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: payments-gate-d1-evidence
+          path: ${{ runner.temp }}/gate-d1
+          retention-days: 30
