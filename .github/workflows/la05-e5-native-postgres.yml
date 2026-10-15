@@ -11,6 +11,9 @@ on:
       - "src/hyperswitch.rs"
       - "src/money_movement*.rs"
       - "src/money_movement_execution/**"
+      - "src/native_api.rs"
+      - "src/merchant_binding.rs"
+      - "src/activation.rs"
       - "db/**"
       - "Cargo.*"
       - ".github/workflows/la05-e5-native-postgres.yml"
@@ -26,6 +29,9 @@ on:
       - "src/hyperswitch.rs"
       - "src/money_movement*.rs"
       - "src/money_movement_execution/**"
+      - "src/native_api.rs"
+      - "src/merchant_binding.rs"
+      - "src/activation.rs"
       - "db/**"
       - "Cargo.*"
       - ".github/workflows/la05-e5-native-postgres.yml"
@@ -62,6 +68,7 @@ jobs:
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0002_webhook_settlement_reconciliation.sql
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0003_money_movement_authority.sql
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/tests/0003_money_movement_authority.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0004_native_payment_api.sql
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -c "ALTER ROLE payment_ci LOGIN PASSWORD '\''synthetic_runtime_only'\''"
             '
       - name: Exercise Rust journal reservation + local synthetic HTTP provider + replay denial

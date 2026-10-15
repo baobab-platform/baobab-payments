@@ -407,4 +407,74 @@ mod tests {
         .unwrap_err();
         assert!(e.contains("https"), "{e}");
     }
+
+    const NATIVE: [(&str, &str); 10] = [
+        ("PAYMENTS_NATIVE_BACKEND", "postgres+hyperswitch"),
+        ("PAYMENTS_DATABASE_URL_FILE", "/run/secrets/db"),
+        ("HYPERSWITCH_ORIGIN", "https://hyperswitch.d1.test/"),
+        ("HYPERSWITCH_API_KEY_FILE", "/run/secrets/hs"),
+        ("CP_ORIGIN", "https://cp.d1.test/"),
+        ("IAM_TOKEN_ENDPOINT", "https://iam.d1.test/token"),
+        ("PAYMENTS_WORKLOAD_CLIENT_ID", "baobab-payments-workload"),
+        ("PAYMENTS_WORKLOAD_SECRET_FILE", "/run/secrets/workload"),
+        ("PAYMENTS_ENGINE_INSTANCE_ID", "ei_d1"),
+        ("MERCHANT_BINDINGS_FILE", "/etc/baobab/bindings.json"),
+    ];
+
+    fn with_native(
+        environment: &'static str,
+        extra: &[(&'static str, &'static str)],
+    ) -> Vec<(&'static str, &'static str)> {
+        let mut pairs = vec![("BAOBAB_ENVIRONMENT", environment), IAM[0], IAM[1]];
+        pairs.extend(NATIVE);
+        pairs.extend_from_slice(extra);
+        pairs
+    }
+
+    #[test]
+    fn the_native_backend_is_accepted_only_in_development_and_integration() {
+        let c = Config::from_env(env(&with_native("integration", &[]))).unwrap();
+        let native = c.native.expect("native backend");
+        assert_eq!(native.engine_instance_id, "ei_d1");
+        assert!(
+            Config::from_env(env(&[
+                ("BAOBAB_ENVIRONMENT", "integration"),
+                IAM[0],
+                IAM[1]
+            ]))
+            .unwrap()
+            .native
+            .is_none()
+        );
+        for protected in ["staging", "production"] {
+            let e = Config::from_env(env(&with_native(protected, &[]))).unwrap_err();
+            assert!(
+                e.contains("accepted only in development and integration"),
+                "{protected}: {e}"
+            );
+        }
+    }
+
+    #[test]
+    fn the_native_backend_has_no_plaintext_hop_and_no_partial_configuration() {
+        for (name, value) in [
+            ("HYPERSWITCH_ORIGIN", "http://hyperswitch.d1.test/"),
+            ("CP_ORIGIN", "http://cp.d1.test/"),
+            ("IAM_TOKEN_ENDPOINT", "http://iam.d1.test/token"),
+        ] {
+            let mut pairs = with_native("integration", &[]);
+            pairs.retain(|(k, _)| *k != name);
+            pairs.push((name, value));
+            let e = Config::from_env(env(&pairs)).unwrap_err();
+            assert!(e.contains(&format!("{name} must use https")), "{e}");
+        }
+        let mut pairs = with_native("integration", &[]);
+        pairs.retain(|(k, _)| *k != "MERCHANT_BINDINGS_FILE");
+        let e = Config::from_env(env(&pairs)).unwrap_err();
+        assert!(e.contains("MERCHANT_BINDINGS_FILE is required"), "{e}");
+        let mut pairs = with_native("integration", &[]);
+        pairs.retain(|(k, _)| *k != "PAYMENTS_NATIVE_BACKEND");
+        pairs.push(("PAYMENTS_NATIVE_BACKEND", "hyperswitch"));
+        assert!(Config::from_env(env(&pairs)).is_err());
+    }
 }
