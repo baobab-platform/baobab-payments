@@ -50,6 +50,8 @@ cleanup() {
 }
 trap cleanup EXIT
 : > "$OUT/run.log"
+# Never reuse a previous run's containers or volumes.
+"${COMPOSE[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
 
 log "throwaway CA and the TLS edge certificate"
 mkdir -p "$RUN"/{edge,cp,payments,issuer,hyperswitch-config}
@@ -80,6 +82,10 @@ cp -r "$HS_SRC/config/." "$RUN/hyperswitch-config/"
 sed -i 's#^stripe.base_url = "https://api.stripe.com/"#stripe.base_url = "http://processor:9000/"#' \
   "$RUN/hyperswitch-config/docker_compose.toml"
 grep -q '^stripe.base_url = "http://processor:9000/"' "$RUN/hyperswitch-config/docker_compose.toml"
+# The sample config logs at DEBUG, which writes the test card number from its
+# locker queries to the console; run HyperSwitch at INFO, as a deployment would.
+sed -i '/^\[log.console\]/,/^\[/ s/^level = "DEBUG"/level = "INFO"/' "$RUN/hyperswitch-config/docker_compose.toml"
+grep -A2 '^\[log.console\]' "$RUN/hyperswitch-config/docker_compose.toml" | grep -q '^level = "INFO"'
 
 log "images: CP release binaries at $(git -C "$CP_SRC" rev-parse HEAD), test services"
 mkdir -p "$RUN/build/cp" "$RUN/build/py"

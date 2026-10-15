@@ -184,7 +184,8 @@ Four rows have no admin API and are recorded as **synthetic** in the evidence:
 
 1. **Context lifetime.** CP's runtime context lives 15 minutes by default; Payments accepts at most 10. The harness sets `PLATFORM_CONTEXT_TTL=5m`. A deployment must set it too, or align the two bounds.
 2. **Lost response in HyperSwitch.** HyperSwitch v1.127's Stripe connector retries a capture whose response was lost, without an idempotency key. The processor refuses the retry, and HyperSwitch records the payment as `failed` although it was captured. Payments now refuses to believe either answer. A real PSP sandbox (Gate D2) must show whether its own webhook or sync heals this.
-3. **Stale provider record.** After a connector timeout, HyperSwitch's record reads `processing` until it is asked to sync.
+3. **Card numbers in HyperSwitch logs.** The sample HyperSwitch configuration logs at DEBUG, which writes the test card number from its locker queries to the console. The run's log scan caught it; the harness runs HyperSwitch at INFO, as a deployment must.
+4. **Stale provider record.** After a connector timeout, HyperSwitch's record reads `processing` until it is asked to sync.
 
 ## Not in these increments
 
