@@ -117,6 +117,9 @@ fn reject_sensitive_data(value: &Value) -> Result<(), HyperSwitchError> {
         "capture_method",
         "confirm",
         "profile_id",
+        // The provider customer that holds the payer's saved payment methods:
+        // an opaque provider reference, never card or bank data.
+        "customer_id",
         "payment_id",
         "refund_id",
         "payment_token",
@@ -307,7 +310,10 @@ impl HyperSwitchTransport {
     ) -> Result<ProviderRecord, HyperSwitchError> {
         let id = record_id(reference)?;
         let path = match kind {
-            RecordKind::Payment => format!("payments/{id}"),
+            // Ask HyperSwitch to sync with the connector first: its own
+            // record can lag behind what the processor did (e.g. after a
+            // connector timeout it reports `processing`).
+            RecordKind::Payment => format!("payments/{id}?force_sync=true"),
             RecordKind::Refund => format!("refunds/{id}"),
         };
         let url = self

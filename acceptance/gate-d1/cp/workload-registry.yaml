@@ -1,0 +1,10 @@
+# Gate D1 CI-only workload registry snapshot. SYNTHETIC: it marks the Payments
+# money-movement assessor ACTIVE for this throwaway integration run only. The
+# canonical Shared registry keeps it PROVISIONED; activation there is a
+# separate, approved change. Never deployed.
+workloads:
+  baobab-payments-legal-actor-assessor-staging:
+    status: ACTIVE
+    environment: integration
+    allowed_scopes: ["context:resolve", "legal-actor:assess", "documentary:restriction-assess", "payments-money-movement-authority:resolve"]
+    context_purposes: ["RUNTIME"]

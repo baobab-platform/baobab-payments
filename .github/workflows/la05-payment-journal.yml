@@ -56,4 +56,9 @@ jobs:
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test \
                 -f /db/tests/0003_money_movement_authority.sql | tee /tmp/0003.out
               grep -q "money-movement fences passed" /tmp/0003.out
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test \
+                -f /db/migrations/0004_native_payment_api.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test \
+                -f /db/tests/0004_native_payment_api.sql | tee /tmp/0004.out
+              grep -q "native payment API journal tests passed" /tmp/0004.out
             '

@@ -108,14 +108,88 @@ CP decides legal authority. Payments decides whether the movement is financially
   - void only before capture.
 - **CI.** `la05-payment-journal` runs 0001 → 0002 → 0003, each with its tests. `la05-e5-native-postgres` runs the executor tests with `LA05_REQUIRE_PG`, so a missing database fails the job instead of skipping it.
 
-## Not in this increment
+## Gate D1 (second increment)
 
-- **HTTP wiring and the activation policy:**
-  - routing the public routes through this enforcement point in development/integration;
-  - replacing the blanket protected-environment 503 with a route- and operation-specific policy that still refuses.
+### Public routes through the enforcement point
 
-  These come with Gate D1 (next PR), which needs them.
-- **Gate D1:** the real Payments service, the real CP binary, real signed workload tokens, PostgreSQL 17 and a deployed HyperSwitch with a test connector, including the crash window.
+- **Activation policy** (`src/activation.rs`): each public mutation is either `Sandbox`, `Native` or `Refused`.
+  - Staging, production and any unrecognised environment are `Refused` (503 `PAYMENT_EXECUTION_NOT_CERTIFIED`) on every route, even with a native backend present.
+  - Activating a protected environment is a reviewed code change here, never a flag.
+- **Native backend** (`PAYMENTS_NATIVE_BACKEND=postgres+hyperswitch`): configuration accepts it only in development and integration.
+  - Every remote hop is TLS (CP, IAM, HyperSwitch); secrets are files.
+  - The journal is reached only on loopback.
+- **`src/native_api.rs`:** the Shared `payments/v1` routes on the native backend.
+  - Create is an intent (no money moves) with the live CP legal-actor and documentary checks.
+  - Confirm is an authorisation, then capture, cancel (a void once authorised) and refund.
+  - The instruction is computed from Payments' own intent row and the tenant's merchant binding (`src/merchant_binding.rs`), never from the request body.
+  - Reads come from the journal. Native execution is MANUAL capture only.
+- **Migration 0004:**
+  - the intent record;
+  - one request per Idempotency-Key;
+  - a cancellation record. A cancelled intent can never be authorised, and an authorised one can only be voided.
+
+### Rejections must be proven
+
+A provider refusal is journalled `REJECTED` only when the provider's own record proves the movement had no effect; otherwise it stays `UNKNOWN`. It keeps holding the balance and is reconciled, never re-sent. Reconciliation reads payments with `force_sync=true`.
+
+### The harness
+
+`acceptance/gate-d1/` runs:
+- the release Payments image;
+- the CP release binary at a pinned merged commit;
+- a test OIDC issuer signing real RS256 tokens;
+- a TLS edge with a throwaway CA;
+- PostgreSQL 17;
+- the `hyperswitch-router` v1.127.0 image, whose **unmodified Stripe connector** points at the deterministic test processor.
+
+**CP seeding** goes through CP's admin API for:
+- tenant bootstrap and activation;
+- market creation, with four-eyes activation;
+- the mandate: propose, decide and activate by three distinct humans, and terminate for revocation.
+
+Four rows have no admin API and are recorded as **synthetic** in the evidence:
+- the human identities;
+- the legal-entity verification;
+- the tenant's market assignment;
+- the `baobab-payments` engine instance binding.
+
+**Scenarios** (`driver/gate_d1.py`):
+
+| # | Scenario | Asserted |
+|---|---|---|
+| 1 | Authorise, capture and refund in full | One provider operation each and two CP decisions each; read-back is consistent across the Payments journal, HyperSwitch and the processor |
+| 2 | One partial capture; partial refunds up to the captured amount | The remainder is released and a second capture is rejected by the provider; an over-limit refund is refused before any call |
+| 3 | Overcapture; double capture | Refused by Payments, no provider call |
+| 4 | Void, then a capture after the void | The void succeeds; the capture is 409 with no provider call |
+| 5 | Void after capture | 409, no provider call |
+| 6 | Identical replay; changed request under the same key; duplicate refund | No second provider call; 409 for the changed request |
+| 7 | Declined card | The intent is FAILED and the journal records REJECTED |
+| 8 | CP revokes the mandate between the reservation's decision and the execution-point decision | 403; reserved but never dispatched; CP recorded the denial |
+| 9 | CP unavailable | 503 and retryable; no provider call |
+| 10 | Provider activation withdrawn | 503; CP authorises but Payments refuses |
+| 11 | Forged legal entity, foreign platform account, unbound tenant, missing scope, invalid token or wrong audience | Refused; nothing journalled |
+| 12 | **Crash window:** Payments is killed after the processor applied the capture and before the outcome was recorded | After restart the retry reconciles from the provider; one capture only |
+| 13 | Lost response | The capture stays UNKNOWN, is never re-sent and keeps holding the balance (see finding 2) |
+| 14 | Dropped request | The retry proves it absent and dispatches once more on a fresh CP decision |
+| 15 | Payout and direct SQL as the runtime role | No route; payout reservation, dispatch without a decision, history rewrite and self-activation are all refused; even the owner cannot rewrite history |
+| 16 | Staging and production with the native backend configured | Startup refused |
+
+**Evidence:** `gate-d1-report.txt` (`Gate D1 failures: N`), `gate-d1-evidence.json`, the processor call log, the issuer's token log and every service log. The run fails if a log carries a token or a card number.
+
+**Production exclusion:**
+- `scripts/verify_no_test_processor.py` fails if anything outside `acceptance/gate-d1/` references the test services, or points the Stripe connector anywhere but Stripe.
+- The test services refuse to start outside `BAOBAB_ENVIRONMENT=integration`.
+
+### Findings from Gate D1
+
+1. **Context lifetime.** CP's runtime context lives 15 minutes by default; Payments accepts at most 10. The harness sets `PLATFORM_CONTEXT_TTL=5m`. A deployment must set it too, or align the two bounds.
+2. **Lost response in HyperSwitch.** HyperSwitch v1.127's Stripe connector retries a capture whose response was lost, without an idempotency key. The processor refuses the retry, and HyperSwitch records the payment as `failed` although it was captured. Payments now refuses to believe either answer. A real PSP sandbox (Gate D2) must show whether its own webhook or sync heals this.
+3. **Card numbers in HyperSwitch logs.** The sample HyperSwitch configuration logs at DEBUG, which writes the test card number from its locker queries to the console. The run's log scan caught it; the harness runs HyperSwitch at INFO, as a deployment must.
+4. **Stale provider record.** After a connector timeout, HyperSwitch's record reads `processing` until it is asked to sync.
+
+## Not in these increments
+
+- **Signed webhook replay** has no public route on the native backend; it stays proven by the `verified-webhook-settlement` job, not by Gate D1.
 - **Not yet:** Gate D2, Gate E, real IAM, real mandates, merchant certification, payout activation and production.
 
 Protected environments still return `503 PAYMENT_EXECUTION_NOT_CERTIFIED`.

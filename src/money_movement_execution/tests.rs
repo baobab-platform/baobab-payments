@@ -104,6 +104,11 @@ struct PspState {
     drop_next_request: AtomicBool,
     /// Capture one minor unit less than asked, yet still answer success.
     short_capture: AtomicBool,
+    /// Refuse the capture: after applying it (`true`, a refused retry of a
+    /// request whose first answer was lost) or without any effect (`false`).
+    refuse_next_capture: Mutex<Option<bool>>,
+    /// The provider's own record says `failed` (it believed its refusal).
+    record_failed: AtomicBool,
 }
 
 fn psp_fault(s: &PspState) -> Option<StatusCode> {
@@ -142,8 +147,14 @@ fn provider(state: Arc<PspState>) -> Router {
         }))
         .route("/payments/{id}/capture", post(|State(s): State<Arc<PspState>>, Path(id): Path<String>, Json(b): Json<Value>| async move {
             if let Some(code) = psp_fault(&s) { return (code, Json(json!({}))); }
+            let refusal = s.refuse_next_capture.lock().unwrap().take();
             let short = i64::from(s.short_capture.swap(false, Ordering::SeqCst));
-            s.captured.fetch_add(b["amount_to_capture"].as_i64().unwrap() - short, Ordering::SeqCst);
+            if refusal != Some(false) {
+                s.captured.fetch_add(b["amount_to_capture"].as_i64().unwrap() - short, Ordering::SeqCst);
+            }
+            if refusal.is_some() {
+                return (StatusCode::BAD_REQUEST, Json(json!({"error": {"code": "IR_00"}})));
+            }
             psp_reply(&s, json!({"payment_id": id, "status": "partially_captured"}))
         }))
         .route("/payments/{id}/cancel", post(|State(s): State<Arc<PspState>>, Path(id): Path<String>| async move {
@@ -159,6 +170,9 @@ fn provider(state: Arc<PspState>) -> Router {
         }))
         .route("/payments/{id}", get(|State(s): State<Arc<PspState>>, Path(id): Path<String>| async move {
             s.gets.fetch_add(1, Ordering::SeqCst);
+            if s.record_failed.load(Ordering::SeqCst) {
+                return Json(json!({"payment_id": id, "status": "failed", "amount_received": null}));
+            }
             Json(json!({"payment_id": id, "status": payment_status(&s),
                         "amount_received": s.captured.load(Ordering::SeqCst)}))
         }))
@@ -964,4 +978,72 @@ async fn postgres17_an_activation_for_another_environment_never_counts() {
         Err(MoneyMovementError::ProviderNotReady)
     );
     assert_eq!(h.posts(), posts);
+}
+
+#[tokio::test]
+async fn postgres17_a_refusal_is_recorded_only_when_the_provider_proves_no_effect() {
+    let Some(h) = harness().await else { return };
+    // A genuine refusal: nothing was captured and the payment is untouched.
+    let payment = unique("pay");
+    h.authorize(&payment, 600).await;
+    *h.psp.refuse_next_capture.lock().unwrap() = Some(false);
+    let refused = h.command(
+        OperationClass::Capture,
+        "capture-refused",
+        &payment,
+        600,
+        Some(&payment),
+    );
+    assert!(
+        matches!(
+            h.run(&refused).await,
+            Err(MoneyMovementError::ProviderRejected { .. })
+        ),
+        "a refusal the provider's record confirms is a rejection"
+    );
+
+    // The provider took the money, then refused a retry and recorded the
+    // payment as failed: neither answer is believed.
+    let payment = unique("pay");
+    h.authorize(&payment, 600).await;
+    *h.psp.refuse_next_capture.lock().unwrap() = Some(true);
+    h.psp.record_failed.store(true, Ordering::SeqCst);
+    let capture = h.command(
+        OperationClass::Capture,
+        "capture-lost",
+        &payment,
+        600,
+        Some(&payment),
+    );
+    let posts = h.posts();
+    for _ in 0..2 {
+        let out = h.run(&capture).await;
+        assert!(
+            matches!(out, Err(MoneyMovementError::OutcomeUnknown { .. })),
+            "{out:?}"
+        );
+    }
+    assert_eq!(
+        h.posts(),
+        posts + 1,
+        "an unknown capture is reconciled, never re-sent"
+    );
+    let rejected = format!(
+        "SELECT count(*) FROM payment_ops.provider_observation o JOIN payment_ops.native_execution e \
+         USING (execution_id) WHERE e.operation_kind='CAPTURE' AND o.outcome='REJECTED' AND e.parent_reference='{payment}'"
+    );
+    assert_eq!(h.count(&rejected).await, 0);
+    // The unknown capture keeps holding the authorised balance.
+    let another = h.command(
+        OperationClass::Capture,
+        "capture-another",
+        &payment,
+        600,
+        Some(&payment),
+    );
+    assert_eq!(
+        h.run(&another).await,
+        Err(MoneyMovementError::FinancialLimit)
+    );
+    h.psp.record_failed.store(false, Ordering::SeqCst);
 }

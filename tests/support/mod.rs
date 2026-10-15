@@ -12,7 +12,13 @@ use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use baobab_payments::auth::{Authenticator, Keys};
 use baobab_payments::contracts;
+use baobab_payments::cp_authority::IamCpAuthority;
 use baobab_payments::http::{AppState, router};
+use baobab_payments::hyperswitch::HyperSwitchTransport;
+use baobab_payments::merchant_binding::MerchantBindings;
+use baobab_payments::money_movement_execution::MoneyMovementExecutor;
+use baobab_payments::native_api::NativePaymentApi;
+use baobab_payments::native_execution::NativeTransactionService;
 use baobab_payments::provider::SandboxProvider;
 use baobab_payments::service::PaymentService;
 use http_body_util::BodyExt;
@@ -65,6 +71,49 @@ pub fn harness() -> Harness {
 // Explicit runtime fixture: protected environments can authenticate, but
 // they must NEVER mutate sandbox money without certified CP/PSP gating.
 pub fn harness_for_environment(environment: &'static str) -> Harness {
+    harness_with(environment, None)
+}
+
+/// A native backend that could only ever reach synthetic, unroutable
+/// endpoints: building it opens no connection, so a test that gets any
+/// answer but a refusal from it has found a path around the policy.
+pub fn unreachable_native_backend() -> Arc<NativePaymentApi> {
+    let database_url = "postgres://payment_ci@127.0.0.1:1/never".to_string();
+    let transport = || {
+        HyperSwitchTransport::new("https://hyperswitch.invalid/", "synthetic-key".into())
+            .expect("transport")
+    };
+    let bindings = MerchantBindings::parse(&format!(
+        r#"{{"bindings":[{{"tenant_id":"{TENANT}","responsible_legal_entity_id":"LE-SYNTHETIC",
+        "operating_organisation_id":"0190f7a2-7a1e-7c3e-9d2b-3c4d5e6f7a8b","market":"ZA","currency":"ZAR",
+        "merchant_profile_reference":"pro_synthetic","provider_merchant_id":"merchant_synthetic",
+        "provider_engine_instance_id":"hs-synthetic","certification_reference":"cert/synthetic",
+        "merchant_activation_reference":"activation/synthetic","platform_account_ids":["pacct_synthetic"]}}]}}"#
+    ))
+    .expect("bindings");
+    Arc::new(NativePaymentApi::new(
+        database_url.clone(),
+        MoneyMovementExecutor::local_integration(
+            database_url.clone(),
+            transport(),
+            "integration",
+            "ei_synthetic".into(),
+        )
+        .expect("executor"),
+        NativeTransactionService::local_integration(database_url, transport(), "integration")
+            .expect("intents"),
+        IamCpAuthority::new(
+            "https://cp.invalid/",
+            "https://iam.invalid/token",
+            "baobab-payments-workload".into(),
+            "synthetic-secret".into(),
+        )
+        .expect("cp"),
+        bindings,
+    ))
+}
+
+pub fn harness_with(environment: &'static str, native: Option<Arc<NativePaymentApi>>) -> Harness {
     let service = Arc::new(PaymentService::new(
         Arc::new(SandboxProvider),
         Arc::new(OffsetDateTime::now_utc),
@@ -91,6 +140,7 @@ pub fn harness_for_environment(environment: &'static str) -> Harness {
         service: service.clone(),
         auth,
         environment,
+        native,
     });
     Harness { app, service }
 }

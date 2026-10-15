@@ -6,10 +6,78 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use baobab_payments::auth::{Authenticator, Keys, RemoteJwks};
-use baobab_payments::config::Config;
+use baobab_payments::config::{Config, NativeBackendConfig};
+use baobab_payments::cp_authority::IamCpAuthority;
 use baobab_payments::http::{AppState, router};
+use baobab_payments::hyperswitch::HyperSwitchTransport;
+use baobab_payments::merchant_binding::MerchantBindings;
+use baobab_payments::money_movement_execution::MoneyMovementExecutor;
+use baobab_payments::native_api::NativePaymentApi;
+use baobab_payments::native_execution::NativeTransactionService;
 use baobab_payments::provider::SandboxProvider;
 use baobab_payments::service::PaymentService;
+
+/// A secret from a mounted file, without its trailing newline.
+fn secret(path: &str, name: &str) -> Result<String, String> {
+    let value = std::fs::read_to_string(path).map_err(|_| format!("{name} cannot be read"))?;
+    let value = value.trim_end_matches(['\r', '\n']).to_string();
+    if value.is_empty() {
+        return Err(format!("{name} is empty"));
+    }
+    Ok(value)
+}
+
+/// P0-04B Gate D1: the native backend. Each constructor refuses anything but
+/// a local integration composition: loopback PostgreSQL, TLS to HyperSwitch,
+/// CP and IAM, and an environment that configuration already limited to
+/// development or integration.
+fn native_backend(
+    config: &NativeBackendConfig,
+    environment: &str,
+) -> Result<NativePaymentApi, String> {
+    let database_url = secret(&config.database_url_file, "PAYMENTS_DATABASE_URL_FILE")?;
+    let api_key = secret(&config.hyperswitch_api_key_file, "HYPERSWITCH_API_KEY_FILE")?;
+    let workload_secret = secret(
+        &config.workload_secret_file,
+        "PAYMENTS_WORKLOAD_SECRET_FILE",
+    )?;
+    let bindings = std::fs::read_to_string(&config.merchant_bindings_file)
+        .map_err(|_| "MERCHANT_BINDINGS_FILE cannot be read".to_string())
+        .and_then(|raw| MerchantBindings::parse(&raw))?;
+    let transport = || {
+        HyperSwitchTransport::new(&config.hyperswitch_origin, api_key.clone())
+            .map_err(|_| "HYPERSWITCH_ORIGIN or its API key is not acceptable".to_string())
+    };
+    let executor = MoneyMovementExecutor::local_integration(
+        database_url.clone(),
+        transport()?,
+        environment,
+        config.engine_instance_id.clone(),
+    )
+    .map_err(|_| "the money-movement executor refuses this composition".to_string())?;
+    let intents = NativeTransactionService::local_integration(
+        database_url.clone(),
+        transport()?,
+        environment,
+    )
+    .map_err(|_| "the intent journal refuses this composition".to_string())?;
+    let cp = IamCpAuthority::new(
+        &config.cp_origin,
+        &config.iam_token_endpoint,
+        config.workload_client_id.clone(),
+        workload_secret,
+    )
+    .map_err(|_| {
+        "CP_ORIGIN, IAM_TOKEN_ENDPOINT or the workload credentials are not acceptable".to_string()
+    })?;
+    Ok(NativePaymentApi::new(
+        database_url,
+        executor,
+        intents,
+        cp,
+        bindings,
+    ))
+}
 
 /// `baobab-payments healthcheck`: the container HEALTHCHECK, needing no shell
 /// or curl in the image. Exits 0 when /health/live answers 200.
@@ -89,10 +157,22 @@ async fn main() -> ExitCode {
         config.workload_audience.clone(),
         config.allowed_clients.clone(),
     ));
+    let native = match config.native.as_ref() {
+        None => None,
+        Some(native) => match native_backend(native, config.environment.as_str()) {
+            Ok(api) => Some(Arc::new(api)),
+            Err(reason) => {
+                tracing::error!(event = "startup.refused", reason);
+                return ExitCode::from(2);
+            }
+        },
+    };
+    let native_backend_configured = native.is_some();
     let app = router(AppState {
         service,
         auth,
         environment: config.environment.as_str(),
+        native,
     });
     let listener = match tokio::net::TcpListener::bind(("0.0.0.0", config.http_port)).await {
         Ok(listener) => listener,
@@ -105,8 +185,12 @@ async fn main() -> ExitCode {
         event = "startup.completed",
         port = config.http_port,
         environment = config.environment.as_str(),
-        payment_provider = "SANDBOX",
-        simulated = true,
+        payment_provider = if native_backend_configured {
+            "HYPERSWITCH"
+        } else {
+            "SANDBOX"
+        },
+        simulated = !native_backend_configured,
     );
     let grace = config.shutdown_grace;
     let (stopping, mut stopped) = tokio::sync::watch::channel(false);

@@ -6,8 +6,13 @@ use support::*;
 
 #[tokio::test]
 async fn staging_and_production_never_execute_any_legacy_money_mutation_or_replay() {
-    for environment in ["staging", "production", "unknown"] {
-        let h = harness_for_environment(environment);
+    // P0-04B: a native backend present in a protected runtime (which
+    // configuration refuses at startup) still opens no route.
+    let cases = ["staging", "production", "unknown"]
+        .into_iter()
+        .flat_map(|e| [(e, None), (e, Some(unreachable_native_backend()))]);
+    for (environment, native) in cases {
+        let h = harness_with(environment, native);
         let bearer = token();
         let operations = [
             ("POST", "/v1/payment-intents", "payment:execute"),

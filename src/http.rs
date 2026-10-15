@@ -17,7 +17,9 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use serde_json::{Value, json};
 
+use crate::activation::{ExecutionPath, Route, execution_path};
 use crate::auth::{Authenticator, Caller};
+use crate::native_api::NativePaymentApi;
 use crate::service::{Call, Outcome, PaymentService, Refusal};
 
 const MAX_BODY: usize = 64 * 1024;
@@ -26,6 +28,60 @@ pub struct AppState {
     pub service: Arc<PaymentService>,
     pub auth: Arc<Authenticator>,
     pub environment: &'static str,
+    /// P0-04B Gate D1: the native backend, present only when configuration
+    /// accepted it (development and integration).
+    pub native: Option<Arc<NativePaymentApi>>,
+}
+
+/// One public mutation and the resource it names.
+enum Op {
+    CreateIntent,
+    ConfirmIntent(String),
+    CancelIntent(String),
+    Capture(String),
+    Refund(String),
+}
+
+impl Op {
+    fn route(&self) -> Route {
+        match self {
+            Self::CreateIntent => Route::CreateIntent,
+            Self::ConfirmIntent(_) => Route::ConfirmIntent,
+            Self::CancelIntent(_) => Route::CancelIntent,
+            Self::Capture(_) => Route::Capture,
+            Self::Refund(_) => Route::Refund,
+        }
+    }
+
+    fn sandbox(
+        &self,
+        svc: &PaymentService,
+        call: &Call<'_>,
+        raw: &[u8],
+    ) -> Result<Outcome, Refusal> {
+        match self {
+            Self::CreateIntent => svc.create_intent(call, raw),
+            Self::ConfirmIntent(id) => svc.confirm_intent(call, id, raw),
+            Self::CancelIntent(id) => svc.cancel_intent(call, id, raw),
+            Self::Capture(id) => svc.capture(call, id, raw),
+            Self::Refund(id) => svc.refund(call, id, raw),
+        }
+    }
+
+    async fn native(
+        &self,
+        api: &NativePaymentApi,
+        call: &Call<'_>,
+        raw: &[u8],
+    ) -> Result<Outcome, Refusal> {
+        match self {
+            Self::CreateIntent => api.create_intent(call, raw).await,
+            Self::ConfirmIntent(id) => api.confirm_intent(call, id, raw).await,
+            Self::CancelIntent(id) => api.cancel_intent(call, id, raw).await,
+            Self::Capture(id) => api.capture(call, id, raw).await,
+            Self::Refund(id) => api.refund(call, id, raw).await,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -224,26 +280,27 @@ fn with_client(mut response: Response, caller: Option<&Caller>) -> Response {
     response
 }
 
-/// Authorise, require an Idempotency-Key, read the body, then run `op`.
+/// Authorise, apply the activation policy, require an Idempotency-Key, read
+/// the body, then run `op` on the path the policy chose.
 async fn mutate(
     state: &AppState,
     correlation: &Correlation,
     headers: &HeaderMap,
     scope: &str,
     body: Result<Bytes, BytesRejection>,
-    op: impl FnOnce(&PaymentService, &Call<'_>, &[u8]) -> Result<Outcome, Refusal>,
+    op: Op,
 ) -> Response {
     let caller = match authorize(state, headers, scope).await {
         Ok(caller) => caller,
         Err(refusal) => return problem_response(&refusal, Some(correlation)),
     };
-    // LA-05E2: until the actual provider adapter is wrapped by a live,
-    // workload-owned CP legal-actor + negative documentary + PSP PEP, no
-    // protected environment may execute ANY financial mutation or replay.
-    // OAuth payment:execute/payment:refund alone is NOT legal authority.
-    // Production cannot boot with SANDBOX, but enforce independently here
-    // so a future provider/config change cannot silently restore a bypass.
-    if !matches!(state.environment, "development" | "integration") {
+    // LA-05E2 / P0-04B: OAuth payment:execute or payment:refund alone is NOT
+    // legal authority. Protected environments refuse every financial mutation
+    // and replay, whatever backend is configured, until an approved
+    // activation change; elsewhere money moves only through the native
+    // enforcement point (CP authority, Payments' own approval, the journal).
+    let path = execution_path(state.environment, state.native.is_some(), op.route());
+    if path == ExecutionPath::Refused {
         return with_client(
             problem_response(
                 &Refusal::new(
@@ -256,16 +313,23 @@ async fn mutate(
             Some(&caller),
         );
     }
-    let result = idempotency_key(headers).and_then(|key| {
-        let bytes = body_bytes(body)?;
-        let call = Call {
-            client_id: &caller.client_id,
-            engine: &caller.engine,
-            idempotency_key: &key,
-            correlation_id: &correlation.0,
-        };
-        op(&state.service, &call, &bytes)
-    });
+    let key = idempotency_key(headers);
+    let bytes = key.and_then(|key| body_bytes(body).map(|bytes| (key, bytes)));
+    let result = match bytes {
+        Err(refusal) => Err(refusal),
+        Ok((key, bytes)) => {
+            let call = Call {
+                client_id: &caller.client_id,
+                engine: &caller.engine,
+                idempotency_key: &key,
+                correlation_id: &correlation.0,
+            };
+            match (path, state.native.as_deref()) {
+                (ExecutionPath::Native, Some(api)) => op.native(api, &call, &bytes).await,
+                _ => op.sandbox(&state.service, &call, &bytes),
+            }
+        }
+    };
     let response = match result {
         Ok(outcome) => json_response(
             StatusCode::from_u16(outcome.status).unwrap_or(StatusCode::OK),
@@ -277,17 +341,31 @@ async fn mutate(
     with_client(response, Some(&caller))
 }
 
+/// The resource a read names.
+enum Read {
+    Intent(String, String),
+    Payment(String, String),
+}
+
 async fn read(
     state: &AppState,
     correlation: &Correlation,
     headers: &HeaderMap,
-    op: impl FnOnce(&PaymentService) -> Result<Value, Refusal>,
+    what: Read,
 ) -> Response {
     let caller = match authorize(state, headers, "payment:read").await {
         Ok(caller) => caller,
         Err(refusal) => return problem_response(&refusal, Some(correlation)),
     };
-    let response = match op(&state.service) {
+    // Reads move no money: on the native backend they come from the journal,
+    // and only the calling engine's own payments are found.
+    let result = match (state.native.as_deref(), &what) {
+        (Some(api), Read::Intent(tenant, id)) => api.intent(&caller.engine, tenant, id).await,
+        (Some(api), Read::Payment(tenant, id)) => api.payment(&caller.engine, tenant, id).await,
+        (None, Read::Intent(tenant, id)) => state.service.intent(tenant, id),
+        (None, Read::Payment(tenant, id)) => state.service.payment(tenant, id),
+    };
+    let response = match result {
         Ok(body) => json_response(StatusCode::OK, &body, false),
         Err(refusal) => problem_response(&refusal, Some(correlation)),
     };
@@ -382,15 +460,7 @@ async fn create_intent(
     headers: HeaderMap,
     body: Result<Bytes, BytesRejection>,
 ) -> Response {
-    mutate(
-        &s,
-        &c,
-        &headers,
-        "payment:execute",
-        body,
-        |svc, call, raw| svc.create_intent(call, raw),
-    )
-    .await
+    mutate(&s, &c, &headers, "payment:execute", body, Op::CreateIntent).await
 }
 
 async fn confirm_intent(
@@ -406,7 +476,7 @@ async fn confirm_intent(
         &headers,
         "payment:execute",
         body,
-        |svc, call, raw| svc.confirm_intent(call, &id, raw),
+        Op::ConfirmIntent(id),
     )
     .await
 }
@@ -424,7 +494,7 @@ async fn cancel_intent(
         &headers,
         "payment:execute",
         body,
-        |svc, call, raw| svc.cancel_intent(call, &id, raw),
+        Op::CancelIntent(id),
     )
     .await
 }
@@ -436,15 +506,7 @@ async fn capture(
     Path(id): Path<String>,
     body: Result<Bytes, BytesRejection>,
 ) -> Response {
-    mutate(
-        &s,
-        &c,
-        &headers,
-        "payment:execute",
-        body,
-        |svc, call, raw| svc.capture(call, &id, raw),
-    )
-    .await
+    mutate(&s, &c, &headers, "payment:execute", body, Op::Capture(id)).await
 }
 
 async fn refund(
@@ -454,15 +516,7 @@ async fn refund(
     Path(id): Path<String>,
     body: Result<Bytes, BytesRejection>,
 ) -> Response {
-    mutate(
-        &s,
-        &c,
-        &headers,
-        "payment:refund",
-        body,
-        |svc, call, raw| svc.refund(call, &id, raw),
-    )
-    .await
+    mutate(&s, &c, &headers, "payment:refund", body, Op::Refund(id)).await
 }
 
 async fn get_intent(
@@ -471,7 +525,7 @@ async fn get_intent(
     headers: HeaderMap,
     Path((tenant, id)): Path<(String, String)>,
 ) -> Response {
-    read(&s, &c, &headers, |svc| svc.intent(&tenant, &id)).await
+    read(&s, &c, &headers, Read::Intent(tenant, id)).await
 }
 
 async fn get_payment(
@@ -480,7 +534,7 @@ async fn get_payment(
     headers: HeaderMap,
     Path((tenant, id)): Path<(String, String)>,
 ) -> Response {
-    read(&s, &c, &headers, |svc| svc.payment(&tenant, &id)).await
+    read(&s, &c, &headers, Read::Payment(tenant, id)).await
 }
 
 async fn ready(State(s): State<Arc<AppState>>) -> Response {
