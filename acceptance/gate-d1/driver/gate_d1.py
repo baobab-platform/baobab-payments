@@ -63,12 +63,13 @@ class GateD1:
 
     def seed(self) -> None:
         hs = self.hs.seed()
-        open(os.path.join(self.args.run, "payments", "hyperswitch-api-key"), "w").write(hs["api_key"])
+        with open(os.path.join(self.args.run, "payments", "hyperswitch-api-key"), "w") as f:
+            f.write(hs["api_key"])
         self.ids = self.cp.seed()
         self.profile = hs["profile_id"]
         self.activation = seed.payments_activation(self.c, self.ids, self.profile, self.ev)
-        open(os.path.join(self.args.run, "payments", "merchant-bindings.json"), "w").write(
-            seed.merchant_bindings(self.ids, self.profile))
+        with open(os.path.join(self.args.run, "payments", "merchant-bindings.json"), "w") as f:
+            f.write(seed.merchant_bindings(self.ids, self.profile))
         self.start_payments()
 
     # --- calling Payments as the Trade workload --------------------------
@@ -448,7 +449,8 @@ class GateD1:
         dispatch without a decision, rewrite history, nor activate a provider."""
         r = self.pay("POST", "/v1/payouts", {"tenant_id": self.ids["tenant"]}, key("payout"))
         check(r.status in (404, 405), f"payout route: {r!r}")
-        password = open(os.path.join(self.args.run, "payments", "payments-database-url")).read().split(":")[2].split("@")[0]
+        with open(os.path.join(self.args.run, "payments", "payments-database-url")) as f:
+            password = f.read().split(":")[2].split("@")[0]
         def runtime(statement: str) -> str:
             p = subprocess.run(self.c.base + ["exec", "-T", "-e", f"PGPASSWORD={password}", "paydb", "psql", "-X", "-q",
                                               "-At", "-h", "127.0.0.1", "-U", "payment_runtime", "-d", "baobab_payments",
@@ -550,14 +552,16 @@ class GateD1:
                 "FROM registry.payments_money_movement_decision ORDER BY recorded_at")
         except Exception as e:
             bundle["journal-error"] = repr(e)
-        json.dump(bundle, open(os.path.join(out, "gate-d1-evidence.json"), "w"), indent=1, default=str)
+        with open(os.path.join(out, "gate-d1-evidence.json"), "w") as f:
+            json.dump(bundle, f, indent=1, default=str)
         lines = ["P0-04B Gate D1 - Payments money movement (ADR-SHARED-035)", ""]
         for r in self.ev.results:
             lines.append(f"{r['status']:4}  {r['scenario']}" + (f"  -- {r['error'][:300]}" if r["status"] == "FAIL" else ""))
         synthetic = [n["label"] for n in self.ev.notes if n["kind"].startswith("synthetic")]
         lines += ["", "Synthetic seeds (no admin API, recorded as evidence):"] + [f"  - {s}" for s in synthetic]
         lines += ["", f"Gate D1 failures: {failures}"]
-        open(os.path.join(out, "gate-d1-report.txt"), "w").write("\n".join(lines) + "\n")
+        with open(os.path.join(out, "gate-d1-report.txt"), "w") as f:
+            f.write("\n".join(lines) + "\n")
         print("\n".join(lines))
 
 

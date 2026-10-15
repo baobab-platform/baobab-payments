@@ -32,7 +32,7 @@ import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, urlsplit
 
-from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 REALM = "/realms/baobab"
@@ -42,7 +42,8 @@ KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 LIFETIME = 300
 
 # Registered workload clients: id -> {secret, audience, scopes}.
-CLIENTS: dict = json.loads(open(os.environ["CLIENTS_FILE"]).read())
+with open(os.environ["CLIENTS_FILE"], encoding="utf-8") as _clients:
+    CLIENTS: dict = json.load(_clients)
 
 LOCK = threading.Lock()
 LOG: list[dict] = []
@@ -114,20 +115,25 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         path = urlsplit(self.path).path
         if path == REALM + "/.well-known/openid-configuration":
-            return self.send_json(200, {
+            self.send_json(200, {
                 "issuer": ISSUER, "jwks_uri": ISSUER + "/certs", "token_endpoint": ISSUER + "/token",
                 "id_token_signing_alg_values_supported": ["RS256"],
                 "grant_types_supported": ["client_credentials"],
                 "response_types_supported": ["token"], "subject_types_supported": ["public"]})
+            return
         if path == REALM + "/certs":
-            return self.send_json(200, {"keys": [jwk()]})
+            self.send_json(200, {"keys": [jwk()]})
+            return
         if path == "/_held":
-            return self.send_json(200, {"held": HELD.is_set()})
+            self.send_json(200, {"held": HELD.is_set()})
+            return
         if path == "/_log":
             with LOCK:
-                return self.send_json(200, {"issued": LOG})
+                self.send_json(200, {"issued": LOG})
+                return
         if path == "/_health":
-            return self.send_json(200, {"status": "UP"})
+            self.send_json(200, {"status": "UP"})
+            return
         self.send_json(404, {"error": "not_found"})
 
     def do_POST(self) -> None:
@@ -138,13 +144,15 @@ class Handler(BaseHTTPRequestHandler):
             client = CLIENTS.get(form.get("client_id", ""))
             if form.get("grant_type") != "client_credentials" or client is None or not hmac.compare_digest(
                     client["secret"].encode(), form.get("client_secret", "").encode()):
-                return self.send_json(401, {"error": "invalid_client"})
+                self.send_json(401, {"error": "invalid_client"})
+                return
             requested = form.get("scope", "").split()
             granted = [s for s in requested if s in client["scopes"]] or client["scopes"]
             maybe_hold(form["client_id"])
             token = issue(client.get("subject", form["client_id"]), client["audience"], granted, "workload",
                           form["client_id"])
-            return self.send_json(200, {"access_token": token, "token_type": "Bearer", "expires_in": LIFETIME})
+            self.send_json(200, {"access_token": token, "token_type": "Bearer", "expires_in": LIFETIME})
+            return
         request = json.loads(raw or "{}")
         if path == "/_mint":
             extra = {}
@@ -152,14 +160,17 @@ class Handler(BaseHTTPRequestHandler):
                 extra["realm_access"] = {"roles": request.get("roles", [])}
             token = issue(request["subject"], request["audience"], request["scopes"], request["actor_type"],
                           request.get("client", "gate-d1-harness"), extra)
-            return self.send_json(200, {"access_token": token})
+            self.send_json(200, {"access_token": token})
+            return
         if path == "/_hold":
             with LOCK:
                 HOLD.update(client=request["client"], skip=int(request.get("skip", 0)))
-            return self.send_json(200, {"armed": request})
+            self.send_json(200, {"armed": request})
+            return
         if path == "/_release":
             RELEASE.set()
-            return self.send_json(200, {"released": True})
+            self.send_json(200, {"released": True})
+            return
         self.send_json(404, {"error": "not_found"})
 
     def log_message(self, fmt: str, *args) -> None:  # never echo tokens

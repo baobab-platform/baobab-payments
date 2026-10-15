@@ -192,22 +192,27 @@ class Handler(BaseHTTPRequestHandler):
         raw = self.rfile.read(length).decode() if length else ""
         path = urlsplit(self.path).path
         if path == "/_health":
-            return self.send_json(200, {"status": "UP"})
+            self.send_json(200, {"status": "UP"})
+            return
         if path == "/_evidence" and self.command == "GET":
             with LOCK:
-                return self.send_json(200, summary())
+                self.send_json(200, summary())
+                return
         if path == "/_fault" and self.command == "POST":
             fault = json.loads(raw or "{}")
             assert fault["mode"] in ("lose_response", "drop_request", "hold_response")
             with LOCK:
                 FAULTS.append({"mode": fault["mode"], "method": fault.get("method", "POST"),
                                "path_contains": fault["path_contains"], "remaining": int(fault.get("count", 1))})
-            return self.send_json(200, {"armed": fault})
+            self.send_json(200, {"armed": fault})
+            return
         if path == "/_held" and self.command == "GET":
-            return self.send_json(200, {"held": HELD.is_set()})
+            self.send_json(200, {"held": HELD.is_set()})
+            return
         if path == "/_release" and self.command == "POST":
             RELEASE.set()
-            return self.send_json(200, {"released": True})
+            self.send_json(200, {"released": True})
+            return
         data = form(raw)
         with LOCK:
             fault = take_fault(self.command, path)
