@@ -160,7 +160,7 @@ fn provider(state: Arc<PspState>) -> Router {
         .route("/payments/{id}", get(|State(s): State<Arc<PspState>>, Path(id): Path<String>| async move {
             s.gets.fetch_add(1, Ordering::SeqCst);
             Json(json!({"payment_id": id, "status": payment_status(&s),
-                        "amount_captured": s.captured.load(Ordering::SeqCst)}))
+                        "amount_received": s.captured.load(Ordering::SeqCst)}))
         }))
         .route("/refunds/{id}", get(|State(s): State<Arc<PspState>>, Path(id): Path<String>| async move {
             s.gets.fetch_add(1, Ordering::SeqCst);

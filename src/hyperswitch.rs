@@ -367,7 +367,13 @@ impl HyperSwitchTransport {
         Ok(ProviderRecord {
             reference: reference.into(),
             status: status.into(),
-            amount_captured: value.get("amount_captured").and_then(Value::as_i64),
+            // HyperSwitch reports the captured total as amount_received
+            // (observed against v1.127 with a manual-capture connector);
+            // amount_captured stays null. Either one, never both summed.
+            amount_captured: value
+                .get("amount_received")
+                .or_else(|| value.get("amount_captured"))
+                .and_then(Value::as_i64),
         })
     }
 }
