@@ -70,6 +70,9 @@ services:
       DATABASE_URL: postgres://controlplane:${CPDB_PASSWORD}@cpdb:5432/controlplane?sslmode=disable
       BAOBAB_ENVIRONMENT: integration
       HTTP_ADDRESS: ":8080"
+      # Payments accepts a runtime context living at most 10 minutes; CP's
+      # 15-minute default is longer, so the deployment sets it explicitly.
+      PLATFORM_CONTEXT_TTL: 5m
       WORKLOAD_OIDC_ISSUER: https://iam.d1.test/realms/baobab
       WORKLOAD_OIDC_AUDIENCE: baobab-control-plane
       ADMIN_OIDC_ISSUER: https://iam.d1.test/realms/baobab

@@ -20,11 +20,11 @@ PROCESSOR = "http://127.0.0.1:19000"
 
 
 class Response:
-    def __init__(self, status: int, body, headers: dict):
-        self.status, self.body, self.headers = status, body, headers
+    def __init__(self, status: int, body, headers: dict, target: str = ""):
+        self.status, self.body, self.headers, self.target = status, body, headers, target
 
     def __repr__(self) -> str:
-        return f"<{self.status} {json.dumps(self.body)[:400]}>"
+        return f"<{self.target} {self.status} {json.dumps(self.body)[:400]}>"
 
 
 def call(method: str, url: str, body=None, headers: dict | None = None, form: str | None = None,
@@ -46,7 +46,7 @@ def call(method: str, url: str, body=None, headers: dict | None = None, form: st
         parsed = json.loads(raw) if raw else None
     except ValueError:
         parsed = raw.decode(errors="replace")
-    return Response(status, parsed, {k.lower(): v for k, v in rh.items()})
+    return Response(status, parsed, {k.lower(): v for k, v in rh.items()}, f"{method} {url.split('?')[0]}")
 
 
 def wait_for(url: str, seconds: int = 120) -> None:

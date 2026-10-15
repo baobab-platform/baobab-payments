@@ -603,7 +603,10 @@ impl MoneyMovementExecutor {
             OperationClass::Authorize => {
                 let mut body = json!({});
                 if let Some(token) = &c.payment_token {
+                    // The token names a saved card; HyperSwitch requires the
+                    // method family with it and infers the card type itself.
                     body["payment_token"] = json!(token);
+                    body["payment_method"] = json!("card");
                 }
                 (
                     NativeOperation::Confirm {
@@ -766,6 +769,34 @@ impl MoneyMovementExecutor {
                         Some(record.reference),
                         Some(record.status),
                     ),
+                    _ => (Outcome::Unknown, None, None),
+                }
+            } else if outcome == Outcome::Rejected {
+                // A refusal is recorded only when the provider's own record
+                // proves this movement had no effect. A provider may refuse a
+                // retry of a request whose first answer was lost after it
+                // took effect; recording that as REJECTED would release the
+                // balance, so it stays UNKNOWN and is reconciled.
+                let prior = if c.class == OperationClass::Capture {
+                    self.prior_confirmed_captures(client, c, execution_id)
+                        .await?
+                } else {
+                    0
+                };
+                match self.reconcile(c, prior).await {
+                    (Outcome::Confirmed, Some(record)) => (
+                        Outcome::Confirmed,
+                        Some(record.reference),
+                        Some(record.status),
+                    ),
+                    (Outcome::Rejected | Outcome::Absent, _) => (Outcome::Rejected, None, None),
+                    (Outcome::Unknown, Some(record))
+                        if c.class == OperationClass::Capture
+                            && record.amount_captured.unwrap_or(0) == prior
+                            && record.status != "failed" =>
+                    {
+                        (Outcome::Rejected, None, None)
+                    }
                     _ => (Outcome::Unknown, None, None),
                 }
             } else {
@@ -1020,7 +1051,8 @@ impl MoneyMovementExecutor {
                 "requires_confirmation" | "requires_payment_method" => Outcome::Absent,
                 _ => Outcome::Unknown,
             },
-            OperationClass::Capture => match record.amount_captured {
+            // HyperSwitch reports nothing received as null.
+            OperationClass::Capture => match Some(record.amount_captured.unwrap_or(0)) {
                 Some(captured) if captured >= prior_captured + c.instruction.amount_minor => {
                     Outcome::Confirmed
                 }

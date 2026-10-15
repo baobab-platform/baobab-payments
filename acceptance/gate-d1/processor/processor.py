@@ -42,9 +42,14 @@ HELD = threading.Event()
 RELEASE = threading.Event()
 
 
+# Transaction ids are unique per process start, as a processor's are: a
+# restarted processor never reissues an id HyperSwitch already holds.
+RUN_NONCE = os.urandom(4).hex()
+
+
 def next_id(prefix: str) -> str:
     STATE["seq"] += 1
-    return f"{prefix}_d1{STATE['seq']:08d}"
+    return f"{prefix}_d1{RUN_NONCE}{STATE['seq']:06d}"
 
 
 def form(body: str) -> dict:

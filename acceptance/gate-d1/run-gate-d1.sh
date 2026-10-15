@@ -24,10 +24,12 @@ OUT=$(mkdir -p "${1:?evidence directory required}" && cd "$1" && pwd)
 HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=$(cd "$HERE/../.." && pwd)
 RUN=$(mktemp -d)
+echo "[gate-d1] run directory: $RUN"
 export D1_RUN=$RUN PAYMENTS_IMAGE
 export CP_IMAGE=baobab-gate-d1/cp:local PYTHON_IMAGE=baobab-gate-d1/python:local
 export PAYDB_PASSWORD="paydb-$(openssl rand -hex 12)" CPDB_PASSWORD="cpdb-$(openssl rand -hex 12)"
 export PAYMENTS_ENGINE_INSTANCE_ID=ei_pending
+printf "%s" "$CPDB_PASSWORD" > "$RUN/cpdb-password"
 COMPOSE=(docker compose -f "$HERE/compose.yaml" -p baobab-gate-d1)
 log() { printf '[gate-d1] %s\n' "$*" | tee -a "$OUT/run.log"; }
 
@@ -36,7 +38,9 @@ collect() {
     "${COMPOSE[@]}" logs --no-color "$s" > "$OUT/$s.log" 2>&1 || true
   done
   # Logs are evidence: they must never carry a token, a secret or a card number.
-  if grep -REl 'eyJ[A-Za-z0-9_-]{20,}\.|4242424242424242|snd_[A-Za-z0-9]{20,}' "$OUT"/*.log >/dev/null 2>&1; then
+  # (HyperSwitch's publishable pk_snd_ key is public by design, and its
+  # 20-character API key ids are not secrets.)
+  if grep -Pl 'eyJ[A-Za-z0-9_-]{20,}\.|4242424242424242|(?<!pk_)snd_[A-Za-z0-9]{30,}' "$OUT"/*.log >/dev/null 2>&1; then
     log "a log carries a token or a card number"; exit 1
   fi
 }

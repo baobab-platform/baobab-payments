@@ -310,7 +310,10 @@ impl HyperSwitchTransport {
     ) -> Result<ProviderRecord, HyperSwitchError> {
         let id = record_id(reference)?;
         let path = match kind {
-            RecordKind::Payment => format!("payments/{id}"),
+            // Ask HyperSwitch to sync with the connector first: its own
+            // record can lag behind what the processor did (e.g. after a
+            // connector timeout it reports `processing`).
+            RecordKind::Payment => format!("payments/{id}?force_sync=true"),
             RecordKind::Refund => format!("refunds/{id}"),
         };
         let url = self
