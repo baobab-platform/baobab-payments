@@ -31,8 +31,23 @@ def probe(endpoint: str) -> bool:
         return False
     try:
         with urllib.request.urlopen(endpoint, timeout=3) as response:  # noqa: S310
-            return response.status == 200 and len(response.read(4097)) <= 4096
-    except (OSError, urllib.error.URLError):
+            if response.status != 200:
+                return False
+            body = response.read(4097)
+            if len(body) > 4096:
+                return False
+            payload = json.loads(body)
+            return (
+                isinstance(payload, dict)
+                and payload.get("status") == "READY"
+                and isinstance(payload.get("checks"), dict)
+                and payload["checks"].get("payment_provider") == "UP"
+                and payload.get("payment_provider") == {"kind": "sandbox", "simulated": True}
+                and payload.get("real_payments") == "NOT_CONFIGURED"
+                and payload.get("store") == "in-memory"
+                and payload.get("environment") == "development"
+            )
+    except (OSError, ValueError, urllib.error.URLError):
         return False
 
 
