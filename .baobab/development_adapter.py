@@ -214,7 +214,7 @@ def connected(phase: str) -> dict:
         cases["PAYMENTS-ACTOR-MARKET-CURRENCY"] = {"result": "BLOCKED", "reason": "AUTHORITY_UNQUALIFIED"}
 
     def credentials():
-        for name, statuses in (("revoked", (401,)), ("expired", (401,)), ("wrong_audience", (401,)), ("missing_scope", (403,))):
+        for name, statuses in (("revoked", (401,)), ("untrusted_issuer", (401,)), ("expired", (401,)), ("wrong_audience", (401,)), ("missing_scope", (403,))):
             check(send("/v1/payment-intents", request_body(), token=custody["security_tokens"][name])[0] in statuses)
     observe("PAYMENTS-REVOKED-GRANT", credentials)
     # Current grant withdrawal is also observed independently by the common
