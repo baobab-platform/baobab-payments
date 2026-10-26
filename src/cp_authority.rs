@@ -184,7 +184,14 @@ impl IamCpAuthority {
             .send()
             .await
             .map_err(|_| CpAuthorityError::Unavailable)?;
-        if !response.status().is_success() {
+        // Dependency loss is not a governance decision. A 5xx or retryable
+        // overload from IAM/CP fails closed as UNAVAILABLE, while a real
+        // 4xx refusal remains NOT_AUTHORISED. Neither authorises money.
+        let status = response.status();
+        if status.is_server_error() || status.as_u16() == 429 {
+            return Err(CpAuthorityError::Unavailable);
+        }
+        if !status.is_success() {
             return Err(CpAuthorityError::NotAuthorised);
         }
         // This endpoint is an OAuth client-credentials provider, not the
@@ -228,7 +235,14 @@ impl IamCpAuthority {
             .send()
             .await
             .map_err(|_| CpAuthorityError::Unavailable)?;
-        if !response.status().is_success() {
+        // Dependency loss is not a governance decision. A 5xx or retryable
+        // overload from IAM/CP fails closed as UNAVAILABLE, while a real
+        // 4xx refusal remains NOT_AUTHORISED. Neither authorises money.
+        let status = response.status();
+        if status.is_server_error() || status.as_u16() == 429 {
+            return Err(CpAuthorityError::Unavailable);
+        }
+        if !status.is_success() {
             return Err(CpAuthorityError::NotAuthorised);
         }
         let body = bounded_object(response, 16_384).await?;
@@ -526,6 +540,10 @@ mod tests {
             ),
             (200, "x".repeat(16_385), CpAuthorityError::Unavailable),
             (302, "{}".to_owned(), CpAuthorityError::NotAuthorised),
+            (403, "{}".to_owned(), CpAuthorityError::NotAuthorised),
+            (429, "{}".to_owned(), CpAuthorityError::Unavailable),
+            (502, "{}".to_owned(), CpAuthorityError::Unavailable),
+            (503, "{}".to_owned(), CpAuthorityError::Unavailable),
             (
                 200,
                 r#"{"outcome":"AUTHORIZED"}"#.to_owned(),
