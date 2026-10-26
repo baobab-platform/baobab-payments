@@ -44,6 +44,9 @@ providers:
     # Contacts nothing, moves no money and marks every result simulated.
     simulated: true
     production_permitted: false
+    invocation:
+      service_reference: service://baobab-payments/payments
+      protocol: http
     provenance:
       authority:
         repository: baobab-platform/baobab-payments
