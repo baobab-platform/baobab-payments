@@ -69,6 +69,38 @@ class PaymentsDev15AdapterTests(unittest.TestCase):
                 with patch.object(ADAPTER.urllib.request, "urlopen", return_value=reply):
                     self.assertEqual(ADAPTER.probe(ADAPTER.LOOPBACK), expected)
 
+    def test_outage_retry_keeps_body_stable_across_fresh_cp_contexts(self):
+        import copy
+        import json
+        import types
+        import uuid
+        driver=types.SimpleNamespace(context={
+            "schema":"baobab.engine-adapter-context.v1","run":{"id":"a"*32},
+            "tenant":{"id":"tn_own","legal_entity_id":"DEV-SYNTHETIC","market_id":"mkt_za","country":"ZA"},
+            "witness":{"caller_token":"synthetic-component-token","context":{"context_id":str(uuid.uuid4())}},
+            "fault_phase":"cp"},last_headers={})
+        stored={};bodies=[];unavailable=True
+        def native(path,body,token,context,key,method):
+            driver.last_headers={}
+            if unavailable:return 503,{"code":"SANDBOX_AUTHORITY_UNAVAILABLE"}
+            if method=="GET":return 200,copy.deepcopy(next(iter(stored.values()))[1])
+            bodies.append(copy.deepcopy(body));fingerprint=json.dumps(body,sort_keys=True)
+            if key in stored:
+                prior,value=stored[key]
+                if fingerprint!=prior:return 409,{"code":"IDEMPOTENCY_KEY_REUSED"}
+                driver.last_headers={"idempotent-replayed":"true"};return 201,copy.deepcopy(value)
+            value={"payment_intent_id":"payint"+"a"*32,"provider":{"kind":"SANDBOX","simulated":True}}
+            stored[key]=(fingerprint,value);return 201,copy.deepcopy(value)
+        driver.native=native
+        with patch.dict("sys.modules",{"engine_sdk":types.SimpleNamespace(Driver=lambda:driver)}):
+            self.assertEqual(ADAPTER.connected("unavailable"),{"observed":True})
+            unavailable=False
+            for _ in range(2):
+                driver.context["witness"]["context"]["context_id"]=str(uuid.uuid4())
+                self.assertEqual(ADAPTER.connected("restored"),{"observed":True})
+        self.assertEqual(len(stored),1)
+        self.assertTrue(all(body==bodies[0] for body in bodies))
+
     def test_real_health_observation_never_means_payments_authority(self):
         with patch.object(ADAPTER, "probe", return_value=True):
             status, row = ADAPTER.run("readiness")

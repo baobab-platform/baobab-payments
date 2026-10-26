@@ -139,11 +139,19 @@ def connected(phase: str) -> dict:
     if phase in {"denied", "unavailable", "restored"}:
         key = "dev15-outage-"+custody["run"]["id"]+"-"+custody.get("fault_phase", "cp")
         body = request_body()
-        # Correlation is stable across lost-response and recovered retries.
-        body["context"]["correlation_id"] = custody["witness"]["context"]["context_id"]
-        code, _ = send("/v1/payment-intents", body, key)
+        # CP may issue a new context after restart. That current authority
+        # travels in the header; it must not change this retry's business body.
+        body["context"]["correlation_id"] = str(uuid.uuid5(uuid.NAMESPACE_URL, "baobab:"+key))
+        code, intent = send("/v1/payment-intents", body, key)
         if phase == "restored":
-            check(code == 201 and driver.last_headers.get("idempotent-replayed") != "true")
+            check(code == 201 and intent["provider"] == {"kind": "SANDBOX", "simulated": True})
+            # A response can be lost after commit. Accept the original or its
+            # replay, then prove another authenticated retry returns that same
+            # resource and the native read agrees; never demand a second create.
+            code, replay = send("/v1/payment-intents", body, key)
+            check(code == 201 and replay == intent and driver.last_headers.get("idempotent-replayed") == "true")
+            code, actual = send("/v1/tenants/"+tenant+"/payment-intents/"+intent["payment_intent_id"], method="GET")
+            check(code == 200 and actual == intent)
         elif phase == "unavailable":
             check(code == 503)
         else:
