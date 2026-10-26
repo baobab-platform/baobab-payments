@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Host-side DEV-15 Payments probe adapter (not inside the Rust service image).
+"""DEV-15 Payments owner adapter for the private simulated Rust service.
 
-Only the unprivileged native health endpoint may pass at this stage. Actual
-money-movement and authority cases require real IAM tokens, CP governance and
-Rust HTTP effects. Nothing here mints identity or fabricates a PSP receipt.
+Legacy health probing remains separate from the connected container phases.
+The latter consume genuine IAM/CP references and exercise actual Rust HTTP
+effects. No phase issues identity, verifies a legal mandate or certifies a PSP.
 """
 from __future__ import annotations
 

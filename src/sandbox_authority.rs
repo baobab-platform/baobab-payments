@@ -172,7 +172,7 @@ impl HttpSandboxAuthority {
         // No positive authority cache. The registered validator redeems the
         // actual native request's bearer, including current issuer revocation.
         let response=self.http.post(self.token.clone()).header("Content-Type","application/x-www-form-urlencoded")
-            .body(format!("grant_type=client_credentials&scope=context%3Avalidate&client_id={}&client_secret={}",form(&self.validator_id),form(&self.validator_secret)))
+            .body(format!("grant_type=client_credentials&audience=baobab-control-plane&scope=context%3Avalidate&client_id={}&client_secret={}",form(&self.validator_id),form(&self.validator_secret)))
             .send().await.map_err(|_|unavailable())?;
         let issued = self.object(response).await?;
         let validator = issued["access_token"]
