@@ -30,6 +30,45 @@ class PaymentsDev15AdapterTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "UNKNOWN_OWNER_PHASE"):
             ADAPTER.run("approve")
 
+    def test_health_reply_rejects_protected_or_nonsandbox_provider(self):
+        import io
+        import json
+
+        class Reply:
+            status = 200
+
+            def __init__(self, body):
+                self.content = io.BytesIO(json.dumps(body).encode())
+
+            def read(self, size):
+                return self.content.read(size)
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_):
+                return False
+
+        good = {
+            "status": "READY",
+            "checks": {"store": "UP", "payment_provider": "UP"},
+            "payment_provider": {"kind": "sandbox", "simulated": True},
+            "real_payments": "NOT_CONFIGURED",
+            "store": "in-memory",
+            "environment": "development",
+        }
+        for mutations, expected in (
+            ({}, True),
+            ({"environment": "production"}, False),
+            ({"payment_provider": {"kind": "hyperswitch", "simulated": False}}, False),
+            ({"real_payments": "CONFIGURED"}, False),
+            ({"status": "NOT_READY"}, False),
+        ):
+            with self.subTest(mutations=mutations):
+                reply = Reply({**good, **mutations})
+                with patch.object(ADAPTER.urllib.request, "urlopen", return_value=reply):
+                    self.assertEqual(ADAPTER.probe(ADAPTER.LOOPBACK), expected)
+
     def test_real_health_observation_never_means_payments_authority(self):
         with patch.object(ADAPTER, "probe", return_value=True):
             status, row = ADAPTER.run("readiness")
