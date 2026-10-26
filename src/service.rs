@@ -148,6 +148,7 @@ pub struct Call<'a> {
     pub engine: &'a str,
     pub idempotency_key: &'a str,
     pub correlation_id: &'a str,
+    pub authority_expires_at: Option<OffsetDateTime>,
 }
 
 pub(crate) fn parse_body(body: &[u8]) -> Result<Value, Refusal> {
@@ -226,6 +227,16 @@ impl PaymentService {
             .state
             .lock()
             .map_err(|_| Refusal::new(503, "PAYMENTS_UNAVAILABLE", "state is unavailable"))?;
+        if call
+            .authority_expires_at
+            .is_none_or(|until| until <= OffsetDateTime::now_utc())
+        {
+            return Err(Refusal::new(
+                403,
+                "SANDBOX_CAPABILITY_EXPIRED",
+                "current CP authority required at native state fence",
+            ));
+        }
         if let Some(prior) = state.idempotency.get(&key) {
             if prior.request_hash != request_hash {
                 return Err(Refusal::new(

@@ -114,6 +114,24 @@ pub fn unreachable_native_backend() -> Arc<NativePaymentApi> {
 }
 
 pub fn harness_with(environment: &'static str, native: Option<Arc<NativePaymentApi>>) -> Harness {
+    configured(
+        environment,
+        native,
+        Some(Arc::new(ComponentSandboxAuthority)),
+    )
+}
+
+pub fn harness_with_authority(
+    authority: Option<Arc<dyn baobab_payments::sandbox_authority::SandboxAuthority>>,
+) -> Harness {
+    configured("development", None, authority)
+}
+
+fn configured(
+    environment: &'static str,
+    native: Option<Arc<NativePaymentApi>>,
+    authority: Option<Arc<dyn baobab_payments::sandbox_authority::SandboxAuthority>>,
+) -> Harness {
     let service = Arc::new(PaymentService::new(
         Arc::new(SandboxProvider),
         Arc::new(OffsetDateTime::now_utc),
@@ -140,6 +158,7 @@ pub fn harness_with(environment: &'static str, native: Option<Arc<NativePaymentA
         service: service.clone(),
         auth,
         environment,
+        sandbox_authority: authority,
         native,
     });
     Harness { app, service }
@@ -260,4 +279,30 @@ pub fn assert_problem(reply: &Reply, status: u16, code: &str) {
     assert_eq!(reply.headers["content-type"], "application/problem+json");
     assert_eq!(reply.body["code"], code, "{}", reply.body);
     assert_conforms(contracts::PROBLEM, &reply.body);
+}
+
+// Explicit component-test port. Never linked into the native executable or
+// accepted as DEV-15 runtime evidence.
+struct ComponentSandboxAuthority;
+impl baobab_payments::sandbox_authority::SandboxAuthority for ComponentSandboxAuthority {
+    fn authorise<'a>(
+        &'a self,
+        _request: baobab_payments::sandbox_authority::SandboxRequest<'a>,
+    ) -> std::pin::Pin<
+        Box<
+            dyn std::future::Future<
+                    Output = Result<
+                        baobab_payments::sandbox_authority::SandboxLease,
+                        baobab_payments::service::Refusal,
+                    >,
+                > + Send
+                + 'a,
+        >,
+    > {
+        Box::pin(async {
+            Ok(baobab_payments::sandbox_authority::SandboxLease {
+                expires_at: OffsetDateTime::now_utc() + time::Duration::minutes(1),
+            })
+        })
+    }
 }

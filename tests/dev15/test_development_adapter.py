@@ -52,7 +52,7 @@ class PaymentsDev15AdapterTests(unittest.TestCase):
         good = {
             "status": "READY",
             "checks": {"store": "UP", "payment_provider": "UP"},
-            "payment_provider": {"kind": "sandbox", "simulated": True},
+            "payment_provider": {"kind": "SANDBOX", "simulated": True},
             "real_payments": "NOT_CONFIGURED",
             "store": "in-memory",
             "environment": "development",

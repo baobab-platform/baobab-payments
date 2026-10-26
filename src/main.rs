@@ -151,8 +151,15 @@ async fn main() -> ExitCode {
         provider.clone(),
         Arc::new(time::OffsetDateTime::now_utc),
     ));
+    let jwks = match RemoteJwks::new(config.workload_jwks_uri.clone()) {
+        Ok(keys) => keys,
+        Err(reason) => {
+            tracing::error!(event = "startup.refused", reason);
+            return ExitCode::from(2);
+        }
+    };
     let auth = Arc::new(Authenticator::new(
-        Keys::Remote(RemoteJwks::new(config.workload_jwks_uri.clone())),
+        Keys::Remote(jwks),
         config.workload_issuer.clone(),
         config.workload_audience.clone(),
         config.allowed_clients.clone(),
@@ -167,11 +174,30 @@ async fn main() -> ExitCode {
             }
         },
     };
+    let sandbox_authority = if native.is_none() {
+        match baobab_payments::sandbox_authority::HttpSandboxAuthority::from_env(|k| {
+            env.get(k).cloned()
+        }) {
+            Ok(value) => value.map(|v| {
+                Arc::new(v) as Arc<dyn baobab_payments::sandbox_authority::SandboxAuthority>
+            }),
+            Err(_) => {
+                tracing::error!(
+                    event = "startup.refused",
+                    reason = "invalid sandbox authority configuration"
+                );
+                return ExitCode::from(2);
+            }
+        }
+    } else {
+        None
+    };
     let native_backend_configured = native.is_some();
     let app = router(AppState {
         service,
         auth,
         environment: config.environment.as_str(),
+        sandbox_authority,
         native,
     });
     let listener = match tokio::net::TcpListener::bind(("0.0.0.0", config.http_port)).await {

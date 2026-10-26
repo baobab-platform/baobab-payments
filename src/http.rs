@@ -31,6 +31,7 @@ pub struct AppState {
     /// P0-04B Gate D1: the native backend, present only when configuration
     /// accepted it (development and integration).
     pub native: Option<Arc<NativePaymentApi>>,
+    pub sandbox_authority: Option<Arc<dyn crate::sandbox_authority::SandboxAuthority>>,
 }
 
 /// One public mutation and the resource it names.
@@ -242,6 +243,46 @@ async fn authorize(state: &AppState, headers: &HeaderMap, scope: &str) -> Result
         .map_err(|e| Refusal::new(e.status, e.code, e.detail))
 }
 
+async fn sandbox_lease(
+    state: &AppState,
+    headers: &HeaderMap,
+    tenant: &str,
+    market: Option<&str>,
+    capabilities: &[&str],
+    token_expires_at: i64,
+) -> Result<crate::sandbox_authority::SandboxLease, Refusal> {
+    let authority = state.sandbox_authority.as_ref().ok_or_else(|| {
+        Refusal::new(
+            503,
+            "SANDBOX_AUTHORITY_UNAVAILABLE",
+            "current CP authority required",
+        )
+    })?;
+    let token = headers
+        .get(header::AUTHORIZATION)
+        .and_then(|s| s.to_str().ok())
+        .and_then(|s| s.strip_prefix("Bearer "))
+        .unwrap_or("");
+    let context = headers
+        .get("x-baobab-context-id")
+        .and_then(|s| s.to_str().ok())
+        .unwrap_or("");
+    let mut lease = authority
+        .authorise(crate::sandbox_authority::SandboxRequest {
+            subject_token: token,
+            context_id: context,
+            tenant_id: tenant,
+            market_id: market,
+            capabilities,
+        })
+        .await?;
+    let expiry = time::OffsetDateTime::from_unix_timestamp(token_expires_at)
+        .map_err(|_| Refusal::new(401, "AUTH_TOKEN_INVALID", "invalid bearer expiry"))?;
+    lease.expires_at = lease.expires_at.min(expiry);
+    lease.require_current()?;
+    Ok(lease)
+}
+
 fn idempotency_key(headers: &HeaderMap) -> Result<String, Refusal> {
     headers
         .get("idempotency-key")
@@ -318,11 +359,50 @@ async fn mutate(
     let result = match bytes {
         Err(refusal) => Err(refusal),
         Ok((key, bytes)) => {
+            let lease = if path == ExecutionPath::Sandbox {
+                let value = match crate::wire_json::decode_object(&bytes) {
+                    Ok(value) => value,
+                    Err(_) => {
+                        return problem_response(
+                            &Refusal::new(400, "VALIDATION_FAILED", "valid request required"),
+                            Some(correlation),
+                        );
+                    }
+                };
+                let tenant = value["context"]["tenant_id"]
+                    .as_str()
+                    .or_else(|| value["tenant_id"].as_str())
+                    .unwrap_or("");
+                let market = value["context"]["market_id"].as_str();
+                let caps: &[&str] = match &op {
+                    Op::CreateIntent => &["payment.intent.create"],
+                    Op::CancelIntent(_) => &["payment.intent.cancel"],
+                    // Automatic confirmation may capture; require both grants
+                    // before entering the owner state transition.
+                    Op::ConfirmIntent(_) => {
+                        &["payment.payment.authorize", "payment.payment.capture"]
+                    }
+                    Op::Capture(_) => &["payment.payment.capture"],
+                    Op::Refund(_) => &["payment.refund.create"],
+                };
+                match sandbox_lease(state, headers, tenant, market, caps, caller.expires_at).await {
+                    Ok(lease) => Some(lease),
+                    Err(refusal) => {
+                        return with_client(
+                            problem_response(&refusal, Some(correlation)),
+                            Some(&caller),
+                        );
+                    }
+                }
+            } else {
+                None
+            };
             let call = Call {
                 client_id: &caller.client_id,
                 engine: &caller.engine,
                 idempotency_key: &key,
                 correlation_id: &correlation.0,
+                authority_expires_at: lease.map(|l| l.expires_at),
             };
             match (path, state.native.as_deref()) {
                 (ExecutionPath::Native, Some(api)) => op.native(api, &call, &bytes).await,
@@ -357,6 +437,23 @@ async fn read(
         Ok(caller) => caller,
         Err(refusal) => return problem_response(&refusal, Some(correlation)),
     };
+    let lease = if state.native.is_none() {
+        let tenant = match &what {
+            Read::Intent(tenant, _) | Read::Payment(tenant, _) => tenant,
+        };
+        let caps: &[&str] = match &what {
+            Read::Intent(_, _) => &["payment.intent.create"],
+            Read::Payment(_, _) => &["payment.payment.authorize", "payment.payment.capture"],
+        };
+        match sandbox_lease(state, headers, tenant, None, caps, caller.expires_at).await {
+            Ok(lease) => Some(lease),
+            Err(refusal) => {
+                return with_client(problem_response(&refusal, Some(correlation)), Some(&caller));
+            }
+        }
+    } else {
+        None
+    };
     // Reads move no money: on the native backend they come from the journal,
     // and only the calling engine's own payments are found.
     let result = match (state.native.as_deref(), &what) {
@@ -365,6 +462,11 @@ async fn read(
         (None, Read::Intent(tenant, id)) => state.service.intent(tenant, id),
         (None, Read::Payment(tenant, id)) => state.service.payment(tenant, id),
     };
+    if let Some(lease) = lease
+        && let Err(refusal) = lease.require_current()
+    {
+        return problem_response(&refusal, Some(correlation));
+    }
     let response = match result {
         Ok(body) => json_response(StatusCode::OK, &body, false),
         Err(refusal) => problem_response(&refusal, Some(correlation)),

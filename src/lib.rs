@@ -23,3 +23,5 @@ pub mod money_movement;
 pub mod money_movement_execution;
 pub mod native_api;
 pub mod wire_json;
+
+pub mod sandbox_authority;

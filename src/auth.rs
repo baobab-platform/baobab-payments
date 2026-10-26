@@ -22,6 +22,7 @@ pub struct Caller {
     /// The engine the client acts for, from configuration, never the token.
     pub engine: String,
     pub scopes: BTreeSet<String>,
+    pub expires_at: i64,
 }
 
 /// Why a caller was refused: 401 (not authenticated) or 403 (not authorised).
@@ -70,16 +71,29 @@ const JWKS_TTL: Duration = Duration::from_secs(300);
 const JWKS_MIN_REFRESH: Duration = Duration::from_secs(30);
 
 impl RemoteJwks {
-    pub fn new(uri: String) -> Self {
-        let client = reqwest::Client::builder()
+    pub fn new(uri: String) -> Result<Self, &'static str> {
+        let mut builder = reqwest::Client::builder()
             .timeout(Duration::from_secs(5))
+            .redirect(reqwest::redirect::Policy::none());
+        if let Ok(path) = std::env::var("SSL_CERT_FILE") {
+            let pem = std::fs::read(path).map_err(|_| "JWKS TLS trust unavailable")?;
+            if pem.len() > 65536 {
+                return Err("JWKS TLS trust oversized");
+            }
+            for certificate in
+                reqwest::Certificate::from_pem_bundle(&pem).map_err(|_| "JWKS TLS trust invalid")?
+            {
+                builder = builder.add_root_certificate(certificate)
+            }
+        }
+        let client = builder
             .build()
-            .expect("an HTTP client builds");
-        Self {
+            .map_err(|_| "JWKS HTTP client unavailable")?;
+        Ok(Self {
             uri,
             client,
             cache: RwLock::new((None, HashMap::new())),
-        }
+        })
     }
 
     async fn key(&self, kid: &str) -> Option<DecodingKey> {
@@ -100,7 +114,7 @@ impl RemoteJwks {
         let mut cache = self.cache.write().await;
         if let Ok(response) = self.client.get(&self.uri).send().await
             && let Ok(response) = response.error_for_status()
-            && let Ok(set) = response.json::<JwkSet>().await
+            && let Some(set) = bounded_jwks(response).await
         {
             let keys = set
                 .keys
@@ -169,7 +183,7 @@ impl Authenticator {
         validation.set_issuer(&[&self.issuer]);
         validation.set_audience(&[&self.audience]);
         validation.set_required_spec_claims(&["exp", "iat", "sub", "iss", "aud"]);
-        validation.leeway = 30;
+        validation.leeway = 0;
         let claims = decode::<Claims>(token, &key, &validation)
             .map_err(|_| invalid())?
             .claims;
@@ -194,6 +208,7 @@ impl Authenticator {
             {
                 Ok(Caller {
                     subject: claims.sub,
+                    expires_at: claims.exp,
                     engine: engine.clone(),
                     client_id: client,
                     scopes,
@@ -206,4 +221,21 @@ impl Authenticator {
             }),
         }
     }
+}
+
+async fn bounded_jwks(mut response: reqwest::Response) -> Option<JwkSet> {
+    if response
+        .content_length()
+        .is_some_and(|length| length > 65536)
+    {
+        return None;
+    }
+    let mut bytes = Vec::new();
+    while let Some(chunk) = response.chunk().await.ok()? {
+        if chunk.len() > 65536 - bytes.len() {
+            return None;
+        }
+        bytes.extend_from_slice(&chunk);
+    }
+    serde_json::from_slice(&bytes).ok()
 }
