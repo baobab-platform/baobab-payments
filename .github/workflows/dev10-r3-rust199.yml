@@ -2,8 +2,8 @@
 # No payment provider's simulation is counted as a real PSP acceptance.
 name: DEV10 R3 Rust 1.99.1 Payments native PG17
 on:
+  # Always exercise the native PostgreSQL 17 gate for PRs; no path-filter bypass.
   pull_request:
-    paths: [".github/workflows/dev10-r3-rust199.yml"]
   workflow_dispatch:
 permissions:
   contents: read
@@ -39,11 +39,31 @@ jobs:
           cargo fmt --all --check
           cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
           cargo test --workspace --all-features --locked
+      - name: Verify the real developer Compose database runs PostgreSQL 17
+        shell: bash
+        run: |
+          set -euo pipefail
+          cleanup() { docker compose -f .devcontainer/docker-compose.yml down --remove-orphans; }
+          trap cleanup EXIT
+          docker compose -f .devcontainer/docker-compose.yml up -d --wait postgres
+          version_num="$(docker compose -f .devcontainer/docker-compose.yml exec -T postgres \
+            psql -X -Atq -U hyperswitch -d hyperswitch -c "SHOW server_version_num")"
+          if ! [[ "$version_num" =~ ^17[0-9]{4}$ ]]; then
+            echo "::error::Payments Dev Container must run PostgreSQL 17; got server_version_num=$version_num"
+            exit 1
+          fi
+          echo "Verified live Payments devcontainer PostgreSQL $version_num"
+
       - name: Apply actual PostgreSQL 17 journal and denial fixture
         run: |
           set -euo pipefail
           docker run --rm --network host --volume "${GITHUB_WORKSPACE}/db:/db:ro" \
             --env PGPASSWORD=synthetic_only_password postgres:17.11-bookworm sh -euc '
+              version_num=$(psql -X -Atq -h 127.0.0.1 -U baobab -d baobab_payments_test -c "SHOW server_version_num")
+              test "$version_num" -ge 170000 && test "$version_num" -lt 180000 || {
+                echo "Payments journal tests require a real PostgreSQL 17 server (found $version_num)" >&2
+                exit 1
+              }
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0001_native_payment_journal.sql
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/tests/0001_native_payment_journal.sql
               psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0002_webhook_settlement_reconciliation.sql
