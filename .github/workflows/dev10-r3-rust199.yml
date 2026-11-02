@@ -1,0 +1,67 @@
+# DEV10-R3 exact stable Rust compatibility with native PG17 acceptance fixture.
+# No payment provider's simulation is counted as a real PSP acceptance.
+name: DEV10 R3 Rust 1.99.1 Payments native PG17
+on:
+  pull_request:
+    paths: [".github/workflows/dev10-r3-rust199.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  latest-stable-native:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    services:
+      postgres:
+        image: postgres:17.11-bookworm
+        env:
+          POSTGRES_DB: baobab_payments_test
+          POSTGRES_USER: baobab
+          POSTGRES_PASSWORD: synthetic_only_password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U baobab -d baobab_payments_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # v1
+        with:
+          toolchain: "1.99.1"
+          components: clippy, rustfmt
+      - name: Verify exact upstream stable compiler and frozen Cargo lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustc --version
+          test "$(rustc --version | cut -d' ' -f2)" = 1.99.1
+          cargo fmt --all --check
+          cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+          cargo test --workspace --all-features --locked
+      - name: Apply actual PostgreSQL 17 journal and denial fixture
+        run: |
+          set -euo pipefail
+          docker run --rm --network host --volume "${GITHUB_WORKSPACE}/db:/db:ro" \
+            --env PGPASSWORD=synthetic_only_password postgres:17.11-bookworm sh -euc '
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0001_native_payment_journal.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/tests/0001_native_payment_journal.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0002_webhook_settlement_reconciliation.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0003_money_movement_authority.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/tests/0003_money_movement_authority.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -f /db/migrations/0004_native_payment_api.sql
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -c "GRANT SELECT, INSERT ON payment_ops.native_api_request, payment_ops.native_intent, payment_ops.native_intent_cancellation TO payment_ci"
+              psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U baobab -d baobab_payments_test -c "ALTER ROLE payment_ci LOGIN PASSWORD '''synthetic_runtime_only'''"
+            '
+      - name: Prove native PG17 authority vetoes and nonproduction loopback provider
+        env:
+          LA05_NATIVE_PG_TEST_URL: "host=127.0.0.1 port=5432 dbname=baobab_payments_test user=payment_ci password=synthetic_runtime_only"
+          LA05_NATIVE_PG_ADMIN_URL: "host=127.0.0.1 port=5432 dbname=baobab_payments_test user=baobab password=synthetic_only_password"
+          LA05_REQUIRE_PG: "1"
+        run: |
+          set -euo pipefail
+          cargo test --locked native_execution::tests::postgres17_commits_intent_before_exactly_one_synthetic_provider_send -- --nocapture
+          cargo test --locked --lib money_movement -- --nocapture 2>&1 | tee "$RUNNER_TEMP/dev10-money-movement.log"
+          grep -Eq 'test result: ok\. 21 passed' "$RUNNER_TEMP/dev10-money-movement.log"
+      - name: Verify frozen standalone release executable
+        run: cargo build --release --locked
