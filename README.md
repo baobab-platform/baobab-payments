@@ -114,4 +114,4 @@ The existing local journal/transport and signed-receipt/settlement components ar
 
 ## Local development
 
-This repository uses the shared `baobab-dev` devcontainer (`full` profile, with Rust layered on, plus local PostgreSQL and Redis services). See `.baobab/environment.yaml` and `.devcontainer/`.
+This repository uses the shared `baobab-dev` devcontainer (`full` profile, with Rust layered on, plus local PostgreSQL **17.11** and Redis services). See `.baobab/environment.yaml` and `.devcontainer/`. The dedicated `postgres17-data` Docker volume deliberately does **not** reuse older PostgreSQL 16 physical data. Back up an old local PG16 database and restore it logically to the new PG17 instance if needed; do not delete the old volume or expect Docker to upgrade it automatically. PR #47 checks the live developer server's major version and separately executes the native journal SQL/negative tests against PG17.
