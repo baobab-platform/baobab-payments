@@ -19,7 +19,8 @@ services:
         condition: service_healthy
 
   postgres:
-    image: postgres:16-alpine
+    # Pin the actual development database to PostgreSQL 17.11. Never attach a PG16 data directory.
+    image: postgres:17.11-bookworm
     environment:
       POSTGRES_DB: hyperswitch
       POSTGRES_USER: hyperswitch
@@ -30,7 +31,8 @@ services:
       timeout: 3s
       retries: 30
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      # New volume name deliberately leaves any existing PostgreSQL 16 volume untouched.
+      - postgres17-data:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
@@ -41,4 +43,4 @@ services:
       retries: 30
 
 volumes:
-  postgres-data:
+  postgres17-data:
