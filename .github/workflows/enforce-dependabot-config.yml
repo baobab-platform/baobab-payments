@@ -1,39 +1,53 @@
-# ==============================================================================
-# Nabhold Engine Template
-# Enforce Dependabot Config
-#
-# File: .github/workflows/enforce-dependabot-config.yml
-#
-# PURPOSE:
-#   Delegates to baobab-platform/shared's reusable enforce-dependabot-config.yml -
-#   fails CI if this repo's .github/dependabot.yml drifts from the org's
-#   structural requirements (missing ecosystem entry, missing schedule,
-#   missing labels, etc). Pairs with enforce-action-pinning.yml above the
-#   same way it does in baobab-platform/shared itself. Toolchain-agnostic: needs no
-#   application code, so it is live (not `.example`) from repository
-#   creation.
-# ==============================================================================
-
-name: Enforce Dependabot Config
-
+# BA-SEC-DEP-001 approved policy — accepted Shared v2.3.0 baseline.
+# Strict validator proposed on Shared #429 is unmerged; local regression
+# tests add manifest-specific negative controls until published.
+name: Enforce Dependency Maintenance Policy
 on:
   push:
     branches: [main]
     paths:
       - ".github/dependabot.yml"
+      - ".github/workflows/enforce-dependabot-config.yml"
+      - ".github/workflows/dependency-security.yml"
+      - ".github/workflows/security-python.yml"
+      - ".github/CODEOWNERS"
+      - "docs/security/dependency-maintenance.md"
+      - "tests/security/test_dependency_policy.py"
   pull_request:
     paths:
       - ".github/dependabot.yml"
+      - ".github/workflows/enforce-dependabot-config.yml"
+      - ".github/workflows/dependency-security.yml"
+      - ".github/workflows/security-python.yml"
+      - ".github/CODEOWNERS"
+      - "docs/security/dependency-maintenance.md"
+      - "tests/security/test_dependency_policy.py"
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
-  check:
+  accepted-shared-baseline:
     permissions:
       contents: read
-    # SHA is baobab-platform/shared's v1.2.0 tag (annotated - peeled commit, not the
-    # tag object's own SHA), verified via `git rev-list -n1 v1.2.0^{}`
-    # against a live checkout on 2026-09-05.
-    uses: baobab-platform/shared/.github/workflows/enforce-dependabot-config.yml@31de2bc3dcd56128c019c640dc7e12c10ae9ca69 # v2.3.0
+    uses: baobab-platform/shared/.github/workflows/enforce-dependabot-config.yml@31de2bc3dcd56128c019c640dc7e12c10ae9ca69 # accepted Shared v2.3.0
+    with:
+      required-ecosystems: "github-actions,cargo,docker,docker-compose"
+
+  manifest-policy-negatives:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout exact PR source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned test parser in disposable environment
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/baobab-security-policy"
+          "$RUNNER_TEMP/baobab-security-policy/bin/python" -m pip install --disable-pip-version-check PyYAML==6.0.3
+      - name: Test real manifest and approval boundaries
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/baobab-security-policy/bin/python" -B -m unittest discover -s tests/security -p 'test_dependency_policy.py' -v
