@@ -25,4 +25,4 @@ jobs:
       - name: Install exact released Cargo audit utility
         run: cargo install --locked cargo-audit --version 0.22.2
       - name: Check committed Cargo.lock against RustSec advisories
-        run: cargo audit --locked
+        run: cargo audit --file Cargo.lock
