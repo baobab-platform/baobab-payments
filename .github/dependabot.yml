@@ -1,24 +1,80 @@
+# BA-SEC-DEP-001: approved dependency and security maintenance policy v1.0.
+# Repository-specific declared manifests; protected runtime authority unchanged.
+# Security updates are advisory-driven, independent of routine version cadence.
+# No target-branch override, blanket ignore, or unscoped update group.
 version: 2
 updates:
-  - package-ecosystem: github-actions
-    directory: /
-    schedule: { interval: weekly }
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Africa/Johannesburg"
     open-pull-requests-limit: 5
-    labels: ["dependencies"]
-    commit-message: { prefix: "ci" }
+    labels: ["dependencies", "github-actions"]
+    commit-message:
+      prefix: "chore"
+      include: "scope"
     groups:
-      actions: { patterns: ["*"] }
-  - package-ecosystem: cargo
-    directory: /
-    schedule: { interval: weekly }
+      github-actions-routine:
+        applies-to: "version-updates"
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:15"
+      timezone: "Africa/Johannesburg"
     open-pull-requests-limit: 5
-    labels: ["dependencies"]
-    commit-message: { prefix: "build" }
+    labels: ["dependencies", "rust"]
+    commit-message:
+      prefix: "chore"
+      include: "scope"
     groups:
-      cargo: { patterns: ["*"], update-types: ["minor", "patch"] }
-  - package-ecosystem: docker
-    directory: /
-    schedule: { interval: weekly }
-    open-pull-requests-limit: 3
-    labels: ["dependencies"]
-    commit-message: { prefix: "build" }
+      cargo-routine:
+        applies-to: "version-updates"
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:30"
+      timezone: "Africa/Johannesburg"
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "docker"]
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  - package-ecosystem: "docker-compose"
+    directory: "/.devcontainer"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:45"
+      timezone: "Africa/Johannesburg"
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "docker"]
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  - package-ecosystem: "docker-compose"
+    directory: "/acceptance/gate-d1"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "Africa/Johannesburg"
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "docker"]
+    commit-message:
+      prefix: "chore"
+      include: "scope"

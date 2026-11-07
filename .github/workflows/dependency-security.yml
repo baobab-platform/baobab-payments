@@ -1,0 +1,28 @@
+# BA-SEC-DEP-001 source audit: native dependency checks without protected 
+# environment credentials, issuer activation, provider simulation or deployment.
+name: Native Dependency Security Maintenance
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "13 3 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cargo-advisories:
+    name: Daily locked Cargo/RustSec audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # pinned source
+        with:
+          toolchain: "1.90.0"
+      - name: Install exact released Cargo audit utility
+        run: cargo install --locked cargo-audit --version 0.22.2
+      - name: Check committed Cargo.lock against RustSec advisories
+        run: cargo audit --file Cargo.lock
