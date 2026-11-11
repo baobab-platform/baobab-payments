@@ -38,7 +38,7 @@ RUN set -eu; apt-get update; \
     { dpkg-deb -f "$deb"; } > /out/var/lib/dpkg/status.d/libssl3t64; \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*.deb
 
-FROM gcr.io/distroless/cc-debian13:nonroot@sha256:e792ab3d241a468a4fd7519ddbbebe66b49b5f365771716ea688ad40b6c6f1c2
+FROM gcr.io/distroless/cc-debian13:nonroot@sha256:83b9b50586253821cf63ffcec87d3d94265a093ad30da232039af962dd8f4edf
 ARG VERSION=0.0.0-dev
 ARG REVISION=unknown
 LABEL org.opencontainers.image.title="baobab-payments" \
