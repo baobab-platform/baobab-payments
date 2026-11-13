@@ -2,7 +2,7 @@
 # baobab-payments: the Baobab Payment API (ADR-PAY-0001) with the sandbox provider.
 # Base images are pinned by tag and digest; never latest.
 
-FROM rust:1.98-trixie@sha256:a8a5f0a1e5fe7dfe1d352591e4a1c7dd2c08fd70475cae872cf3458ba0df0546 AS build
+FROM rust:1.99-trixie@sha256:8a4e90c7946b74626488b1446f712c0fe0ed1a596cbd3d871684bc9c5433ae07 AS build
 WORKDIR /src
 # Dependencies first, so source changes reuse the cached dependency layer.
 COPY Cargo.toml Cargo.lock ./
@@ -26,7 +26,7 @@ RUN touch src/main.rs src/lib.rs \
 # the already-pinned trixie build image. The guard fails the build unless the
 # fetched version is at least the fixed one. Remove this stage once the
 # distroless digest ships libssl3t64 >= 3.5.7-1~deb13u3.
-FROM rust:1.98-trixie@sha256:a8a5f0a1e5fe7dfe1d352591e4a1c7dd2c08fd70475cae872cf3458ba0df0546 AS libssl
+FROM rust:1.99-trixie@sha256:8a4e90c7946b74626488b1446f712c0fe0ed1a596cbd3d871684bc9c5433ae07 AS libssl
 RUN set -eu; apt-get update; \
     apt-get install -y --no-install-recommends --reinstall --download-only libssl3t64; \
     deb=$(ls /var/cache/apt/archives/libssl3t64_*.deb); \
