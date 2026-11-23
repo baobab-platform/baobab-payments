@@ -12,11 +12,6 @@ services:
       DB_PASS: dev-only-password
       DATABASE_URL: postgresql://hyperswitch:dev-only-password@postgres:5432/hyperswitch
       REDIS_URL: redis://redis:6379
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
 
   postgres:
     # Pin the actual development database to PostgreSQL 17.11. Never attach a PG16 data directory.
