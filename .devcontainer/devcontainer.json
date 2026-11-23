@@ -8,7 +8,7 @@
   "features": {
     "ghcr.io/devcontainers/features/rust:1": {}
   },
-  "postCreateCommand": "baobab-verify --contract",
+  "postCreateCommand": "rustc --version",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -17,5 +17,9 @@
         "redhat.vscode-yaml"
       ]
     }
-  }
+  },
+  "runServices": [],
+  "waitFor": "postCreateCommand",
+  "init": true,
+  "updateRemoteUserUID": true
 }
